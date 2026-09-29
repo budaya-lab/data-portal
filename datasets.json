@@ -1,0 +1,166 @@
+[
+  {
+    "slug": "country-codes",
+    "namespace": "reference",
+    "name": "Country Codes",
+    "description": "ISO 3166-1 country names with their alpha-2 and alpha-3 codes.",
+    "file": "country-codes.csv",
+    "format": "csv",
+    "profile": "frictionless-tabular",
+    "schema": {
+      "primaryKey": "alpha3",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "title": "Country name",
+          "description": "Common English short name of the country.",
+          "constraints": { "required": true }
+        },
+        {
+          "name": "alpha2",
+          "type": "string",
+          "title": "Alpha-2 code",
+          "description": "ISO 3166-1 alpha-2 two-letter code.",
+          "constraints": { "required": true, "unique": true, "pattern": "^[A-Z]{2}$" }
+        },
+        {
+          "name": "alpha3",
+          "type": "string",
+          "title": "Alpha-3 code",
+          "description": "ISO 3166-1 alpha-3 three-letter code.",
+          "constraints": { "required": true, "unique": true, "pattern": "^[A-Z]{3}$" }
+        }
+      ]
+    },
+    "licenses": [
+      {
+        "name": "ODbL-1.0",
+        "title": "Open Data Commons Open Database License 1.0",
+        "path": "https://opendatacommons.org/licenses/odbl/1-0/"
+      }
+    ],
+    "sources": [
+      {
+        "title": "ISO 3166-1",
+        "path": "https://www.iso.org/iso-3166-country-codes.html"
+      }
+    ],
+    "keywords": ["countries", "iso", "reference"],
+    "version": "1.0.0"
+  },
+  {
+    "slug": "population-2022",
+    "namespace": "reference",
+    "name": "World Population 2022",
+    "description": "Estimated mid-year population for a sample of countries.",
+    "file": "population-2022.csv",
+    "format": "csv",
+    "dcat": {
+      "spatial": {
+        "bbox": "POLYGON((-180 -90, 180 -90, 180 90, -180 90, -180 -90))"
+      }
+    }
+  },
+  {
+    "slug": "co2-emissions",
+    "namespace": "reference",
+    "name": "CO₂ Emissions per Capita",
+    "description": "Tonnes of CO₂ emitted per person for a sample of countries.",
+    "file": "co2-emissions.csv",
+    "format": "csv"
+  },
+  {
+    "slug": "country-indicators",
+    "namespace": "reference",
+    "name": "Country Indicators (bundle)",
+    "description": "A multi-resource dataset: reference codes plus population and CO₂ indicators for a sample of countries.",
+    "keywords": ["countries", "reference", "indicators"],
+    "resources": [
+      {
+        "name": "codes",
+        "path": "country-codes.csv",
+        "format": "csv",
+        "title": "Country codes",
+        "description": "ISO 3166-1 names with alpha-2 and alpha-3 codes."
+      },
+      {
+        "name": "population",
+        "path": "population-2022.csv",
+        "format": "csv",
+        "title": "Population 2022",
+        "description": "Estimated mid-year population."
+      },
+      {
+        "name": "co2",
+        "path": "co2-emissions.csv",
+        "format": "csv",
+        "title": "CO₂ emissions per capita",
+        "description": "Tonnes of CO₂ emitted per person."
+      }
+    ]
+  },
+  {
+    "slug": "fruit-sales",
+    "namespace": "sales",
+    "name": "Fruit Sales",
+    "description": "Monthly fruit units sold and revenue — a small tabular sample.",
+    "file": "fruit-sales.csv",
+    "format": "csv",
+    "keywords": ["sales", "fruit"]
+  },
+  {
+    "slug": "region-metrics",
+    "namespace": "sales",
+    "name": "Region Metrics",
+    "description": "Regional sales and ratings, queried in your browser with SQL over DuckDB-Wasm. This resource is Parquet, so the showcase opens a SQL editor instead of a flat preview; point it at a remote Parquet on data.portaljs.com and DuckDB range-reads it in place.",
+    "keywords": ["sales", "regions", "duckdb", "sql"],
+    "resources": [
+      {
+        "name": "data",
+        "path": "https://data.portaljs.com/lfs/datopian/portaljs-catalog/be9d8739eae34b301988bbce4f69182b4b2e150961f1efb6d98fb4d51e1f3fd5",
+        "format": "parquet",
+        "title": "Region metrics",
+        "query": "SELECT region, round(avg(rating), 2) AS avg_rating, sum(sales) AS total_sales\nFROM data\nGROUP BY region\nORDER BY total_sales DESC\nLIMIT 10;"
+      }
+    ]
+  },
+  {
+    "slug": "world-boundaries",
+    "namespace": "reference",
+    "name": "World Country Boundaries",
+    "description": "Country boundaries for the whole world in two serverless geo tiers derived from the same Natural Earth source: a PMTiles archive the map renders in place (any size, no tile server), and a GeoParquet twin DuckDB-Wasm runs spatial SQL over in place — bbox pre-filter to prune Parquet row groups, then ST_Intersects, rendered as a live overlay. Render tier + query tier on one dataset.",
+    "resources": [
+      {
+        "name": "tiles",
+        "title": "Boundaries (PMTiles — render tier)",
+        "description": "Vector tiles rendered by MapLibre GL over HTTP range requests; only the tiles in view are fetched, so any dataset size pans and zooms with no tile server.",
+        "path": "https://data.portaljs.com/lfs/datopian/portaljs-catalog/14b9f9c68e58e8c2f3b6fd5f6794e0f8196649b9a63bed57ece80cd1c8c18af4",
+        "format": "pmtiles"
+      },
+      {
+        "name": "geo",
+        "title": "Boundaries (GeoParquet — query tier)",
+        "description": "GeoParquet 1.1 (Hilbert-sorted, covering bbox column) queried in place with DuckDB-Wasm + spatial. Pan the map and “Query viewport” to fetch only the features in view; click a feature for its full attributes via a DuckDB point-in-polygon lookup.",
+        "path": "https://data.portaljs.com/lfs/datopian/portaljs-catalog/437f70dcc2c8d464be9f2181175c37daa21b533351d4873039f78eff0e79f5f5",
+        "format": "geoparquet",
+        "query": "-- bbox-first: the covering bbox prunes Parquet row groups (cheap),\n-- then ST_Intersects refines to the exact predicate (only on survivors).\nSELECT name, continent, pop_est, ST_AsGeoJSON(geometry) AS geojson\nFROM data\nWHERE bbox.xmin <= 40 AND bbox.xmax >= -25\n  AND bbox.ymin <= 72 AND bbox.ymax >= 34\n  AND ST_Intersects(geometry, ST_MakeEnvelope(-25, 34, 40, 72))"
+      }
+    ],
+    "licenses": [
+      {
+        "name": "PDDL-1.0",
+        "title": "Public domain (Natural Earth)",
+        "path": "https://www.naturalearthdata.com/about/terms-of-use/"
+      }
+    ],
+    "sources": [
+      {
+        "title": "Natural Earth 1:110m Admin 0 — Countries",
+        "path": "https://www.naturalearthdata.com/downloads/110m-cultural-vectors/"
+      }
+    ],
+    "keywords": ["boundaries", "countries", "geospatial", "pmtiles", "geoparquet", "duckdb"],
+    "version": "1.1.0"
+  }
+]

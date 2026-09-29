@@ -1,0 +1,18 @@
+node_modules/
+.next/
+.env
+.env.local
+out/
+
+# Generated DCAT harvest feeds (npm run generate:dcat → predev/prebuild):
+# per-profile × serialization feeds, the canonical un-suffixed feeds, and the index.
+public/catalog.jsonld
+public/catalog.ttl
+public/catalog.rdf
+public/catalog.*.jsonld
+public/catalog.*.ttl
+public/catalog.*.rdf
+public/catalog-feeds.json
+
+# TypeScript incremental build cache
+*.tsbuildinfo
