@@ -202,7 +202,7 @@
     "name": "UM Newspaper pages",
     "description": "80 articles manually annotated by Syafiq and Frial for the article reconstruction task. OCR has not yet been performed.",
     "keywords": [
-      "newspaper",
+      "newspapers",
       "articles",
       "article reconstruction",
       "Jawi"
@@ -240,7 +240,7 @@
     "name": "UM-1956 Newspaper pages",
     "description": "80 UM-1956 pages in ALTO and article XML format; every text region is empty or contains at least six characters, with no negative coordinates.",
     "keywords": [
-      "newspaper",
+      "newspapers",
       "articles",
       "article reconstruction",
       "Jawi",
@@ -1481,5 +1481,26 @@
       }
     ],
     "description": "470 images verified by Jakkarin for image, image-data, header, footer and calligraphy"
+  },
+  {
+    "slug": "example-supabase-database",
+    "namespace": "culturalheritagenus",
+    "name": "Example Supabase Database",
+    "description": "Illustrative PostgreSQL source only; no database is provisioned. Remote Supabase project URL (placeholder): https://your-project-ref.supabase.co. No connection or credentials are provided.",
+    "keywords": [
+      "database",
+      "newspapers",
+      "Jawi",
+      "postgresql",
+      "supabase"
+    ],
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "Supabase dashboard (sign in; example only)",
+        "path": "https://supabase.com/dashboard/projects",
+        "access": "restricted"
+      }
+    ]
   }
 ]
