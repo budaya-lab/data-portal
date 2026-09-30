@@ -104,6 +104,10 @@ export type Dataset = {
   licenses?: License[]
   sources?: Source[]
   keywords?: string[]
+  // Catalog access label. Restricted data stays at its source; this public
+  // manifest contains only metadata and a login-protected landing page URL.
+  // A restricted `sources[]` entry also makes the dataset restricted.
+  access?: 'public' | 'restricted'
   // Catalog grouping label (e.g. "Boundaries", "Environment"). Sourced from the
   // origin portal's categories on migration (AGOL item categories → meaningful
   // DCAT theme → keyword mapping) or hand-assigned. When any dataset carries

@@ -7,6 +7,7 @@ import { Table } from '../../components/Table'
 import {
   DATA_QUERY,
   NAMESPACE_TYPE,
+  isRestricted,
   resourceUrl,
   resourceLabel,
   type Dataset,
@@ -76,16 +77,19 @@ export const getStaticProps: GetStaticProps<PageProps> = async ({ params }) => {
 // primary download.
 export default function DatasetPage({ dataset, resources, activity }: PageProps) {
   const namespaceLabel = NAMESPACE_TYPE === 'owner' ? 'Owner' : 'Theme'
-  const primary = resources[0]
+  const restricted = isRestricted(dataset)
+  const visibleResources = restricted ? [] : resources
+  const visibleActivity = restricted ? [] : activity
+  const primary = visibleResources[0]
   // The two serverless geo tiers render as ONE map (see MapPreview): the PMTiles
   // archive is the render layer, the GeoParquet twin is the query engine bound to
   // the same viewport. Pull both out of the per-resource preview loop so a
   // dual-tier dataset shows a single map instead of two. The files still appear
   // individually in the Resources download list above.
-  const pmtilesResource = resources.find((r) => r.format === 'pmtiles')
-  const geoparquetResource = resources.find((r) => r.format === 'geoparquet')
+  const pmtilesResource = visibleResources.find((r) => r.format === 'pmtiles')
+  const geoparquetResource = visibleResources.find((r) => r.format === 'geoparquet')
   const hasGeo = Boolean(pmtilesResource || geoparquetResource)
-  const nonGeoResources = resources.filter(
+  const nonGeoResources = visibleResources.filter(
     (r) => r.format !== 'pmtiles' && r.format !== 'geoparquet'
   )
   // Which resources get an INLINE preview. A geo dataset's non-geo files (GeoJSON,
@@ -101,7 +105,7 @@ export default function DatasetPage({ dataset, resources, activity }: PageProps)
   // Every file, ordered for the Download & API block: the two serverless geo tiers
   // first (GeoParquet for analysis, PMTiles for maps), then the source archive
   // (GeoJSON), then the remaining tabular/export formats.
-  const orderedResources = [...resources].sort(
+  const orderedResources = [...visibleResources].sort(
     (a, b) => downloadRank(a.format) - downloadRank(b.format)
   )
   // "Last updated" describes the DATA's freshness. The manifest's source-provenance
@@ -110,7 +114,7 @@ export default function DatasetPage({ dataset, resources, activity }: PageProps)
   // dataset is the migration itself (that would wrongly show the harvest date as the
   // data's last-updated). Fall back to git history only for hand-added datasets that
   // carry no source `modified`.
-  const lastUpdated = (dataset.modified && formatDate(dataset.modified)) ?? activity[0]?.date
+  const lastUpdated = (dataset.modified && formatDate(dataset.modified)) ?? visibleActivity[0]?.date
   const created = dataset.created && formatDate(dataset.created)
   // Migration/sync time is provenance about the COPY, shown as its own field so it
   // never masquerades as the data's freshness.
@@ -159,7 +163,7 @@ export default function DatasetPage({ dataset, resources, activity }: PageProps)
                 <GeoSection
                   pmtilesResource={pmtilesResource}
                   geoparquetResource={geoparquetResource}
-                  showHeading={resources.length > 1}
+                  showHeading={visibleResources.length > 1}
                   mapAttribution={dataset.sources?.[0]?.title}
                 />
               )}
@@ -182,7 +186,7 @@ export default function DatasetPage({ dataset, resources, activity }: PageProps)
             />
 
             {/* Activity — every resource commit across the dataset, newest first. */}
-            {activity.length > 0 && <ActivityFeed activity={activity} />}
+            {visibleActivity.length > 0 && <ActivityFeed activity={visibleActivity} />}
 
             {/* Views placeholder — charts and maps are added here by the
                 /portaljs-add-chart and /portaljs-add-map skills. */}
@@ -215,7 +219,10 @@ export default function DatasetPage({ dataset, resources, activity }: PageProps)
                             </a>
                           ) : (
                             s.title
-                          )}
+                          )}{' '}
+                          <span className="font-sans text-[11px] text-ink/55">
+                            ({s.access ?? dataset.access ?? 'public'})
+                          </span>
                         </li>
                       ))}
                     </ul>
@@ -248,10 +255,13 @@ export default function DatasetPage({ dataset, resources, activity }: PageProps)
           {/* Metadata sidebar. */}
           <aside className="flex h-fit flex-col gap-[18px] rounded-sm border border-ink/[0.18] p-[26px]">
             <SidebarField label={namespaceLabel} value={`@${dataset.namespace}`} />
-            <SidebarField
-              label="Resources"
-              value={`${resources.length} file${resources.length === 1 ? '' : 's'}`}
-            />
+            <SidebarField label="Access" value={restricted ? 'Restricted' : 'Public'} />
+            {!restricted && (
+              <SidebarField
+                label="Resources"
+                value={`${visibleResources.length} file${visibleResources.length === 1 ? '' : 's'}`}
+              />
+            )}
             {typeof dataset.recordCount === 'number' && (
               <SidebarField
                 label="Records"
@@ -278,6 +288,11 @@ export default function DatasetPage({ dataset, resources, activity }: PageProps)
                   ))}
                 </div>
               </div>
+            )}
+            {restricted && (
+              <p className="border-t border-ink/[0.15] pt-[18px] font-sans text-xs leading-relaxed text-ink/60">
+                Access is managed by the source. Follow its link to request access.
+              </p>
             )}
             {primary && (
               <div className="border-t border-ink/[0.15] pt-[18px]">

@@ -1,4 +1,5 @@
 import manifest from '../../datasets.json'
+import { matchesCatalogQuery, validateCatalogAccess } from '../datasets'
 import type {
   DataProvider,
   Dataset,
@@ -12,6 +13,7 @@ import type {
 // file needed. A git-LFS + object-store (e.g. R2) source is the same model with
 // the bytes living outside the repo; it would implement this same interface.
 const datasets = manifest as Dataset[]
+validateCatalogAccess(datasets)
 
 export class StaticProvider implements DataProvider {
   readonly name = 'static'
@@ -34,16 +36,10 @@ export class StaticProvider implements DataProvider {
   }
 
   async search({ q, namespace, format }: DatasetQuery): Promise<Dataset[]> {
-    const needle = q?.trim().toLowerCase()
-    return datasets.filter((d) => {
-      if (namespace && d.namespace !== namespace) return false
-      if (format && d.format !== format) return false
-      if (!needle) return true
-      return (
-        d.name.toLowerCase().includes(needle) ||
-        d.namespace.toLowerCase().includes(needle) ||
-        (d.description ?? '').toLowerCase().includes(needle)
-      )
-    })
+    return datasets.filter((d) =>
+      (!namespace || d.namespace === namespace) &&
+      (!format || d.format === format) &&
+      matchesCatalogQuery(d, q ?? '')
+    )
   }
 }

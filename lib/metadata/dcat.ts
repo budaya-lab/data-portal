@@ -42,6 +42,7 @@ export type DcatDataset = {
   'dct:title'?: string
   'dct:description'?: string
   'dcat:keyword'?: string[]
+  'dct:accessLevel'?: 'restricted public'
   // A license URI (Frictionless license.path) or its SPDX id (license.name).
   'dct:license'?: string
   // URLs the data was sourced from (Frictionless sources[].path).
@@ -71,6 +72,7 @@ export type FrictionlessLike = PackageMetadata & {
   file?: string
   format?: string
   schema?: TableSchema
+  access?: 'public' | 'restricted'
 }
 
 // A catalog entry adds the routing identity (namespace/slug) the catalog uses to
@@ -231,6 +233,9 @@ export function toDCAT(input: FrictionlessLike, opts: ToDcatOptions = {}): DcatD
     'dct:title': input.title ?? input.name,
     'dct:description': input.description,
     'dcat:keyword': input.keywords,
+    'dct:accessLevel': input.access === 'restricted' || input.sources?.some((s) => s.access === 'restricted')
+      ? 'restricted public'
+      : undefined,
     'dct:license': licenseUri(input.licenses),
     'dct:source': input.sources
       ?.map((s) => s.path ?? s.title)

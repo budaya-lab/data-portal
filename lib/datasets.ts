@@ -33,6 +33,51 @@ export const NAMESPACE_TYPE: 'theme' | 'owner' = 'owner'
 // 'flat' for preview-only portals but otherwise leaves this default in place.
 export const DATA_QUERY: 'flat' | 'duckdb' = 'duckdb'
 
+// Client-side catalog search and the static provider share the same metadata fields.
+export function matchesCatalogQuery(d: Dataset, query: string): boolean {
+  const q = query.trim().toLowerCase()
+  if (!q) return true
+  return [d.name, d.namespace, d.description, d.category, ...(d.keywords ?? [])]
+    .some((value) => value?.toLowerCase().includes(q))
+}
+
+export function isRestricted(d: Dataset): boolean {
+  return d.access === 'restricted' || d.sources?.some((s) => s.access === 'restricted') === true
+}
+
+// A public static export cannot enforce access to data. Reject restricted
+// resources at build time, before any file URLs can enter the generated pages.
+export function validateCatalogAccess(datasets: Dataset[]): void {
+  for (const d of datasets) {
+    if (d.access !== undefined && d.access !== 'public' && d.access !== 'restricted') {
+      throw new Error(`Invalid access for dataset ${d.namespace}/${d.slug}`)
+    }
+    if (d.sources?.some((s) => s.access !== undefined && s.access !== 'public' && s.access !== 'restricted')) {
+      throw new Error(`Invalid access for source of dataset ${d.namespace}/${d.slug}`)
+    }
+    const restricted = isRestricted(d)
+    if (restricted && (d.file || (d.resources && d.resources.length > 0))) {
+      throw new Error(`Restricted dataset ${d.namespace}/${d.slug} cannot have resources in a public catalog`)
+    }
+    if (restricted && !d.sources?.some((s) => s.path)) {
+      throw new Error(`Restricted dataset ${d.namespace}/${d.slug} needs a source link`)
+    }
+    for (const source of d.sources ?? []) {
+      if (!source.path) continue
+      let url: URL
+      try {
+        url = new URL(source.path)
+      } catch {
+        throw new Error(`Invalid source link for dataset ${d.namespace}/${d.slug}`)
+      }
+      if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password ||
+          (restricted && (url.protocol !== 'https:' || url.search || url.hash))) {
+        throw new Error(`Invalid source link for dataset ${d.namespace}/${d.slug}: use a credential-free HTTP(S) landing page (HTTPS without query or fragment for restricted sources)`)
+      }
+    }
+  }
+}
+
 // Canonical URL for a dataset's showcase page. Datasets are namespaced under `@`
 // so they never collide with regular content/static pages (which never start
 // with `@`). See README for the routing rationale.

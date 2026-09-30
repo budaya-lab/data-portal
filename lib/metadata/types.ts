@@ -71,7 +71,14 @@ export type TableSchema = {
 // schema and map cleanly onto DCAT later (title→dct:title, licenses→dct:license,
 // keywords→dcat:keyword, ...).
 export type License = { name?: string; path?: string; title?: string }
-export type Source = { title: string; path?: string; email?: string }
+// `access` is a catalogue extension: Frictionless sources retain their usual
+// title/path fields, while the portal can label a source's access policy.
+export type Source = {
+  title: string
+  path?: string
+  email?: string
+  access?: 'public' | 'restricted'
+}
 
 export type PackageMetadata = {
   title?: string

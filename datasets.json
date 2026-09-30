@@ -22,14 +22,22 @@
           "type": "string",
           "title": "Alpha-2 code",
           "description": "ISO 3166-1 alpha-2 two-letter code.",
-          "constraints": { "required": true, "unique": true, "pattern": "^[A-Z]{2}$" }
+          "constraints": {
+            "required": true,
+            "unique": true,
+            "pattern": "^[A-Z]{2}$"
+          }
         },
         {
           "name": "alpha3",
           "type": "string",
           "title": "Alpha-3 code",
           "description": "ISO 3166-1 alpha-3 three-letter code.",
-          "constraints": { "required": true, "unique": true, "pattern": "^[A-Z]{3}$" }
+          "constraints": {
+            "required": true,
+            "unique": true,
+            "pattern": "^[A-Z]{3}$"
+          }
         }
       ]
     },
@@ -160,7 +168,81 @@
         "path": "https://www.naturalearthdata.com/downloads/110m-cultural-vectors/"
       }
     ],
-    "keywords": ["boundaries", "countries", "geospatial", "pmtiles", "geoparquet", "duckdb"],
+    "keywords": [
+      "boundaries",
+      "countries",
+      "geospatial",
+      "pmtiles",
+      "geoparquet",
+      "duckdb"
+    ],
     "version": "1.1.0"
+  },
+  {
+    "slug": "ds-article-20260902",
+    "namespace": "culturalheritagenus",
+    "name": "UM Newspaper pages",
+    "description": "80 articles manually annotated by Syafiq and Frial for the article reconstruction task. OCR has not yet been performed.",
+    "keywords": ["newspaper", "articles", "article reconstruction", "Jawi"],
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds_article_20260902",
+        "access": "restricted"
+      }
+    ]
+  },
+  {
+    "slug": "rumi-data",
+    "namespace": "culturalheritagenus",
+    "name": "Jawi and Rumi",
+    "description": "Jawi (Luqman) and Rumi (Alan) data.",
+    "keywords": ["Jawi", "Rumi"],
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/rumi_data",
+        "access": "restricted"
+      }
+    ]
+  },
+  {
+    "slug": "ds-filteredum1956",
+    "namespace": "culturalheritagenus",
+    "name": "UM-1956 Newspaper pages",
+    "description": "80 UM-1956 pages in ALTO and article XML format; every text region is empty or contains at least six characters, with no negative coordinates.",
+    "keywords": [
+      "newspaper",
+      "articles",
+      "article reconstruction",
+      "Jawi",
+      "UM-1956",
+      "ALTO XML"
+    ],
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-filteredUM1956",
+        "access": "restricted"
+      }
+    ]
+  },
+  {
+    "slug": "ds-articlereconstruction-20260821",
+    "namespace": "culturalheritagenus",
+    "name": "Article Reconstruction Ground Truth",
+    "description": "Region (JSON) and article (XML) ground-truth data for evaluating article reconstruction, with helper scripts for verification and exploration.",
+    "keywords": ["article reconstruction", "ground truth", "regions", "articles"],
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-20260821",
+        "access": "restricted"
+      }
+    ]
   }
 ]

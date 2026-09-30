@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useEffect, useMemo, useState } from 'react'
 import DebouncedInput from '../components/ui/DebouncedInput'
-import { datasetHref, getResources, type Dataset } from '../lib/datasets'
+import { datasetHref, getResources, isRestricted, matchesCatalogQuery, type Dataset } from '../lib/datasets'
 import { provider } from '../lib/providers'
 
 export async function getStaticProps() {
@@ -69,15 +69,7 @@ export default function Search({ datasets }: { datasets: Dataset[] }) {
   // provider.search({ q, … }) server-side (full-text / faceted by namespace,
   // format, tags) — the static provider filters here in the browser.
   const searched = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return datasets
-    return datasets.filter(
-      (d) =>
-        d.name.toLowerCase().includes(q) ||
-        d.namespace.toLowerCase().includes(q) ||
-        (d.description ?? '').toLowerCase().includes(q) ||
-        (d.category ?? '').toLowerCase().includes(q)
-    )
+    return datasets.filter((d) => matchesCatalogQuery(d, query))
   }, [datasets, query])
 
   const catOf = (d: Dataset) => d.category ?? 'Other'
@@ -151,8 +143,8 @@ export default function Search({ datasets }: { datasets: Dataset[] }) {
         {datasets.length === 0 ? (
           <div className="py-10 font-serif text-[17px] italic text-ink/55">
             No datasets yet — add an entry to{' '}
-            <code className="font-mono not-italic">datasets.json</code> and drop the
-            file in <code className="font-mono not-italic">public/data</code>.
+            <code className="font-mono not-italic">datasets.json</code> with a source link
+            or a public data file.
           </div>
         ) : (
           <div className={hasFacets ? 'lg:grid lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-12' : ''}>
@@ -336,8 +328,9 @@ function DatasetRow({ ds }: { ds: Dataset }) {
           </div>
         )}
       </div>
-      <div className="ml-auto whitespace-nowrap pt-1 font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-ink/40">
-        {ds.namespace}
+      <div className="ml-auto flex flex-col items-end gap-1 pt-1 font-sans text-[11px] font-semibold uppercase tracking-[0.08em] text-ink/40">
+        <span>{ds.namespace}</span>
+        <span>{isRestricted(ds) ? 'Restricted' : 'Public'}</span>
       </div>
     </Link>
   )
