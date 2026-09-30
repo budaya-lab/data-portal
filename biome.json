@@ -19,14 +19,11 @@
       "preset": "recommended"
     }
   },
-  "javascript": {
-    "formatter": {
-      "quoteStyle": "single"
-    }
-  },
   "overrides": [
     {
-      "includes": ["styles/globals.css"],
+      "includes": [
+        "styles/globals.css"
+      ],
       "linter": {
         "rules": {
           "suspicious": {
@@ -40,7 +37,12 @@
     "enabled": true,
     "actions": {
       "source": {
-        "organizeImports": "on"
+        "organizeImports": {
+          "level": "on",
+          "options": {
+            "sortBareImports": true
+          }
+        }
       }
     }
   }
