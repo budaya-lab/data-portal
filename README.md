@@ -1,244 +1,59 @@
-# PortalJS Catalog Template (dynamic routes)
+# CSSH Data Portal
 
-A template variant for portals with **many datasets**. Instead of one page file per
-dataset, the catalog is driven by a single manifest (`datasets.json`) and rendered by a
-dynamic route (`pages/[owner]/[slug].tsx` + `getStaticPaths`). Adding a dataset is one
-JSON entry plus a data file — no new page.
+A public catalogue of research datasets for CSSH. Use it to discover records by publisher and keywords, then follow links to the systems that hold the data. The catalogue is **metadata-first**: most data stays in GitHub repositories or other source systems, and access to restricted sources is enforced there, not by this public site. See [ARCHITECTURE.md](ARCHITECTURE.md) for the decisions and planned work.
 
-## The three surfaces
+## Run locally
 
-| Surface | Route | File | What it is |
-|---|---|---|---|
-| Home | `/` | `pages/index.tsx` | Landing page: hero + search CTA + suggested-query chips |
-| Catalog / search | `/search` | `pages/search.tsx` | The dataset list with client-side full-text filtering |
-| Dataset showcase | `/@<namespace>/<slug>` | `pages/[owner]/[slug].tsx` | One dataset: metadata, data preview, download/API, views |
-
-The home page's search box and chips navigate to `/search?q=…`; each search result links
-to its showcase at `/@<namespace>/<slug>`.
-
-## When to use this vs `portaljs-template`
-
-| | `portaljs-template` | `portaljs-catalog` (this) |
-|---|---|---|
-| Dataset pages | one `.tsx` file per dataset | one dynamic `[owner]/[slug].tsx` for all |
-| Registration | hardcoded array in `index.tsx` | `datasets.json` manifest |
-| Best for | a handful of datasets | dozens to hundreds |
-
-Both ship the same lightweight `components/Table.tsx`, Tailwind setup, and Next 14 config.
-
-## Running
+Requires Node.js 22+ and pnpm (this project uses `pnpm-lock.yaml`). From this directory:
 
 ```bash
-cd examples/portaljs-catalog
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
-## Adding a dataset
+Visit `http://localhost:3000/search`. To check a production build, run `pnpm build`. The build and dev scripts also generate optional DCAT feeds from the catalogue; `datasets.json` remains the source of truth.
 
-1. Drop the file in `public/data/` (e.g. `public/data/my-data.csv`).
-2. Append an entry to `datasets.json`:
+| Command | Purpose |
+| --- | --- |
+| `pnpm dev` | Start the local Next.js server |
+| `pnpm build` | Generate the feeds and build the site |
+| `pnpm exec tsc --noEmit` | Type-check |
+| `TSX_TSCONFIG_PATH=scripts/tsconfig.test.json node --import tsx --test scripts/catalog.test.ts scripts/harvest-roundtrip.test.ts` | Run catalogue and metadata tests |
+| `pnpm lint` / `pnpm check` | Run Biome lint / lint + format checks |
+
+## Catalogue workflow
+
+Edit [`datasets.json`](datasets.json) to add or update records; **do not create a page per dataset**. The search page at `/search` filters record names, publisher namespaces, descriptions, categories, and keywords (not the contents of source files). [`pages/[owner]/[slug].tsx`](pages/%5Bowner%5D/%5Bslug%5D.tsx) generates each showcase at `/@<namespace>/<slug>` at build time. This portal uses `NAMESPACE_TYPE = 'owner'`: `namespace` means publisher/owner, not subject. `(namespace, slug)` must be unique.
+
+For an access-controlled GitHub repository, follow the existing CSSH entries. A metadata-only record needs no `file`, `format`, or `resources`:
 
 ```json
 {
-  "slug": "my-data",
-  "namespace": "reference",
-  "name": "My Data",
-  "description": "One-line description.",
-  "file": "my-data.csv",
-  "format": "csv"
+  "slug": "example-project",
+  "namespace": "culturalheritagenus",
+  "name": "Example Project",
+  "description": "A one-line description of the dataset.",
+  "keywords": ["topic", "method"],
+  "access": "restricted",
+  "sources": [
+    {
+      "title": "GitHub repository (sign in for access)",
+      "path": "https://github.com/culturalheritagenus/example-project",
+      "access": "restricted"
+    }
+  ]
 }
 ```
 
-That's it. `getStaticPaths` picks up the new `(namespace, slug)` pair at build time and
-`/@reference/my-data` renders automatically. CSV and TSV files are previewed in an
-interactive `<Table />`; other formats (`json`, `geojson`) show a download link.
+The link is a **landing page**, not a public data URL; GitHub may show 404 to signed-out visitors. Use a credential-free HTTPS URL with no query string or fragment for restricted sources. Never put private file URLs, tokens, database credentials, or restricted data in `datasets.json` or `public/data/`. A restricted record cannot have `file` or `resources`; the build rejects that combination. This public static site displays an access label but provides **no authentication or authorization** for source data. The source system remains responsible for access.
 
-The bundled sample **CSVs** under `public/data/` are small reference data that ships
-inline so the basic table demos run offline with zero credentials. The two binary
-samples — `region-metrics` (Parquet) and `world-boundaries` (PMTiles) — are **not**
-committed; they are hosted on R2 via Giftless and referenced by their
-`data.portaljs.com` URLs in `datasets.json`, so the showcase demonstrates the real
-serverless range-read path rather than shipping bytes in git. For **large data**, see below.
+For public sources, prefer linking to an existing public landing page with `sources`. If an accessible CSV/TSV/JSON/GeoJSON resource needs a preview, an absolute URL can be used in `file` (with `format`), subject to the remote host's CORS support. Avoid copying source data into the portal by default. Small CSVs under `public/data/` are inherited **template samples**, not CSSH research data; other demo records also reference external R2-hosted Parquet/geo files. Keep these samples until deliberately retired, but do not treat their namespaces or data as CSSH publishers.
 
-## Large data (Git LFS → R2)
+The restricted CSSH entries in `datasets.json` are examples of the current onboarding pattern. New records should use informative titles, descriptions, and subject keywords so they are discoverable without exposing private content. After editing, build the site and check both `/search` and the generated showcase URL. No per-dataset page is needed.
 
-Committing big files to `public/data/` doesn't scale — git bloats and the static export
-ships every byte. So the template wires large data through **Git LFS → Cloudflare R2**
-(epic po-g9y):
+## Implementation status
 
-- **`.gitattributes`** routes added data through Git LFS **per file** — it ships minimal
-  and `/portaljs-add-dataset` appends a path-specific entry for each file it sends to R2
-  (format-agnostic, any binary). The bundled `public/data/` sample is a fenced exception —
-  it stays inline so the portal runs offline with zero credentials.
-- **`.lfsconfig`** points LFS at the [Giftless](../../giftless) endpoint, which streams
-  the bytes to R2 and leaves a tiny pointer in git. It carries **no credentials** — auth
-  is local-only (see `giftless/README.md`).
-- **Serving:** the browser fetches the bytes straight from R2. A dataset whose data lives
-  in R2 sets its `resource.path` (or `file`) to the **absolute R2 URL** — `resourceUrl()`
-  in `lib/datasets.ts` passes absolute URLs through unchanged, so no bytes are copied into
-  the repo or the static export. R2 CORS + range headers are configured and verified
-  (`giftless/r2-cors.json`), which also unlocks the DuckDB-Wasm range-query tier.
-
-- **Deploy:** `/portaljs-deploy` serves large data from R2 too — it never pulls LFS bytes into
-  the static export and gates the upload on `npm run check-export` (`scripts/check-export.mjs`),
-  which fails on LFS pointer leaks or oversized files in `out/`. The export stays lean; the
-  bytes stay in R2.
-
-`/portaljs-add-dataset` automates this routing: local files → R2 via LFS by default;
-remote URLs → recorded as-is (passthrough) by default, or adopted into R2 on request.
-Inline storage is a fenced exception for bundled sample data.
-
-## Query tier — query large data without downloading it
-
-Once data is on R2, the showcase can query it **in place** instead of downloading
-the whole file. Convert CSV/TSV to **Parquet** and the showcase reads it with
-DuckDB-Wasm over HTTP range requests — projection + predicate pushdown mean a
-browser fetches only the row groups and columns a query touches, so a phone can
-query a multi-GB file by pulling a few MB:
-
-```bash
-scripts/csv-to-parquet.sh public/data/orders.csv orders.parquet
-# version with Git LFS (→ R2), then point the resource at the R2 URL with format: "parquet"
-```
-
-Every tabular resource renders the in-browser SQL explorer by default
-(`DATA_QUERY = 'duckdb'` in `lib/datasets.ts`); set it to `'flat'` for a
-preview-only portal that never needs querying. The engine runs entirely client-side
-(no server, no catalog DB) and loads only when a query view mounts. For data too
-big for the browser, the same `DataQuery` seam can route to an edge Worker or
-MotherDuck — see [`lib/query/README.md`](lib/query/README.md) for the contract and
-device-tier / fallback guidance.
-
-## Map tier — preview any-size geo data (PMTiles)
-
-Big GeoJSON can't be previewed by loading the whole file. Tile it into a single
-**PMTiles** archive and the showcase renders it with MapLibre GL over HTTP range
-requests — the map fetches only the tiles in view, so a multi-GB dataset pans and
-zooms with no tile server (served from R2 here, or any static host / `/public/data`).
-
-Make PMTiles from GeoJSON/Shapefile with [tippecanoe](https://github.com/felt/tippecanoe)
-(`brew install tippecanoe`):
-
-```bash
-tippecanoe -zg --drop-densest-as-needed -o boundaries.pmtiles boundaries.geojson
-# small reference layers can cap the zoom instead: tippecanoe -z5 -o out.pmtiles in.geojson
-```
-
-Then add the resource with `format: "pmtiles"` (see the R2-hosted
-`@reference/world-boundaries` sample) — the showcase renders the interactive map
-preview with click-to-inspect feature properties. The `/portaljs-add-geo` skill
-**automates this**: it shells out to `tippecanoe` (and `duckdb`) on your machine to
-derive PMTiles + GeoParquet from one geo upload, pushes them to R2, and registers
-the dual-tier dataset for you — the manual `tippecanoe` recipe below is the
-underlying step it runs.
-
-## Geo query tier — spatial SQL over GeoParquet (no download)
-
-Where PMTiles *renders* geometry, **GeoParquet** lets you *query* it. Add a
-resource with `format: "geoparquet"` and the showcase opens `components/GeoQuery.tsx`:
-DuckDB-Wasm (with the `spatial` extension) reads the remote GeoParquet in place
-over HTTP range requests and runs spatial SQL — the geospatial analog of the
-Parquet SQL editor above. Results render as a live MapLibre overlay, a table, and
-a bar chart; clicking a feature does a DuckDB point-in-polygon lookup for its full
-attributes. A dataset can ship **both** a `pmtiles` and a `geoparquet` resource so
-render + query compose on one page (see `@reference/world-boundaries`).
-
-The queries use a **bbox-first** pattern — a cheap covering-bbox filter prunes
-Parquet row groups, then `ST_Intersects` refines to the exact predicate:
-
-```sql
-SELECT name, ST_AsGeoJSON(geometry) AS geojson   -- `geojson` column drives the overlay
-FROM data
-WHERE bbox.xmin <= 40 AND bbox.xmax >= -25        -- prune row groups (Parquet stats)
-  AND bbox.ymin <= 72 AND bbox.ymax >= 34
-  AND ST_Intersects(geometry, ST_MakeEnvelope(-25, 34, 40, 72))  -- exact predicate
-```
-
-Build a GeoParquet twin from the same source with duckdb — Hilbert-sorted, with a
-GeoParquet 1.1 covering `bbox` column so row-group pruning works:
-
-```bash
-duckdb -c "LOAD spatial;
-  COPY (
-    SELECT * EXCLUDE (geom),
-      {'xmin': ST_XMin(geom), 'ymin': ST_YMin(geom),
-       'xmax': ST_XMax(geom), 'ymax': ST_YMax(geom)} AS bbox,
-      geom AS geometry
-    FROM ST_Read('boundaries.geojson')
-    ORDER BY ST_Hilbert(geom, {'min_x':-180,'min_y':-90,'max_x':180,'max_y':90}::BOX_2D)
-  ) TO 'boundaries.parquet' (FORMAT PARQUET, ROW_GROUP_SIZE 25000);"
-```
-
-Keep result sets small (`ST_AsGeoJSON` is the slow path — decode, not query); for
-very large sets project WKB/GeoArrow instead of GeoJSON. `@duckdb/duckdb-wasm`
-loads on demand in the browser only. `/portaljs-add-geo` runs this exact `duckdb`
-recipe for you as part of its auto-ingest (GeoParquet query tier alongside the
-PMTiles render tier); the manual step above is what it automates.
-
-## Why dataset URLs start with `@`
-
-Dataset showcase URLs are namespaced under `@` (`/@<owner-or-theme>/<dataset>`) so they
-**never collide** with regular content/static pages (which never start with `@`). The
-dataset route is a 2-segment dynamic route (`pages/[owner]/[slug].tsx`) resolved entirely
-by static generation from the manifest — so **content/static pages should not use
-2-segment non-`@` paths**, or they would clash with the dataset route's matcher.
-
-A portal uses **exactly one** namespace mode, set via `NAMESPACE_TYPE` in
-`lib/datasets.ts`:
-
-- **`'theme'`** — a single-publisher portal whose datasets are grouped by subject
-  (e.g. `@reference/country-codes`). The showcase labels the namespace "Theme".
-- **`'owner'`** — a multi-publisher portal whose datasets are grouped by who published
-  them (e.g. `@worldbank/country-codes`). The showcase labels the namespace "Owner".
-
-Picking one mode keeps every `(@namespace, slug)` pair unique. The URL shape is
-`/@<namespace>/<slug>` regardless of which mode is chosen — `NAMESPACE_TYPE` only changes
-the metadata label on the showcase.
-
-## Placeholder tokens
-
-`/portaljs-new-portal` replaces these at scaffold time:
-
-| Token | Replaced with |
-|-------|--------------|
-| `CSSH Data Portal` | Human-readable portal name |
-| `cssh-data-portal` | URL-safe slug |
-| `A data portal for Social Sciences and Humanities data` | One-sentence portal description |
-
-## Branding (placeholder — swap it)
-
-The template ships with the **PortalJS** mark as a clearly-swappable placeholder so a fresh
-portal looks intentional before you customize it: a favicon, a navbar logo (with a tasteful
-spin on hover that respects `prefers-reduced-motion`), and social/PWA icons.
-
-To make it your own, replace the icon files in `public/` with your own brand marks — the
-links in `pages/_document.tsx` and the logo in `components/Navbar.tsx` then need no changes:
-
-| File | Used for |
-|------|----------|
-| `public/icon.svg` | navbar logo + modern-browser favicon (scalable) |
-| `public/favicon.ico` | classic browser-tab favicon (16/32/48) |
-| `public/apple-touch-icon.png` | iOS home-screen icon (180×180) |
-| `public/icon-512.png` | PWA / social card (512×512) |
-
-The navbar's brand text uses the same `CSSH Data Portal` token, so it is already set to your
-portal name after scaffolding.
-
-## Structure
-
-```
-datasets.json              — manifest: the single source of truth for the catalog
-lib/datasets.ts            — typed loader (getDatasets / getDataset / datasetHref / NAMESPACE_TYPE)
-pages/index.tsx            — landing page: hero + search CTA + suggested chips
-pages/search.tsx           — searchable dataset list, reads manifest via getStaticProps
-pages/[owner]/[slug].tsx   — dynamic dataset showcase (/@<namespace>/<slug>)
-pages/_app.tsx             — renders the Navbar on every page
-pages/_document.tsx        — favicon / icon links + default meta description
-public/data/               — bundled sample CSVs (inline); Parquet/PMTiles samples live on R2 (data.portaljs.com)
-public/{icon.svg,favicon.ico,apple-touch-icon.png,icon-512.png} — branding (placeholder)
-components/Navbar.tsx       — site navbar: logo (hover-spin) + name + link to /search
-components/Table.tsx       — interactive table (search, sort, paginate)
-.gitattributes             — routes large data formats through Git LFS (→ R2)
-.lfsconfig                 — Git LFS endpoint (Giftless → R2); no credentials
-```
+- [`lib/providers/static-provider.ts`](lib/providers/static-provider.ts) loads the manifest at build time; [`lib/datasets.ts`](lib/datasets.ts) supplies search, routing, and restricted-access validation. [`lib/providers/types.ts`](lib/providers/types.ts) defines the record shape.
+- The current UI and bundled samples still contain PortalJS template preview, map, and DuckDB features. `DATA_QUERY` is **still `'duckdb'`** in `lib/datasets.ts`; [ARCHITECTURE.md](ARCHITECTURE.md) calls for a later switch to `'flat'` for the catalogue's preview-only use case. Do not assume that switch has been made.
+- Git LFS/R2 configuration and optional template commands are present, but the CSSH default is **external linked data**, not ingesting files into R2. XML and PostgreSQL data can be listed by metadata and landing-page link without adding a preview or a database connection to the site.
+- Cloudflare Pages built from GitHub is the intended hosting model; this repository does not itself provide access control for restricted datasets.
