@@ -15,7 +15,9 @@
           "type": "string",
           "title": "Country name",
           "description": "Common English short name of the country.",
-          "constraints": { "required": true }
+          "constraints": {
+            "required": true
+          }
         },
         {
           "name": "alpha2",
@@ -54,7 +56,11 @@
         "path": "https://www.iso.org/iso-3166-country-codes.html"
       }
     ],
-    "keywords": ["countries", "iso", "reference"],
+    "keywords": [
+      "countries",
+      "iso",
+      "reference"
+    ],
     "version": "1.0.0"
   },
   {
@@ -83,7 +89,11 @@
     "namespace": "reference",
     "name": "Country Indicators (bundle)",
     "description": "A multi-resource dataset: reference codes plus population and CO₂ indicators for a sample of countries.",
-    "keywords": ["countries", "reference", "indicators"],
+    "keywords": [
+      "countries",
+      "reference",
+      "indicators"
+    ],
     "resources": [
       {
         "name": "codes",
@@ -115,14 +125,22 @@
     "description": "Monthly fruit units sold and revenue — a small tabular sample.",
     "file": "fruit-sales.csv",
     "format": "csv",
-    "keywords": ["sales", "fruit"]
+    "keywords": [
+      "sales",
+      "fruit"
+    ]
   },
   {
     "slug": "region-metrics",
     "namespace": "sales",
     "name": "Region Metrics",
     "description": "Regional sales and ratings, queried in your browser with SQL over DuckDB-Wasm. This resource is Parquet, so the showcase opens a SQL editor instead of a flat preview; point it at a remote Parquet on data.portaljs.com and DuckDB range-reads it in place.",
-    "keywords": ["sales", "regions", "duckdb", "sql"],
+    "keywords": [
+      "sales",
+      "regions",
+      "duckdb",
+      "sql"
+    ],
     "resources": [
       {
         "name": "data",
@@ -183,7 +201,12 @@
     "namespace": "culturalheritagenus",
     "name": "UM Newspaper pages",
     "description": "80 articles manually annotated by Syafiq and Frial for the article reconstruction task. OCR has not yet been performed.",
-    "keywords": ["newspaper", "articles", "article reconstruction", "Jawi"],
+    "keywords": [
+      "newspaper",
+      "articles",
+      "article reconstruction",
+      "Jawi"
+    ],
     "access": "restricted",
     "sources": [
       {
@@ -198,7 +221,10 @@
     "namespace": "culturalheritagenus",
     "name": "Jawi and Rumi",
     "description": "Jawi (Luqman) and Rumi (Alan) data.",
-    "keywords": ["Jawi", "Rumi"],
+    "keywords": [
+      "Jawi",
+      "Rumi"
+    ],
     "access": "restricted",
     "sources": [
       {
@@ -235,7 +261,12 @@
     "namespace": "culturalheritagenus",
     "name": "Article Reconstruction Ground Truth",
     "description": "Region (JSON) and article (XML) ground-truth data for evaluating article reconstruction, with helper scripts for verification and exploration.",
-    "keywords": ["article reconstruction", "ground truth", "regions", "articles"],
+    "keywords": [
+      "article reconstruction",
+      "ground truth",
+      "regions",
+      "articles"
+    ],
     "access": "restricted",
     "sources": [
       {
@@ -244,5 +275,1211 @@
         "access": "restricted"
       }
     ]
+  },
+  {
+    "slug": "ds-layout",
+    "namespace": "culturalheritagenus",
+    "name": "jawi-data-2026",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-layout",
+        "access": "restricted"
+      }
+    ],
+    "description": "Layout segmentation training data for a Kraken model targeting historical Jawi-script newspapers."
+  },
+  {
+    "slug": "ds-yasharticlemodel",
+    "namespace": "culturalheritagenus",
+    "name": "Article Model Gemma Experiment 1",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-yasharticlemodel",
+        "access": "restricted"
+      }
+    ],
+    "description": "750 article paragraph comparions"
+  },
+  {
+    "slug": "ds-layout-experiments",
+    "namespace": "culturalheritagenus",
+    "name": "Jawi Layout Annotation Experiments v1",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds_layout_experiments",
+        "access": "restricted"
+      }
+    ],
+    "description": "The experiment generates 300 identical synthetic Jawi newspaper pages with real Wikipedia photos, then annotates each page in two ways: Condition A treats each image+caption block as a single unified \"text-image\" region, while Condition B splits the same block into separate \"image\" and \"text\" regions. The goal is to test how different annotation granularities affect document layout analysis."
+  },
+  {
+    "slug": "ds-articlemodel",
+    "namespace": "culturalheritagenus",
+    "name": "Article Model Clustering Experiment Suboptimal Results",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlemodel",
+        "access": "restricted"
+      }
+    ],
+    "description": "18 Jawi sequences which are transliterated Rumi paragraphs from 9 different articles; poorly clustered by a finetuned version of Sealion-Gemma-4 (ARI = 21%)."
+  },
+  {
+    "slug": "ds-demo",
+    "namespace": "culturalheritagenus",
+    "name": "Demo Dataset",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-demo",
+        "access": "restricted"
+      }
+    ],
+    "description": "High-resolution scanned document images (300 DPI TIFF) from the document digitization pipeline."
+  },
+  {
+    "slug": "ds-articles",
+    "namespace": "culturalheritagenus",
+    "name": "Articles",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds_articles",
+        "access": "restricted"
+      }
+    ]
+  },
+  {
+    "slug": "ds-articlemodel-ocrdataexperiment",
+    "namespace": "culturalheritagenus",
+    "name": "Article Model Performance on 98 Pages Noisy OCR Data",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlemodel_ocrdataexperiment",
+        "access": "restricted"
+      }
+    ],
+    "description": "Per-page ARI for Baseline-Gemma4 Louvain Clustering on 98 Pages OCR data (95% Median ARI)."
+  },
+  {
+    "slug": "ds-20260622-1012",
+    "namespace": "culturalheritagenus",
+    "name": "200 articles with lines",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds_20260622_1012",
+        "access": "restricted"
+      }
+    ],
+    "description": "lines verified by Jakkarin and Asia."
+  },
+  {
+    "slug": "ds-syntheticjawicorpus",
+    "namespace": "culturalheritagenus",
+    "name": "Synthetic Rumi-Jawi Parallel Data",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-syntheticjawicorpus",
+        "access": "restricted"
+      }
+    ],
+    "description": "48000 Rumi-Jawi Parallel Newspaper Data (Rumi Ground Truth, Jawi transliterated by Malaya-T5)"
+  },
+  {
+    "slug": "ds-20260617-0924",
+    "namespace": "culturalheritagenus",
+    "name": "20260617_0924",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds_20260617_0924",
+        "access": "restricted"
+      }
+    ],
+    "description": "100 pages, annotated with articles"
+  },
+  {
+    "slug": "ds-20260610-0948",
+    "namespace": "culturalheritagenus",
+    "name": "20260610_0948",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds_20260610_0948",
+        "access": "restricted"
+      }
+    ],
+    "description": "100 pages from 1956 Utusan Melayu. Annotated by Syafiq, corrected by Miguel."
+  },
+  {
+    "slug": "ds-articlemodelcosinesimilarity",
+    "namespace": "culturalheritagenus",
+    "name": "E5 Embedding Model (Finetuned by Sealion) Weights for Pariwise-Region Same-Article Likelihood",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlemodelcosinesimilarity",
+        "access": "restricted"
+      }
+    ],
+    "description": "Per-page Pairwise Region cosine similarity scores output by Sealion-E5-600M indicating likelihood of same-article origin"
+  },
+  {
+    "slug": "ds-articlemodelwithgridnetwork",
+    "namespace": "culturalheritagenus",
+    "name": "Page Topology Data for 98 OCR-scanned pages",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlemodelwithgridnetwork",
+        "access": "restricted"
+      }
+    ],
+    "description": "Per-page Topology and Geographic Networking Mapping of Regions based on Ray-Casting while respecting RTL & T2B order."
+  },
+  {
+    "slug": "ds-articlemodelgemmaclusteringwithmultiplierappliedraycastingtopology",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlemodelgemmaclusteringwithmultiplierappliedraycastingtopology",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlemodelgemmaclusteringwithmultiplierappliedraycastingtopology",
+        "access": "restricted"
+      }
+    ]
+  },
+  {
+    "slug": "ds-articlemodelgemmaclusteringwithdropoutraycastingtopology",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlemodelgemmaclusteringwithdropoutraycastingtopology",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlemodelgemmaclusteringwithdropoutraycastingtopology",
+        "access": "restricted"
+      }
+    ]
+  },
+  {
+    "slug": "ds-articlemodele5clusteringwithdropoutraycastingtopology",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlemodele5clusteringwithdropoutraycastingtopology",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlemodele5clusteringwithdropoutraycastingtopology",
+        "access": "restricted"
+      }
+    ]
+  },
+  {
+    "slug": "ds-articlemodele5clusteringsequencelevelwithdropoutraycastingtopology",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlemodele5clusteringsequencelevelwithdropoutraycastingtopology",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlemodele5clusteringsequencelevelwithdropoutraycastingtopology",
+        "access": "restricted"
+      }
+    ]
+  },
+  {
+    "slug": "ds-articlemodele5clusteringwithmultiplierappliedraycastingtopology",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlemodele5clusteringwithmultiplierappliedraycastingtopology",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlemodele5clusteringwithmultiplierappliedraycastingtopology",
+        "access": "restricted"
+      }
+    ]
+  },
+  {
+    "slug": "ds-dividers",
+    "namespace": "culturalheritagenus",
+    "name": "ds_20260704_0943",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds_dividers",
+        "access": "restricted"
+      }
+    ],
+    "description": "From a selection of files 1959-1967, processed by extend_inference_output.py. Dividers marked by Asia. Ignore the region and baseline information. Verified by Miguel on 5 July 2026."
+  },
+  {
+    "slug": "ds-articlemodelgemmabaselineclusteringwithraycastingtopology",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlemodelgemmabaselineclusteringwithraycastingtopology",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlemodelgemmabaselineclusteringwithraycastingtopology",
+        "access": "restricted"
+      }
+    ]
+  },
+  {
+    "slug": "ds-articlemodelgemmastylethresholdclusteringwithraycastingtopology",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlemodelgemmastylethresholdclusteringwithraycastingtopology",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlemodelgemmastylethresholdclusteringwithraycastingtopology",
+        "access": "restricted"
+      }
+    ]
+  },
+  {
+    "slug": "ds-articlemodelgemmastyleandsemanticthresholdclusteringwithraycastingtopology",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlemodelgemmastyleandsemanticthresholdclusteringwithraycastingtopology",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlemodelgemmastyleandsemanticthresholdclusteringwithraycastingtopology",
+        "access": "restricted"
+      }
+    ]
+  },
+  {
+    "slug": "ds-articlemodelpromptvariation",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlemodelpromptvariation",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlemodelpromptvariation",
+        "access": "restricted"
+      }
+    ],
+    "description": "Testing pure Same-article Likelihood"
+  },
+  {
+    "slug": "ds-articlemodelbestprompt",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlemodelbestprompt",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlemodelbestprompt",
+        "access": "restricted"
+      }
+    ],
+    "description": "Input Data (not produced by pipeline):"
+  },
+  {
+    "slug": "ds-articlenetworkdatalatest",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlenetworkdatalatest",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlenetworkdatalatest",
+        "access": "restricted"
+      }
+    ],
+    "description": "Latest network data generated by pl-article-reconstruction pipeline"
+  },
+  {
+    "slug": "ds-articlereconstruction-fd76c630-2026-07-23",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-fd76c630-2026-07-23",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-fd76c630-2026-07-23",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-0e6d7e1b-2026-07-23",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-0e6d7e1b-2026-07-23",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-0e6d7e1b-2026-07-23",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-1b197013-2026-07-23",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-1b197013-2026-07-23",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-1b197013-2026-07-23",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-381",
+    "namespace": "culturalheritagenus",
+    "name": "ds-381",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-381",
+        "access": "restricted"
+      }
+    ],
+    "description": "A combination of files annotated by Jakkarin and Asia"
+  },
+  {
+    "slug": "ds-articlereconstruction-c5376fd9-2026-07-24",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-c5376fd9-2026-07-24",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-c5376fd9-2026-07-24",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-8a108873-2026-07-24",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-8a108873-2026-07-24",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-8a108873-2026-07-24",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-37cf4a71-2026-07-24",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-37cf4a71-2026-07-24",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-37cf4a71-2026-07-24",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-15d574b0-2026-07-27",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-15d574b0-2026-07-27",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-15d574b0-2026-07-27",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-e5da83a3-2026-07-27",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-e5da83a3-2026-07-27",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-e5da83a3-2026-07-27",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-f40ae638-2026-07-27",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-f40ae638-2026-07-27",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-f40ae638-2026-07-27",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-e558fa83-2026-07-27",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-e558fa83-2026-07-27",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-e558fa83-2026-07-27",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-feb97b31-2026-07-27",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-feb97b31-2026-07-27",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-feb97b31-2026-07-27",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-870718e0-2026-07-28",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-870718e0-2026-07-28",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-870718e0-2026-07-28",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-203dc7a3-2026-07-28",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-203dc7a3-2026-07-28",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-203dc7a3-2026-07-28",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-5eeeb340-2026-07-30",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-5eeeb340-2026-07-30",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-5eeeb340-2026-07-30",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-d2068707-2026-07-30",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-d2068707-2026-07-30",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-d2068707-2026-07-30",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-d2d25534-2026-07-30",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-d2d25534-2026-07-30",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-d2d25534-2026-07-30",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-924c5b2b-2026-07-30",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-924c5b2b-2026-07-30",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-924c5b2b-2026-07-30",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-4e034691-2026-07-30",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-4e034691-2026-07-30",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-4e034691-2026-07-30",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-faaf72c9-2026-07-30",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-faaf72c9-2026-07-30",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-faaf72c9-2026-07-30",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-um1956-rumitransliterations",
+    "namespace": "culturalheritagenus",
+    "name": "Pages of UM-1956 transliterated to Rumi",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-UM1956-rumitransliterations",
+        "access": "restricted"
+      }
+    ],
+    "description": "98 pages of UM-1956 transliterated to Rumi using aisingapore/Gemma-SEA-LION-v4-27B-IT"
+  },
+  {
+    "slug": "ds-articlereconstruction-0e7a5ad0-2026-07-31",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-0e7a5ad0-2026-07-31",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-0e7a5ad0-2026-07-31",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-f6ae8223-2026-07-31",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-f6ae8223-2026-07-31",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-f6ae8223-2026-07-31",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-68265810-2026-07-31",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-68265810-2026-07-31",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-68265810-2026-07-31",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-080f882a-2026-08-03",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-080f882a-2026-08-03",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-080f882a-2026-08-03",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-jawibertexp-2026-08-03-f10-6384",
+    "namespace": "culturalheritagenus",
+    "name": "ds-jawibertexp-2026-08-03-f10.6384",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-jawibertexp-2026-08-03-f10.6384",
+        "access": "restricted"
+      }
+    ],
+    "description": "JawiBERT Logical Continuation Experiment Data"
+  },
+  {
+    "slug": "ds-jawibertexp-2026-08-03-f10-6220",
+    "namespace": "culturalheritagenus",
+    "name": "ds-jawibertexp-2026-08-03-f10.6220",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-jawibertexp-2026-08-03-f10.6220",
+        "access": "restricted"
+      }
+    ],
+    "description": "JawiBERT Logical Continuation Experiment Data"
+  },
+  {
+    "slug": "ds-jawibertexp-2026-08-03-f10-6215",
+    "namespace": "culturalheritagenus",
+    "name": "ds-jawibertexp-2026-08-03-f10.6215",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-jawibertexp-2026-08-03-f10.6215",
+        "access": "restricted"
+      }
+    ],
+    "description": "JawiBERT Logical Continuation Experiment Data"
+  },
+  {
+    "slug": "ds-jawibertexp-2026-08-04-f10-6430",
+    "namespace": "culturalheritagenus",
+    "name": "ds-jawibertexp-2026-08-04-f10.6430",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-jawibertexp-2026-08-04-f10.6430",
+        "access": "restricted"
+      }
+    ],
+    "description": "JawiBERT Logical Continuation Experiment Data"
+  },
+  {
+    "slug": "ds-jawibertexp-2026-08-04-f10-6433",
+    "namespace": "culturalheritagenus",
+    "name": "ds-jawibertexp-2026-08-04-f10.6433",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-jawibertexp-2026-08-04-f10.6433",
+        "access": "restricted"
+      }
+    ],
+    "description": "JawiBERT Logical Continuation Experiment Data"
+  },
+  {
+    "slug": "ds-jawibertexp-2026-08-04-f10-6250",
+    "namespace": "culturalheritagenus",
+    "name": "ds-jawibertexp-2026-08-04-f10.6250",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-jawibertexp-2026-08-04-f10.6250",
+        "access": "restricted"
+      }
+    ],
+    "description": "JawiBERT Logical Continuation Experiment Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-080f882a-2026-08-04",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-080f882a-2026-08-04",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-080f882a-2026-08-04",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-jawibertexp-2026-08-04-f10-6628",
+    "namespace": "culturalheritagenus",
+    "name": "ds-jawibertexp-2026-08-04-f10.6628",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-jawibertexp-2026-08-04-f10.6628",
+        "access": "restricted"
+      }
+    ],
+    "description": "JawiBERT Logical Continuation Experiment Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-68265810-2026-08-04",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-68265810-2026-08-04",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-68265810-2026-08-04",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-jawibertexp-2026-08-05-f10-6376",
+    "namespace": "culturalheritagenus",
+    "name": "ds-jawibertexp-2026-08-05-f10.6376",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-jawibertexp-2026-08-05-f10.6376",
+        "access": "restricted"
+      }
+    ],
+    "description": "JawiBERT Logical Continuation Experiment Data"
+  },
+  {
+    "slug": "ds-mcprumitrainingpairs",
+    "namespace": "culturalheritagenus",
+    "name": "Rumi Training Pairs sourced from MCP articles",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-mcprumitrainingpairs",
+        "access": "restricted"
+      }
+    ],
+    "description": "605 training pairs in Rumi for the task of same-article classification."
+  },
+  {
+    "slug": "ds-um1956testingpairs",
+    "namespace": "culturalheritagenus",
+    "name": "UM1956 pairs of regions with",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-UM1956testingpairs",
+        "access": "restricted"
+      }
+    ],
+    "description": "98 pages of UM-1956 transliterated to Rumi using aisingapore/Gemma-SEA-LION-v4-27B-IT"
+  },
+  {
+    "slug": "ds-jawibertexp-2026-08-05-f10-7024",
+    "namespace": "culturalheritagenus",
+    "name": "ds-jawibertexp-2026-08-05-f10.7024",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-jawibertexp-2026-08-05-f10.7024",
+        "access": "restricted"
+      }
+    ],
+    "description": "JawiBERT Logical Continuation Experiment Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-68265810-2026-08-05",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-68265810-2026-08-05",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-68265810-2026-08-05",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-68265810-2026-08-06",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-68265810-2026-08-06",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-68265810-2026-08-06",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-20260806-1238",
+    "namespace": "culturalheritagenus",
+    "name": "ds_20260806_1238",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds_20260806_1238",
+        "access": "restricted"
+      }
+    ],
+    "description": "A combination of files annotated by Jakkarin, Frial and Asia for header, footer, text-image, image (and sometimes calligraphy)"
+  },
+  {
+    "slug": "ds-articlereconstruction-1629e37d-2026-08-06",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-1629e37d-2026-08-06",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-1629e37d-2026-08-06",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-92bcef77-2026-08-06",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-92bcef77-2026-08-06",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-92bcef77-2026-08-06",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-jawibertexp-2026-08-06-f10-6743",
+    "namespace": "culturalheritagenus",
+    "name": "ds-jawibertexp-2026-08-06-f10.6743",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-jawibertexp-2026-08-06-f10.6743",
+        "access": "restricted"
+      }
+    ],
+    "description": "JawiBERT Logical Continuation Experiment Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-9a9a1d1c-2026-08-10",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-9a9a1d1c-2026-08-10",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-9a9a1d1c-2026-08-10",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-um1956-18page-causallmtrainingprompts",
+    "namespace": "culturalheritagenus",
+    "name": "Training Data for Causal LM prompt-based pairwise region same-article likelihood scoring.",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-UM1956-18Page-CausalLMTrainingPrompts",
+        "access": "restricted"
+      }
+    ],
+    "description": "277 labelled prompts of balanced region pairs from 18 Pages of UM1956 to finetune any causal lm on scoring same article likelihood."
+  },
+  {
+    "slug": "ds-articlereconstruction-3fe17226-2026-08-11",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-3fe17226-2026-08-11",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-3fe17226-2026-08-11",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-b24a6da4-2026-08-11",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-b24a6da4-2026-08-11",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-b24a6da4-2026-08-11",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-f20d4488-2026-08-11",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-f20d4488-2026-08-11",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-f20d4488-2026-08-11",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-7d22cc04-2026-08-11",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-7d22cc04-2026-08-11",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-7d22cc04-2026-08-11",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-articlereconstruction-70f05097-2026-08-11",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-70f05097-2026-08-11",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-70f05097-2026-08-11",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-um1956unweightednetwork",
+    "namespace": "culturalheritagenus",
+    "name": "ds-UM1956unweightednetwork",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-UM1956unweightednetwork",
+        "access": "restricted"
+      }
+    ],
+    "description": "Produced using topology module"
+  },
+  {
+    "slug": "ds-um1956weightednetwork",
+    "namespace": "culturalheritagenus",
+    "name": "ds-UM1956weightednetwork",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-UM1956weightednetwork",
+        "access": "restricted"
+      }
+    ],
+    "description": "Produced using pairwise weights module"
+  },
+  {
+    "slug": "ds-um1956segmentednetwork",
+    "namespace": "culturalheritagenus",
+    "name": "ds-UM1956segmentednetwork",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-UM1956segmentednetwork",
+        "access": "restricted"
+      }
+    ],
+    "description": "Produced using clustering module"
+  },
+  {
+    "slug": "ds-articlereconstruction-9eeced24-2026-08-19",
+    "namespace": "culturalheritagenus",
+    "name": "ds-articlereconstruction-9eeced24-2026-08-19",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-articlereconstruction-9eeced24-2026-08-19",
+        "access": "restricted"
+      }
+    ],
+    "description": "Article Reconstruction Evaluation Data"
+  },
+  {
+    "slug": "ds-jak-verified-20260828",
+    "namespace": "culturalheritagenus",
+    "name": "ds-jak-verified-20260828",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/culturalheritagenus/ds-jak-verified-20260828",
+        "access": "restricted"
+      }
+    ],
+    "description": "470 images verified by Jakkarin for image, image-data, header, footer and calligraphy"
   }
 ]
