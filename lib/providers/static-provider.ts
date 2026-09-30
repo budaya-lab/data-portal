@@ -7,36 +7,46 @@ import type {
   ProviderCapabilities,
 } from './types'
 
-// The default provider: a read-only, build-time source backed by datasets.json
-// (the git/static tier). The manifest is the single source of truth — add
-// datasets by dropping the file in /public/data and appending an entry, no page
-// file needed. A git-LFS + object-store (e.g. R2) source is the same model with
-// the bytes living outside the repo; it would implement this same interface.
-const datasets = manifest as Dataset[]
-validateCatalogAccess(datasets)
+const manifestDatasets = manifest as Dataset[]
+validateCatalogAccess(manifestDatasets)
 
 export class StaticProvider implements DataProvider {
   readonly name = 'static'
+  private readonly datasets: Dataset[]
 
   readonly capabilities: ProviderCapabilities = {
-    search: false, // the catalog page filters client-side over listDatasets()
-    query: false, // flat-file preview only (no DuckDB / datastore yet)
-    write: false, // datasets are added via git (a PR), not at runtime
-    rbac: false, // fully public
+    search: false,
+    query: false,
+    write: false,
+    rbac: false,
+  }
+
+  constructor(
+    datasets: Dataset[] = manifestDatasets,
+    private readonly environment = process.env.NODE_ENV,
+  ) {
+    validateCatalogAccess(datasets)
+    this.datasets = datasets
+  }
+
+  private visibleDatasets(): Dataset[] {
+    return this.environment === 'development'
+      ? this.datasets
+      : this.datasets.filter((dataset) => dataset.draft !== true)
   }
 
   async listDatasets(): Promise<Dataset[]> {
-    return datasets
+    return this.visibleDatasets()
   }
 
   async getDataset(namespace: string, slug: string): Promise<Dataset | null> {
     return (
-      datasets.find((d) => d.namespace === namespace && d.slug === slug) ?? null
+      this.visibleDatasets().find((d) => d.namespace === namespace && d.slug === slug) ?? null
     )
   }
 
   async search({ q, namespace, format }: DatasetQuery): Promise<Dataset[]> {
-    return datasets.filter((d) =>
+    return this.visibleDatasets().filter((d) =>
       (!namespace || d.namespace === namespace) &&
       (!format || d.format === format) &&
       matchesCatalogQuery(d, q ?? '')

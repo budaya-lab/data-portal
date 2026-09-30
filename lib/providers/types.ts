@@ -75,6 +75,9 @@ export type Resource = {
 }
 
 export type Dataset = {
+  // Unpublished metadata candidate. Development may render drafts, but production
+  // provider results and exported catalog feeds must exclude them.
+  draft?: boolean
   slug: string
   namespace: string
   name: string

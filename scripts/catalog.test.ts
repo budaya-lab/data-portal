@@ -3,7 +3,7 @@ import { test } from 'node:test'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import DatasetPage from '../pages/[owner]/[slug]'
-import { datasetHref, matchesCatalogQuery, isRestricted, validateCatalogAccess } from '../lib/datasets'
+import { datasetHref, matchesCatalogQuery, isRestricted, validateCatalogAccess, publishedDatasets } from '../lib/datasets'
 import type { Dataset } from '../lib/datasets'
 import { StaticProvider } from '../lib/providers/static-provider'
 import { toDCAT } from '../lib/metadata/dcat'
@@ -24,6 +24,38 @@ test('catalog search finds Frictionless keywords without searching source data',
   assert.equal(matchesCatalogQuery(tagged, 'recorded'), true)
   assert.equal(matchesCatalogQuery(tagged, 'nothing'), false)
   assert.equal(matchesCatalogQuery({ ...tagged, keywords: [] }, 'oral history'), false)
+})
+
+test('draft datasets are hidden from static provider outside development', async () => {
+  const records: Dataset[] = [
+    { ...tagged, slug: 'published' },
+    { ...tagged, slug: 'draft-record', draft: true },
+  ]
+  const provider = new StaticProvider(records, 'production')
+  assert.deepEqual((await provider.listDatasets()).map((d) => d.slug), ['published'])
+  assert.equal(await provider.getDataset(tagged.namespace, 'draft-record'), null)
+  assert.deepEqual((await provider.search({ q: 'interviews' })).map((d) => d.slug), ['published'])
+})
+
+test('draft datasets are available to the development provider', async () => {
+  const provider = new StaticProvider([{ ...tagged, draft: true }], 'development')
+  assert.equal((await provider.listDatasets()).length, 1)
+  assert.ok(await provider.getDataset(tagged.namespace, tagged.slug))
+})
+
+test('published feed selection excludes drafts regardless of environment', () => {
+  const records: Dataset[] = [
+    { ...tagged, slug: 'published' },
+    { ...tagged, slug: 'draft-record', draft: true },
+  ]
+  assert.deepEqual(publishedDatasets(records).map((d) => d.slug), ['published'])
+})
+
+test('catalogue rejects invalid draft values', () => {
+  assert.throws(
+    () => validateCatalogAccess([{ ...tagged, draft: 'true' } as unknown as Dataset]),
+    /invalid draft/i,
+  )
 })
 
 test('static provider searches manifest keywords as well as catalog metadata', async () => {

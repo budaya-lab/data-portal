@@ -25,6 +25,7 @@ import { mkdir, writeFile, readFile } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import { join } from 'node:path'
 import { provider } from '../lib/providers'
+import { publishedDatasets } from '../lib/datasets'
 import {
   toDCATCatalog,
   getDcatProfile,
@@ -66,7 +67,7 @@ async function main() {
     ? cfg.serializations
     : ['jsonld', 'ttl', 'rdf']
 
-  const datasets = (await provider.listDatasets()) as CatalogEntry[]
+  const datasets = publishedDatasets((await provider.listDatasets()) as CatalogEntry[])
 
   // Base DCAT-3 catalog (profile-agnostic). Profiles augment this.
   const base = toDCATCatalog(datasets, {

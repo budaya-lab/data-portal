@@ -79,6 +79,7 @@ export type FrictionlessLike = PackageMetadata & {
 // build per-dataset landing pages + download URLs. A providers' Dataset is
 // structurally assignable to this.
 export type CatalogEntry = FrictionlessLike & {
+  draft?: boolean
   namespace?: string
   slug?: string
   description?: string

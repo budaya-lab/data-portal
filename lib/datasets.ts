@@ -41,6 +41,10 @@ export function matchesCatalogQuery(d: Dataset, query: string): boolean {
     .some((value) => value?.toLowerCase().includes(q))
 }
 
+export function publishedDatasets<T extends { draft?: boolean }>(datasets: T[]): T[] {
+  return datasets.filter((dataset) => dataset.draft !== true)
+}
+
 export function isRestricted(d: Dataset): boolean {
   return d.access === 'restricted' || d.sources?.some((s) => s.access === 'restricted') === true
 }
@@ -49,6 +53,9 @@ export function isRestricted(d: Dataset): boolean {
 // resources at build time, before any file URLs can enter the generated pages.
 export function validateCatalogAccess(datasets: Dataset[]): void {
   for (const d of datasets) {
+    if (d.draft !== undefined && typeof d.draft !== 'boolean') {
+      throw new Error(`Invalid draft for dataset ${d.namespace}/${d.slug}`)
+    }
     if (d.access !== undefined && d.access !== 'public' && d.access !== 'restricted') {
       throw new Error(`Invalid access for dataset ${d.namespace}/${d.slug}`)
     }
