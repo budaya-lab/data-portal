@@ -1,8 +1,41 @@
-node_modules/
-.next/
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
 .env
-.env.local
-out/
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# PortalJS
 
 # Generated DCAT harvest feeds (npm run generate:dcat → predev/prebuild):
 # per-profile × serialization feeds, the canonical un-suffixed feeds, and the index.
@@ -14,5 +47,6 @@ public/catalog.*.ttl
 public/catalog.*.rdf
 public/catalog-feeds.json
 
-# TypeScript incremental build cache
-*.tsbuildinfo
+.tmp/
+
+tasks/
