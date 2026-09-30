@@ -1,70 +1,71 @@
-import { useState } from 'react'
-import Head from 'next/head'
-import Link from 'next/link'
-import dynamic from 'next/dynamic'
-import type { GetStaticPaths, GetStaticProps } from 'next'
-import { Table } from '../../components/Table'
+import type { GetStaticPaths, GetStaticProps } from "next";
+import dynamic from "next/dynamic";
+import Head from "next/head";
+import Link from "next/link";
+import { useState } from "react";
+import { Table } from "../../components/Table";
 import {
+  type ActivityEntry,
   DATA_QUERY,
-  NAMESPACE_TYPE,
-  isRestricted,
-  resourceUrl,
-  resourceLabel,
   type Dataset,
+  isDraft,
+  isRestricted,
+  NAMESPACE_TYPE,
   type Resource,
   type ResourceVersion,
-  type ActivityEntry,
-} from '../../lib/datasets'
-import { provider } from '../../lib/providers'
-import { withHistory } from '../../lib/history'
-import { formatDate } from '../../lib/format'
+  resourceLabel,
+  resourceUrl,
+} from "../../lib/datasets";
+import { formatDate } from "../../lib/format";
+import { withHistory } from "../../lib/history";
+import { provider } from "../../lib/providers";
 
 // DuckDB only runs in the browser, so load the query view client-side. The chunk
 // (and DuckDB-Wasm) is only fetched when a resource actually needs it — flat
 // portals never pay for it.
-const DataExplorer = dynamic(() => import('../../components/DataExplorer'), {
+const DataExplorer = dynamic(() => import("../../components/DataExplorer"), {
   ssr: false,
-})
+});
 
 // MapLibre GL touches `window` at module scope, so the map is client-only. The
 // chunk (maplibre + pmtiles, and lazily @duckdb/duckdb-wasm) loads only when a
 // dataset actually has a geo resource. ONE component carries both geo tiers: the
 // PMTiles render layer AND the GeoParquet + DuckDB-Wasm query engine bound to the
 // same map viewport — a dual-tier dataset gets one map, not two.
-const MapPreview = dynamic(() => import('../../components/MapPreview'), {
+const MapPreview = dynamic(() => import("../../components/MapPreview"), {
   ssr: false,
-})
+});
 
 type PageProps = {
-  dataset: Dataset
-  resources: Resource[]
-  activity: ActivityEntry[]
-}
+  dataset: Dataset;
+  resources: Resource[];
+  activity: ActivityEntry[];
+};
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const datasets = await provider.listDatasets()
+  const datasets = await provider.listDatasets();
   return {
     // The `owner` segment carries the `@` prefix so the generated URL is
     // /@<namespace>/<slug> — namespacing datasets under `@` keeps them from
     // colliding with regular content/static pages (which never start with `@`).
     paths: datasets.map((d) => ({
-      params: { owner: '@' + d.namespace, slug: d.slug },
+      params: { owner: "@" + d.namespace, slug: d.slug },
     })),
     fallback: false,
-  }
-}
+  };
+};
 
 export const getStaticProps: GetStaticProps<PageProps> = async ({ params }) => {
   // Strip the leading `@` from the owner segment to recover the namespace,
   // then resolve the dataset by its (namespace, slug) pair.
-  const namespace = String(params?.owner ?? '').replace(/^@/, '')
-  const dataset = await provider.getDataset(namespace, String(params?.slug))
-  if (!dataset) return { notFound: true }
+  const namespace = String(params?.owner ?? "").replace(/^@/, "");
+  const dataset = await provider.getDataset(namespace, String(params?.slug));
+  if (!dataset) return { notFound: true };
   // Capture git history for each resource (and the derived activity feed) at build
   // time — deployed portals are static exports with no git in out/. See lib/history.ts.
-  const { resources, activity } = withHistory(dataset)
-  return { props: { dataset, resources, activity } }
-}
+  const { resources, activity } = withHistory(dataset);
+  return { props: { dataset, resources, activity } };
+};
 
 // Showcase surface (editorial design imported from the Claude Design mockups): an
 // eyebrow + title + italic description, then a two-column body that follows the
@@ -75,23 +76,29 @@ export const getStaticProps: GetStaticProps<PageProps> = async ({ params }) => {
 // of the one dataset — download + copy-URL + a DuckDB snippet, with sizes), then a
 // portal activity feed and a Views slot — beside a metadata sidebar with the
 // primary download.
-export default function DatasetPage({ dataset, resources, activity }: PageProps) {
-  const namespaceLabel = NAMESPACE_TYPE === 'owner' ? 'Owner' : 'Theme'
-  const restricted = isRestricted(dataset)
-  const visibleResources = restricted ? [] : resources
-  const visibleActivity = restricted ? [] : activity
-  const primary = visibleResources[0]
+export default function DatasetPage({
+  dataset,
+  resources,
+  activity,
+}: PageProps) {
+  const namespaceLabel = NAMESPACE_TYPE === "owner" ? "Owner" : "Theme";
+  const restricted = isRestricted(dataset);
+  const visibleResources = restricted ? [] : resources;
+  const visibleActivity = restricted ? [] : activity;
+  const primary = visibleResources[0];
   // The two serverless geo tiers render as ONE map (see MapPreview): the PMTiles
   // archive is the render layer, the GeoParquet twin is the query engine bound to
   // the same viewport. Pull both out of the per-resource preview loop so a
   // dual-tier dataset shows a single map instead of two. The files still appear
   // individually in the Resources download list above.
-  const pmtilesResource = visibleResources.find((r) => r.format === 'pmtiles')
-  const geoparquetResource = visibleResources.find((r) => r.format === 'geoparquet')
-  const hasGeo = Boolean(pmtilesResource || geoparquetResource)
+  const pmtilesResource = visibleResources.find((r) => r.format === "pmtiles");
+  const geoparquetResource = visibleResources.find(
+    (r) => r.format === "geoparquet",
+  );
+  const hasGeo = Boolean(pmtilesResource || geoparquetResource);
   const nonGeoResources = visibleResources.filter(
-    (r) => r.format !== 'pmtiles' && r.format !== 'geoparquet'
-  )
+    (r) => r.format !== "pmtiles" && r.format !== "geoparquet",
+  );
   // Which resources get an INLINE preview. A geo dataset's non-geo files (GeoJSON,
   // CSV, GeoPackage, Shapefile) are alternate FORMATS of the data already shown on
   // the map, so they never preview — they only appear as download rows. A tabular
@@ -100,25 +107,28 @@ export default function DatasetPage({ dataset, resources, activity }: PageProps)
   const previewResources = hasGeo
     ? []
     : nonGeoResources.filter(
-        (r) => r.format === 'parquet' || r.format === 'csv' || r.format === 'tsv'
-      )
+        (r) =>
+          r.format === "parquet" || r.format === "csv" || r.format === "tsv",
+      );
   // Every file, ordered for the Download & API block: the two serverless geo tiers
   // first (GeoParquet for analysis, PMTiles for maps), then the source archive
   // (GeoJSON), then the remaining tabular/export formats.
   const orderedResources = [...visibleResources].sort(
-    (a, b) => downloadRank(a.format) - downloadRank(b.format)
-  )
+    (a, b) => downloadRank(a.format) - downloadRank(b.format),
+  );
   // "Last updated" describes the DATA's freshness. The manifest's source-provenance
   // `modified` (preserved from the origin platform on migration) is the truth when
   // present — it must win over git activity, whose freshest commit for a migrated
   // dataset is the migration itself (that would wrongly show the harvest date as the
   // data's last-updated). Fall back to git history only for hand-added datasets that
   // carry no source `modified`.
-  const lastUpdated = (dataset.modified && formatDate(dataset.modified)) ?? visibleActivity[0]?.date
-  const created = dataset.created && formatDate(dataset.created)
+  const lastUpdated =
+    (dataset.modified && formatDate(dataset.modified)) ??
+    visibleActivity[0]?.date;
+  const created = dataset.created && formatDate(dataset.created);
   // Migration/sync time is provenance about the COPY, shown as its own field so it
   // never masquerades as the data's freshness.
-  const migratedAt = dataset.migratedAt && formatDate(dataset.migratedAt)
+  const migratedAt = dataset.migratedAt && formatDate(dataset.migratedAt);
 
   return (
     <>
@@ -127,13 +137,19 @@ export default function DatasetPage({ dataset, resources, activity }: PageProps)
       </Head>
       <main className="mx-auto max-w-[940px] px-6 pb-24 sm:px-16">
         <nav className="pt-7 font-sans text-[13px] font-medium text-ink/50">
-          <Link href="/" className="text-inherit no-underline hover:text-accent">
+          <Link
+            href="/"
+            className="text-inherit no-underline hover:text-accent"
+          >
             Home
-          </Link>{' '}
-          /{' '}
-          <Link href="/search" className="text-inherit no-underline hover:text-accent">
+          </Link>{" "}
+          /{" "}
+          <Link
+            href="/search"
+            className="text-inherit no-underline hover:text-accent"
+          >
             Search
-          </Link>{' '}
+          </Link>{" "}
           <span className="text-ink">/ {dataset.name}</span>
         </nav>
 
@@ -186,7 +202,9 @@ export default function DatasetPage({ dataset, resources, activity }: PageProps)
             />
 
             {/* Activity — every resource commit across the dataset, newest first. */}
-            {visibleActivity.length > 0 && <ActivityFeed activity={visibleActivity} />}
+            {visibleActivity.length > 0 && (
+              <ActivityFeed activity={visibleActivity} />
+            )}
 
             {/* Views placeholder — charts and maps are added here by the
                 /portaljs-add-chart and /portaljs-add-map skills. */}
@@ -214,14 +232,17 @@ export default function DatasetPage({ dataset, resources, activity }: PageProps)
                       {dataset.sources.map((s) => (
                         <li key={s.title}>
                           {s.path ? (
-                            <a href={s.path} className="text-accent underline underline-offset-2">
+                            <a
+                              href={s.path}
+                              className="text-accent underline underline-offset-2"
+                            >
                               {s.title}
                             </a>
                           ) : (
                             s.title
-                          )}{' '}
+                          )}{" "}
                           <span className="font-sans text-[11px] text-ink/55">
-                            ({s.access ?? dataset.access ?? 'public'})
+                            ({s.access ?? dataset.access ?? "public"})
                           </span>
                         </li>
                       ))}
@@ -237,11 +258,14 @@ export default function DatasetPage({ dataset, resources, activity }: PageProps)
                       {dataset.licenses.map((l) => (
                         <li key={l.name ?? l.title ?? l.path}>
                           {l.path ? (
-                            <a href={l.path} className="text-accent underline underline-offset-2">
+                            <a
+                              href={l.path}
+                              className="text-accent underline underline-offset-2"
+                            >
                               {l.title ?? l.name}
                             </a>
                           ) : (
-                            l.title ?? l.name
+                            (l.title ?? l.name)
                           )}
                         </li>
                       ))}
@@ -254,23 +278,37 @@ export default function DatasetPage({ dataset, resources, activity }: PageProps)
 
           {/* Metadata sidebar. */}
           <aside className="flex h-fit flex-col gap-[18px] rounded-sm border border-ink/[0.18] p-[26px]">
-            <SidebarField label={namespaceLabel} value={`@${dataset.namespace}`} />
-            <SidebarField label="Access" value={restricted ? 'Restricted' : 'Public'} />
+            <SidebarField
+              label={namespaceLabel}
+              value={`@${dataset.namespace}`}
+            />
+            <SidebarField
+              label="Access"
+              value={restricted ? "Restricted" : "Public"}
+            />
+            <SidebarField
+              label="Status"
+              value={isDraft(dataset) ? "Draft" : "Published"}
+            />
             {!restricted && (
               <SidebarField
                 label="Resources"
-                value={`${visibleResources.length} file${visibleResources.length === 1 ? '' : 's'}`}
+                value={`${visibleResources.length} file${visibleResources.length === 1 ? "" : "s"}`}
               />
             )}
-            {typeof dataset.recordCount === 'number' && (
+            {typeof dataset.recordCount === "number" && (
               <SidebarField
                 label="Records"
-                value={dataset.recordCount.toLocaleString('en-US')}
+                value={dataset.recordCount.toLocaleString("en-US")}
               />
             )}
-            {dataset.version && <SidebarField label="Version" value={dataset.version} />}
+            {dataset.version && (
+              <SidebarField label="Version" value={dataset.version} />
+            )}
             {created && <SidebarField label="Created" value={created} />}
-            {lastUpdated && <SidebarField label="Last updated" value={lastUpdated} />}
+            {lastUpdated && (
+              <SidebarField label="Last updated" value={lastUpdated} />
+            )}
             {migratedAt && <SidebarField label="Migrated" value={migratedAt} />}
             {dataset.keywords && dataset.keywords.length > 0 && (
               <div>
@@ -291,7 +329,8 @@ export default function DatasetPage({ dataset, resources, activity }: PageProps)
             )}
             {restricted && (
               <p className="border-t border-ink/[0.15] pt-[18px] font-sans text-xs leading-relaxed text-ink/60">
-                Access is managed by the source. Follow its link to request access.
+                Access is managed by the source. Follow its link to request
+                access.
               </p>
             )}
             {primary && (
@@ -308,16 +347,16 @@ export default function DatasetPage({ dataset, resources, activity }: PageProps)
         </div>
       </main>
     </>
-  )
+  );
 }
 
 // Uppercase Work Sans section label, matching the mockups' hairline dividers.
 function SectionLabel({
   children,
-  className = '',
+  className = "",
 }: {
-  children: React.ReactNode
-  className?: string
+  children: React.ReactNode;
+  className?: string;
 }) {
   return (
     <div
@@ -325,7 +364,7 @@ function SectionLabel({
     >
       {children}
     </div>
-  )
+  );
 }
 
 function SidebarField({ label, value }: { label: string; value: string }) {
@@ -336,36 +375,44 @@ function SidebarField({ label, value }: { label: string; value: string }) {
       </div>
       <div className="font-serif text-base font-semibold text-ink">{value}</div>
     </div>
-  )
+  );
 }
 
 // Format-priority for the Download & API list: the serverless geo tiers lead
 // (GeoParquet for analysis/SQL, PMTiles for maps), then the source archive
 // (GeoJSON), then the remaining tabular/export formats. Unlisted formats sort last.
 function downloadRank(format: string): number {
-  const order = ['geoparquet', 'pmtiles', 'geojson', 'csv', 'tsv', 'parquet', 'json']
-  const i = order.indexOf(format)
-  return i === -1 ? order.length : i
+  const order = [
+    "geoparquet",
+    "pmtiles",
+    "geojson",
+    "csv",
+    "tsv",
+    "parquet",
+    "json",
+  ];
+  const i = order.indexOf(format);
+  return i === -1 ? order.length : i;
 }
 
 // A tiny copy-to-clipboard button that flips to a "Copied" confirmation for a
 // moment. Used for both the raw file URL and the ready-to-run DuckDB snippet.
 function CopyButton({ text, label }: { text: string; label: string }) {
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState(false);
   return (
     <button
       type="button"
       onClick={() => {
         void navigator.clipboard?.writeText(text).then(() => {
-          setCopied(true)
-          setTimeout(() => setCopied(false), 1500)
-        })
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        });
       }}
       className="whitespace-nowrap font-sans text-[11px] font-medium text-ink/55 underline underline-offset-2 hover:text-accent"
     >
-      {copied ? 'Copied' : label}
+      {copied ? "Copied" : label}
     </button>
-  )
+  );
 }
 
 // The single "Download & API" block: every file in the dataset presented as a
@@ -377,10 +424,10 @@ function DownloadApiBlock({
   resources,
   dualTier,
 }: {
-  resources: Resource[]
-  dualTier: boolean
+  resources: Resource[];
+  dualTier: boolean;
 }) {
-  if (resources.length === 0) return null
+  if (resources.length === 0) return null;
   return (
     <section className="mt-11">
       <SectionLabel>Download &amp; API</SectionLabel>
@@ -391,7 +438,7 @@ function DownloadApiBlock({
       </div>
       {dualTier && (
         <p className="mt-3 font-sans text-xs leading-relaxed text-ink/45">
-          Rendered from PMTiles, queried in-browser from GeoParquet — no server.{' '}
+          Rendered from PMTiles, queried in-browser from GeoParquet — no server.{" "}
           <a
             href="https://portaljs.com"
             className="text-accent underline underline-offset-2"
@@ -401,7 +448,7 @@ function DownloadApiBlock({
         </p>
       )}
     </section>
-  )
+  );
 }
 
 // One file in the Download & API block: label + format tag + size on the left,
@@ -410,14 +457,15 @@ function DownloadApiBlock({
 // format's role — GeoJSON is flagged as the original export archive. Version
 // history (when git captured any) stays available behind a per-row toggle.
 function ResourceDownloadRow({ resource }: { resource: Resource }) {
-  const [open, setOpen] = useState(false)
-  const history = resource.history ?? []
-  const url = resourceUrl(resource)
-  const isPublicUrl = /^(https?:)?\/\//.test(resource.path)
+  const [open, setOpen] = useState(false);
+  const history = resource.history ?? [];
+  const url = resourceUrl(resource);
+  const isPublicUrl = /^(https?:)?\/\//.test(resource.path);
   // Newest version first (see lib/history.ts), so history[0] is the current size.
-  const size = history[0]?.size
-  const isColumnar = resource.format === 'geoparquet' || resource.format === 'parquet'
-  const caption = downloadCaption(resource.format)
+  const size = history[0]?.size;
+  const isColumnar =
+    resource.format === "geoparquet" || resource.format === "parquet";
+  const caption = downloadCaption(resource.format);
 
   return (
     <div className="border-b border-dotted border-ink/25">
@@ -431,11 +479,15 @@ function ResourceDownloadRow({ resource }: { resource: Resource }) {
               {resource.format}
             </span>
             {size && (
-              <span className="flex-shrink-0 font-sans text-[11px] text-ink/40">{size}</span>
+              <span className="flex-shrink-0 font-sans text-[11px] text-ink/40">
+                {size}
+              </span>
             )}
           </div>
           {caption && (
-            <div className="mt-1 font-sans text-[12px] text-ink/50">{caption}</div>
+            <div className="mt-1 font-sans text-[12px] text-ink/50">
+              {caption}
+            </div>
           )}
         </div>
         <div className="flex flex-shrink-0 flex-wrap items-center justify-end gap-x-3 gap-y-1">
@@ -458,7 +510,7 @@ function ResourceDownloadRow({ resource }: { resource: Resource }) {
               onClick={() => setOpen((v) => !v)}
               className="whitespace-nowrap font-sans text-[11px] font-medium text-ink/55 hover:text-accent"
             >
-              {open ? 'Hide history' : `History (${history.length})`}
+              {open ? "Hide history" : `History (${history.length})`}
             </button>
           )}
         </div>
@@ -471,7 +523,7 @@ function ResourceDownloadRow({ resource }: { resource: Resource }) {
         </div>
       )}
     </div>
-  )
+  );
 }
 
 // A short, human caption for a file's role in the dataset. GeoJSON is the full,
@@ -480,35 +532,39 @@ function ResourceDownloadRow({ resource }: { resource: Resource }) {
 // caption (the format tag already says enough).
 function downloadCaption(format: string): string {
   switch (format) {
-    case 'geoparquet':
-      return 'Columnar — query with DuckDB / SQL'
-    case 'pmtiles':
-      return 'Vector tiles — embed in a map'
-    case 'geojson':
-      return 'Original export (archive)'
-    case 'parquet':
-      return 'Columnar — query with DuckDB / SQL'
-    case 'gpkg':
-    case 'geopackage':
-      return 'GeoPackage — GIS desktop (QGIS, ArcGIS)'
-    case 'shp':
-    case 'shapefile':
-      return 'Shapefile — legacy GIS interchange'
+    case "geoparquet":
+      return "Columnar — query with DuckDB / SQL";
+    case "pmtiles":
+      return "Vector tiles — embed in a map";
+    case "geojson":
+      return "Original export (archive)";
+    case "parquet":
+      return "Columnar — query with DuckDB / SQL";
+    case "gpkg":
+    case "geopackage":
+      return "GeoPackage — GIS desktop (QGIS, ArcGIS)";
+    case "shp":
+    case "shapefile":
+      return "Shapefile — legacy GIS interchange";
     default:
-      return ''
+      return "";
   }
 }
 
 // One commit in a resource's history timeline: version tag, date, download, message,
 // sha + size, and — for raw-text files — an expandable line diff.
 function VersionEntry({ version: v }: { version: ResourceVersion }) {
-  const [showDiff, setShowDiff] = useState(false)
+  const [showDiff, setShowDiff] = useState(false);
   return (
     <div>
       <div className="flex items-baseline justify-between gap-3">
         <div className="flex items-baseline gap-2">
-          <span className="font-mono text-[11px] font-semibold text-accent">{v.version}</span>
-          <span className="font-sans text-[11px] font-medium text-ink/45">{v.date}</span>
+          <span className="font-mono text-[11px] font-semibold text-accent">
+            {v.version}
+          </span>
+          <span className="font-sans text-[11px] font-medium text-ink/45">
+            {v.date}
+          </span>
         </div>
         {v.downloadHref && (
           <a
@@ -524,7 +580,7 @@ function VersionEntry({ version: v }: { version: ResourceVersion }) {
       </div>
       <div className="mt-[3px] font-mono text-[10.5px] text-ink/40">
         {v.sha}
-        {v.size ? ` · ${v.size}` : ''}
+        {v.size ? ` · ${v.size}` : ""}
       </div>
       {v.diffSummary && (
         <>
@@ -533,7 +589,7 @@ function VersionEntry({ version: v }: { version: ResourceVersion }) {
             onClick={() => setShowDiff((s) => !s)}
             className="mt-1.5 font-sans text-[11px] font-medium text-accent underline underline-offset-2"
           >
-            {showDiff ? 'Hide diff' : 'View diff'}
+            {showDiff ? "Hide diff" : "View diff"}
           </button>
           {showDiff && (
             <div className="mt-2 border border-ink/[0.12] bg-cream-panel px-3.5 py-3">
@@ -544,7 +600,7 @@ function VersionEntry({ version: v }: { version: ResourceVersion }) {
                 <div
                   key={i}
                   className={`font-mono text-xs leading-[1.7] ${
-                    ln.type === 'add' ? 'text-[#3a7d44]' : 'text-[#b3341f]'
+                    ln.type === "add" ? "text-[#3a7d44]" : "text-[#b3341f]"
                   }`}
                 >
                   {ln.text}
@@ -555,15 +611,15 @@ function VersionEntry({ version: v }: { version: ResourceVersion }) {
         </>
       )}
     </div>
-  )
+  );
 }
 
 // The portal activity feed: every resource commit across the dataset, newest first.
 // Collapsed to the three most recent, with a toggle to reveal the rest.
 function ActivityFeed({ activity }: { activity: ActivityEntry[] }) {
-  const [expanded, setExpanded] = useState(false)
-  const shown = expanded ? activity : activity.slice(0, 3)
-  const hasMore = activity.length > 3
+  const [expanded, setExpanded] = useState(false);
+  const shown = expanded ? activity : activity.slice(0, 3);
+  const hasMore = activity.length > 3;
   return (
     <div className="mb-11">
       <div className="mb-3.5 flex items-baseline justify-between">
@@ -574,7 +630,7 @@ function ActivityFeed({ activity }: { activity: ActivityEntry[] }) {
             onClick={() => setExpanded((v) => !v)}
             className="font-sans text-xs font-medium text-accent underline underline-offset-2"
           >
-            {expanded ? 'Show less' : 'Show all activity'}
+            {expanded ? "Show less" : "Show all activity"}
           </button>
         )}
       </div>
@@ -590,12 +646,14 @@ function ActivityFeed({ activity }: { activity: ActivityEntry[] }) {
             <span className="flex-shrink-0 font-mono text-[11px] text-ink/45">
               {a.filename}
             </span>
-            <span className="font-serif text-sm italic text-ink">{a.message}</span>
+            <span className="font-serif text-sm italic text-ink">
+              {a.message}
+            </span>
           </div>
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 // The geo tiers of a dataset, rendered as ONE map. PMTiles is the render layer
@@ -610,12 +668,12 @@ function GeoSection({
   showHeading,
   mapAttribution,
 }: {
-  pmtilesResource?: Resource
-  geoparquetResource?: Resource
-  showHeading: boolean
-  mapAttribution?: string
+  pmtilesResource?: Resource;
+  geoparquetResource?: Resource;
+  showHeading: boolean;
+  mapAttribution?: string;
 }) {
-  const pmtilesUrl = pmtilesResource ? resourceUrl(pmtilesResource) : undefined
+  const pmtilesUrl = pmtilesResource ? resourceUrl(pmtilesResource) : undefined;
   return (
     <section className="mb-11">
       {showHeading && (
@@ -623,10 +681,10 @@ function GeoSection({
           <h2 className="font-serif text-xl font-semibold text-ink">Map</h2>
           <span className="border border-accent/50 px-2 py-0.5 font-sans text-[10px] font-semibold uppercase tracking-[0.06em] text-accent">
             {pmtilesResource && geoparquetResource
-              ? 'pmtiles + geoparquet'
+              ? "pmtiles + geoparquet"
               : pmtilesResource
-                ? 'pmtiles'
-                : 'geoparquet'}
+                ? "pmtiles"
+                : "geoparquet"}
           </span>
         </div>
       )}
@@ -638,7 +696,7 @@ function GeoSection({
       {pmtilesResource && <ResourceSchema resource={pmtilesResource} />}
       {geoparquetResource && <ResourceSchema resource={geoparquetResource} />}
     </section>
-  )
+  );
 }
 
 // One PREVIEWABLE tabular resource: its data preview (the DuckDB SQL editor for
@@ -651,16 +709,17 @@ function ResourceSection({
   resource,
   showHeading,
 }: {
-  resource: Resource
-  showHeading: boolean
+  resource: Resource;
+  showHeading: boolean;
 }) {
-  const url = resourceUrl(resource)
-  const tabular = resource.format === 'csv' || resource.format === 'tsv'
+  const url = resourceUrl(resource);
+  const tabular = resource.format === "csv" || resource.format === "tsv";
   // Parquet has no flat preview (papaparse can't read it) — it's read through
   // DuckDB-Wasm, which also range-queries it in place when it lives on R2. So a
   // Parquet resource always gets the SQL editor, regardless of the DATA_QUERY
   // flag; CSV/TSV get it only when the portal opts into the 'duckdb' engine.
-  const useQueryView = resource.format === 'parquet' || (tabular && DATA_QUERY === 'duckdb')
+  const useQueryView =
+    resource.format === "parquet" || (tabular && DATA_QUERY === "duckdb");
   return (
     <section className="mb-11">
       {showHeading && (
@@ -690,12 +749,13 @@ function ResourceSection({
 
       <ResourceSchema resource={resource} />
     </section>
-  )
+  );
 }
 
 // Per-resource Frictionless Table Schema (degrades cleanly when absent).
 function ResourceSchema({ resource }: { resource: Resource }) {
-  if (!resource.schema?.fields || resource.schema.fields.length === 0) return null
+  if (!resource.schema?.fields || resource.schema.fields.length === 0)
+    return null;
   return (
     <div className="mt-6">
       <SectionLabel>Schema</SectionLabel>
@@ -711,48 +771,59 @@ function ResourceSchema({ resource }: { resource: Resource }) {
           </thead>
           <tbody>
             {resource.schema.fields.map((f) => {
-              const c = f.constraints
+              const c = f.constraints;
               const tags = [
-                c?.required && 'required',
-                c?.unique && 'unique',
+                c?.required && "required",
+                c?.unique && "unique",
                 c?.enum && `enum(${c.enum.length})`,
-              ].filter(Boolean) as string[]
+              ].filter(Boolean) as string[];
               // Prefer the human field label (Frictionless `title` — e.g. the
               // ArcGIS field alias "Property Type") as the header, keeping the raw
               // database column name (PROP_TYPE) as a mono subtitle. Falls back to
               // the raw name alone when there's no distinct alias.
-              const hasAlias = f.title && f.title !== f.name
+              const hasAlias = f.title && f.title !== f.name;
               return (
-                <tr key={f.name} className="border-t border-ink/[0.1] align-top">
+                <tr
+                  key={f.name}
+                  className="border-t border-ink/[0.1] align-top"
+                >
                   <td className="px-4 py-3">
                     {hasAlias ? (
                       <>
                         <div className="font-sans text-ink/80">{f.title}</div>
-                        <div className="font-mono text-[11px] text-ink/45">{f.name}</div>
+                        <div className="font-mono text-[11px] text-ink/45">
+                          {f.name}
+                        </div>
                       </>
                     ) : (
                       <span className="font-mono text-ink/80">{f.name}</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 font-sans text-ink/60">{f.type ?? '—'}</td>
-                  <td className="px-4 py-3 font-sans text-ink/60">{f.description ?? ''}</td>
-                  <td className="px-4 py-3 font-sans text-ink/50">{tags.join(', ')}</td>
+                  <td className="px-4 py-3 font-sans text-ink/60">
+                    {f.type ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 font-sans text-ink/60">
+                    {f.description ?? ""}
+                  </td>
+                  <td className="px-4 py-3 font-sans text-ink/50">
+                    {tags.join(", ")}
+                  </td>
                 </tr>
-              )
+              );
             })}
           </tbody>
         </table>
       </div>
       {resource.schema.primaryKey && (
         <p className="mt-2 font-sans text-xs text-ink/45">
-          Primary key:{' '}
+          Primary key:{" "}
           <code className="font-mono text-ink/70">
             {Array.isArray(resource.schema.primaryKey)
-              ? resource.schema.primaryKey.join(', ')
+              ? resource.schema.primaryKey.join(", ")
               : resource.schema.primaryKey}
           </code>
         </p>
       )}
     </div>
-  )
+  );
 }
