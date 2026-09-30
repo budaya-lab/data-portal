@@ -18,7 +18,7 @@ Visit `http://localhost:3000/search`. To check a production build, run `pnpm bui
 | `pnpm dev` | Start the local Next.js server |
 | `pnpm build` | Generate the feeds and build the site |
 | `pnpm exec tsc --noEmit` | Type-check |
-| `TSX_TSCONFIG_PATH=scripts/tsconfig.test.json node --import tsx --test scripts/catalog.test.ts scripts/harvest-roundtrip.test.ts` | Run catalogue and metadata tests |
+| `TSX_TSCONFIG_PATH=scripts/tsconfig.test.json node --import tsx --test scripts/catalog.test.ts scripts/github-repositories.test.ts scripts/harvest-roundtrip.test.ts` | Run catalogue, GitHub onboarding, and metadata tests |
 | `pnpm lint` / `pnpm check` | Run Biome lint / lint + format checks |
 
 ## Catalogue workflow
@@ -50,6 +50,21 @@ The link is a **landing page**, not a public data URL; GitHub may show 404 to si
 For public sources, prefer linking to an existing public landing page with `sources`. If an accessible CSV/TSV/JSON/GeoJSON resource needs a preview, an absolute URL can be used in `file` (with `format`), subject to the remote host's CORS support. Avoid copying source data into the portal by default. Small CSVs under `public/data/` are inherited **template samples**, not CSSH research data; other demo records also reference external R2-hosted Parquet/geo files. Keep these samples until deliberately retired, but do not treat their namespaces or data as CSSH publishers.
 
 The restricted CSSH entries in `datasets.json` are examples of the current onboarding pattern. New records should use informative titles, descriptions, and subject keywords so they are discoverable without exposing private content. After editing, build the site and check both `/search` and the generated showcase URL. No per-dataset page is needed.
+
+### GitHub repository onboarding
+
+`scripts/github-repositories.ts` can propose metadata-only draft records from repositories in a GitHub organisation or user account. It matches repository **names** locally (default `^ds[-_].*`), reads only GitHub repository metadata plus allowlisted `datapackage.json`, `metadata.yaml`, and README files, and never downloads dataset files. From `metadata.yaml`, it recognizes top-level `title`/`name`, `description`, and `keywords` fields (including a keyword list). Metadata extracted from repository text is untrusted and may be incomplete; review every proposed description and keyword before applying it.
+
+```bash
+# Uses your active `gh` login; set GITHUB_TOKEN only if you want to override it.
+pnpm catalogue:github culturalheritagenus                         # dry-run (default)
+pnpm catalogue:github culturalheritagenus --namespace cssh        # publisher override
+pnpm catalogue:github culturalheritagenus --pattern '^ds[-_].*' --apply
+```
+
+The required first argument is the GitHub organisation or username. By default, the catalogue namespace is that account's lowercase login; `--namespace` overrides it without changing source links. `--pattern` overrides the default regular expression. The tool uses GitHub's [REST API](https://docs.github.com/en/rest) for [account lookup](https://docs.github.com/en/rest/users/users#get-a-user), [repository listing](https://docs.github.com/en/rest/repos/repos#list-organization-repositories), and [allowlisted contents](https://docs.github.com/en/rest/repos/contents#get-repository-content); provide a token with only the read permissions needed for those repositories. Already-catalogued repositories are skipped before metadata files are read. A TTY shows a progress bar while new candidates are processed; instead of printing candidate JSON, the script saves a review report to `.tmp/github-repository-review-<namespace>-<account>.json` and prints its path and a count summary. `.tmp/` is gitignored. `--apply` saves the same report and then requires typing `apply` in a terminal before appending new records; it is not suitable for unattended use. Missing descriptions/keywords and slug conflicts are flagged in the report. Existing records are never overwritten.
+
+New records are `draft: true`. They are visible locally in development, but omitted from production catalogue routes/search/home and all generated DCAT feeds. Remove `draft` only after reviewing the metadata and access classification. Drafts are a production visibility gate, not confidentiality: the repository is private, but draft metadata is visible to its collaborators and remains in Git history. The scraper never writes resource/file URLs or `file`/`resources` fields. Non-public or unknown repository visibility is treated as restricted and linked only to the credential-free GitHub repository landing page.
 
 ## Implementation status
 
