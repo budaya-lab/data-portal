@@ -11,7 +11,7 @@ pnpm install
 pnpm dev
 ```
 
-Visit `http://localhost:3000/search`. To check a production build, run `pnpm build`. The build and dev scripts also generate optional DCAT feeds from the catalogue; `datasets.json` remains the source of truth.
+Visit `http://localhost:3000/`. To check a production build, run `pnpm build`. The build and dev scripts also generate optional DCAT feeds from the catalogue; `datasets.json` remains the source of truth.
 
 | Command | Purpose |
 | --- | --- |
@@ -76,5 +76,4 @@ New records are `draft: true`. They are visible locally in development, but omit
 
 - [`lib/providers/static-provider.ts`](lib/providers/static-provider.ts) loads the manifest at build time; [`lib/datasets.ts`](lib/datasets.ts) supplies search, routing, and restricted-access validation. [`lib/providers/types.ts`](lib/providers/types.ts) defines the record shape.
 - The current UI and bundled samples still contain PortalJS template preview, map, and DuckDB features. `DATA_QUERY` is **still `'duckdb'`** in `lib/datasets.ts`; [ARCHITECTURE.md](ARCHITECTURE.md) calls for a later switch to `'flat'` for the catalogue's preview-only use case. Do not assume that switch has been made.
-- Git LFS/R2 configuration and optional template commands are present, but the CSSH default is **external linked data**, not ingesting files into R2. XML and PostgreSQL data can be listed by metadata and landing-page link without adding a preview or a database connection to the site.
-- Cloudflare Pages built from GitHub is the intended hosting model; this repository does not itself provide access control for restricted datasets.
+- Git LFS/R2 configuration and optional template commands are present, but the catalogue defaults to **external linked data**, not ingesting files into R2. Sources can be listed by metadata and landing-page link without adding a preview or a database connection to the site.
