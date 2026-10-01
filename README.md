@@ -51,6 +51,14 @@ For public sources, prefer linking to an existing public landing page with `sour
 
 The restricted CSSH entries in `datasets.json` are examples of the current onboarding pattern. New records should use informative titles, descriptions, and subject keywords so they are discoverable without exposing private content. After editing, build the site and check both `/search` and the generated showcase URL. No per-dataset page is needed.
 
+### Master collections and derived datasets
+
+A master collection is an authoritative body of data; a derived dataset can be a subset or transformation of other data, whether or not its parents are recorded in this catalogue. For example, a PostgreSQL database hosted on Supabase or a Droplet might hold a master collection, while a GitHub repository holds a derived subset. Hosting does **not** determine the role. Keep each as its own catalogue record with its own access label and source landing page; a public subset does not inherit its parent's access label automatically. Never publish a database connection string, credentials, or private URLs.
+
+Records may optionally declare `role: "master" | "derived"` and independently provide `derivedFrom`, an array of `{ "namespace": "...", "slug": "..." }` references to known parent records. Both fields are optional; a derived record may have no recorded parents, and multiple parents are supported. Parent references must resolve to catalogue records, cannot be duplicated or self-referential, and cycles are rejected. For example, a derived record can use `"role": "derived"` without a `derivedFrom` field when its provenance is unknown.
+
+Showcase pages label declared roles and link to known parent records; search results show the role. A published record may reference a draft parent, but production output omits that parent's reference and link; the relationship remains visible in development. Access labels are independent per record. The portal does not connect to source databases. Lineage is not currently exported in generated DCAT feeds. Do not infer additional relationships. See [ARCHITECTURE.md](ARCHITECTURE.md) for design details.
+
 ### GitHub repository onboarding
 
 `scripts/github-repositories.ts` can propose metadata-only draft records from repositories in a GitHub organisation or user account. It matches repository **names** locally (default `^ds[-_].*`), reads only GitHub repository metadata plus allowlisted `datapackage.json`, `metadata.yaml`, and README files, and never downloads dataset files. From `metadata.yaml`, it recognizes top-level `title`/`name`, `description`, and `keywords` fields (including a keyword list). Metadata extracted from repository text is untrusted and may be incomplete; review every proposed description and keyword before applying it.

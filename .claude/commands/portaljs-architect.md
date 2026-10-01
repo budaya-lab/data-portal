@@ -83,6 +83,10 @@ Round 2 of 4 — the data.
 3. How often does it change? (rarely, by hand · regularly · continuously)
 4. How many datasets? (a handful · dozens · hundreds+)
 5. Any of it private / access-controlled? (no, all public · yes)
+6. Do any records describe master collections and derived subsets/outputs? If yes,
+   are any parent catalogue records known? Parent references are optional, even for
+   derived records, and may be multiple. (default: no known lineage; do not infer it
+   from storage location)
 ```
 If the user points at actual files or a directory, inspect them to ground the answers
 instead of guessing — e.g. size and row counts:
@@ -158,6 +162,13 @@ narrow:
 - Default **Frictionless** profile.
 - Harvesting / standard compliance → add a **DCAT** export and the relevant profile
   (DCAT-AP / national / domain). Multiple dataset types → multi-profile.
+- When the data includes master collections and derived subsets, describe their roles
+  under Metadata, not Storage. Provenance links are optional, including for derived
+  records; when known, allow multiple parents identified by stable catalogue identity.
+  A database can be master or derived, as can a repository. Keep source landing pages
+  and per-record access separate. Do not guess links from URLs. If the portal has no
+  lineage implementation yet, label this as designed-in/built-later rather than
+  claiming the fields or UI already exist.
 
 **Namespace mode (for the `/portaljs-new-portal` handoff):** single publisher → `theme`
 (group by subject); multiple publishers → `owner` (group by who published).
@@ -184,6 +195,7 @@ Architecture brief — say "go" to proceed, or correct anything:
     • Namespace: <theme|owner>
     • Data tier: <inline|LFS|external>   — default for added data; <why>
     • Query:     DATA_QUERY=<flat|duckdb> — <why>
+    • Lineage:   <master/derived roles, optional known parent links, or none/unknown>
 
   Deviations from the default: <list, or "none — this is the recommended default">
   Designed-in but built later: <e.g. Git-LFS via giftless, DCAT export, runtime/RBAC>
@@ -191,10 +203,12 @@ Architecture brief — say "go" to proceed, or correct anything:
 
 ### 4. Persist the brief
 
-On confirmation, write the brief to `./ARCHITECTURE.md` in the working directory (create
-or overwrite) so it documents the decision and parameterizes the build skills. Keep it to
-the six slots + the two build-time knobs (data tier + `DATA_QUERY`) + reasoning + the
-deferred items.
+On confirmation, persist the brief to `./ARCHITECTURE.md` so it documents the decision
+and parameterizes the build skills. If the file already exists, read it first and update
+only confirmed decisions; preserve project-specific constraints, implemented-vs-planned
+notes, and unrelated content. Do not overwrite an existing brief with template defaults.
+Keep the six slots + the two build-time knobs (data tier + `DATA_QUERY`) + reasoning +
+any relevant lineage decision and deferred items.
 
 ### 5. Hand off to the build skills
 

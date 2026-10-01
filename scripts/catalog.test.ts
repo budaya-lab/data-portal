@@ -36,6 +36,172 @@ test("catalog search finds Frictionless keywords without searching source data",
   );
 });
 
+test("lineage is optional and may reference multiple catalogue parents", async () => {
+  const master: Dataset = { ...tagged, slug: "master", role: "master" };
+  const secondMaster: Dataset = {
+    ...tagged,
+    slug: "second-master",
+    namespace: "archives",
+    role: "master",
+  };
+  const derived: Dataset = {
+    ...tagged,
+    slug: "derived",
+    role: "derived",
+    derivedFrom: [
+      { namespace: master.namespace, slug: master.slug },
+      { namespace: secondMaster.namespace, slug: secondMaster.slug },
+    ],
+  };
+  const provider = new StaticProvider(
+    [master, secondMaster, derived],
+    "production",
+  );
+  assert.deepEqual(
+    (await provider.getDataset("humanities", "derived"))?.derivedFrom,
+    [
+      { namespace: "humanities", slug: "master" },
+      { namespace: "archives", slug: "second-master" },
+    ],
+  );
+  assert.doesNotThrow(() =>
+    validateCatalogAccess([
+      { ...tagged, slug: "derived-without-parents", role: "derived" },
+      { ...tagged, slug: "empty-parents", derivedFrom: [] },
+    ]),
+  );
+});
+
+test("catalogue validates lineage references and rejects cycles", () => {
+  const parent: Dataset = { ...tagged, slug: "parent", role: "master" };
+  const derived: Dataset = {
+    ...tagged,
+    slug: "derived",
+    role: "derived",
+    derivedFrom: [{ namespace: parent.namespace, slug: parent.slug }],
+  };
+  const restrictedParent: Dataset = {
+    ...parent,
+    access: "restricted",
+    sources: [
+      { title: "Parent login", path: "https://archive.example.org/login" },
+    ],
+  };
+  assert.doesNotThrow(() => validateCatalogAccess([restrictedParent, derived]));
+  assert.throws(
+    () =>
+      validateCatalogAccess([
+        { ...tagged, role: "unknown" } as unknown as Dataset,
+      ]),
+    /invalid role/i,
+  );
+  assert.throws(
+    () =>
+      validateCatalogAccess([
+        { ...tagged, derivedFrom: [{ namespace: "", slug: "parent" }] },
+      ]),
+    /invalid parent reference/i,
+  );
+  assert.throws(
+    () =>
+      validateCatalogAccess([
+        {
+          ...tagged,
+          derivedFrom: [
+            {
+              namespace: "humanities",
+              slug: "parent",
+              privateUrl: "https://private.invalid",
+            },
+          ],
+        } as unknown as Dataset,
+        parent,
+      ]),
+    /invalid parent reference/i,
+  );
+  assert.throws(
+    () =>
+      validateCatalogAccess([
+        { ...derived, derivedFrom: [{ namespace: "missing", slug: "parent" }] },
+      ]),
+    /unknown parent/i,
+  );
+  assert.throws(
+    () =>
+      validateCatalogAccess([
+        {
+          ...derived,
+          derivedFrom: [
+            { namespace: parent.namespace, slug: parent.slug },
+            { namespace: parent.namespace, slug: parent.slug },
+          ],
+        },
+        parent,
+      ]),
+    /duplicate parent/i,
+  );
+  assert.throws(
+    () =>
+      validateCatalogAccess([
+        {
+          ...derived,
+          derivedFrom: [{ namespace: derived.namespace, slug: derived.slug }],
+        },
+      ]),
+    /cycle/i,
+  );
+  assert.throws(
+    () =>
+      validateCatalogAccess([
+        {
+          ...parent,
+          role: "derived",
+          derivedFrom: [{ namespace: "humanities", slug: "derived" }],
+        },
+        derived,
+      ]),
+    /cycle/i,
+  );
+});
+
+test("production provider omits draft parents without mutating manifest records", async () => {
+  const draftParent: Dataset = { ...tagged, slug: "draft-parent", draft: true };
+  const publishedChild: Dataset = {
+    ...tagged,
+    slug: "published-child",
+    role: "derived",
+    derivedFrom: [{ namespace: tagged.namespace, slug: draftParent.slug }],
+  };
+  const records = [draftParent, publishedChild];
+  const production = new StaticProvider(records, "production");
+  const development = new StaticProvider(records, "development");
+
+  assert.deepEqual(
+    (await production.getDataset(tagged.namespace, publishedChild.slug))
+      ?.derivedFrom,
+    [],
+  );
+  const productionList = await production.listDatasets();
+  assert.equal(JSON.stringify(productionList).includes("draft-parent"), false);
+  const productionResults = await production.search({});
+  assert.deepEqual(
+    productionResults.find((d) => d.slug === publishedChild.slug)?.derivedFrom,
+    [],
+  );
+  assert.equal(
+    JSON.stringify(productionResults).includes("draft-parent"),
+    false,
+  );
+  assert.deepEqual(
+    (await development.getDataset(tagged.namespace, publishedChild.slug))
+      ?.derivedFrom,
+    [{ namespace: tagged.namespace, slug: draftParent.slug }],
+  );
+  assert.deepEqual(publishedChild.derivedFrom, [
+    { namespace: tagged.namespace, slug: draftParent.slug },
+  ]);
+});
+
 test("isDraft identifies only explicitly marked draft datasets", () => {
   assert.equal(isDraft({ ...tagged, draft: true }), true);
   assert.equal(isDraft(tagged), false);
@@ -310,4 +476,48 @@ test("unmarked existing datasets retain their public resource display", () => {
   );
   assert.match(html, /Download &amp; API/);
   assert.match(html, /\/data\/data\.csv/);
+});
+
+test("dataset showcase renders role and catalogue parent links", () => {
+  const dataset: Dataset = {
+    ...tagged,
+    role: "derived",
+    derivedFrom: [{ namespace: "archives", slug: "master-record" }],
+  };
+  const parent: Dataset = {
+    slug: "master-record",
+    namespace: "archives",
+    name: "Master collection",
+  };
+  const secondParent: Dataset = {
+    slug: "second-master",
+    namespace: "other-archives",
+    name: "Second master collection",
+  };
+  const html = renderToStaticMarkup(
+    createElement(DatasetPage, {
+      dataset,
+      parents: [parent, secondParent],
+      resources: [],
+      activity: [],
+    }),
+  );
+  assert.match(html, /Derived dataset/);
+  assert.match(html, /Master collection/);
+  assert.match(html, /href="\/@archives\/master-record"/);
+  assert.match(html, /Second master collection/);
+  assert.match(html, /href="\/@other-archives\/second-master"/);
+});
+
+test("dataset showcase supports a derived role without parent metadata", () => {
+  const html = renderToStaticMarkup(
+    createElement(DatasetPage, {
+      dataset: { ...tagged, role: "derived", derivedFrom: [] },
+      parents: [],
+      resources: [],
+      activity: [],
+    }),
+  );
+  assert.match(html, /Derived dataset/);
+  assert.doesNotMatch(html, /Derived from/);
 });

@@ -7,6 +7,7 @@ import { Table } from "../../components/Table";
 import {
   type ActivityEntry,
   DATA_QUERY,
+  datasetHref,
   type Dataset,
   isDraft,
   isRestricted,
@@ -38,6 +39,7 @@ const MapPreview = dynamic(() => import("../../components/MapPreview"), {
 
 type PageProps = {
   dataset: Dataset;
+  parents?: Dataset[];
   resources: Resource[];
   activity: ActivityEntry[];
 };
@@ -61,10 +63,18 @@ export const getStaticProps: GetStaticProps<PageProps> = async ({ params }) => {
   const namespace = String(params?.owner ?? "").replace(/^@/, "");
   const dataset = await provider.getDataset(namespace, String(params?.slug));
   if (!dataset) return { notFound: true };
+  const catalog = await provider.listDatasets();
+  const parents = (dataset.derivedFrom ?? [])
+    .map(({ namespace: parentNamespace, slug }) =>
+      catalog.find((candidate) =>
+        candidate.namespace === parentNamespace && candidate.slug === slug,
+      ),
+    )
+    .filter((parent): parent is Dataset => parent !== undefined);
   // Capture git history for each resource (and the derived activity feed) at build
   // time — deployed portals are static exports with no git in out/. See lib/history.ts.
   const { resources, activity } = withHistory(dataset);
-  return { props: { dataset, resources, activity } };
+  return { props: { dataset, parents, resources, activity } };
 };
 
 // Showcase surface (editorial design imported from the Claude Design mockups): an
@@ -78,6 +88,7 @@ export const getStaticProps: GetStaticProps<PageProps> = async ({ params }) => {
 // primary download.
 export default function DatasetPage({
   dataset,
+  parents = [],
   resources,
   activity,
 }: PageProps) {
@@ -286,6 +297,31 @@ export default function DatasetPage({
               label="Access"
               value={restricted ? "Restricted" : "Public"}
             />
+            {dataset.role && (
+              <SidebarField
+                label="Collection role"
+                value={dataset.role === "master" ? "Master collection" : "Derived dataset"}
+              />
+            )}
+            {parents.length > 0 && (
+              <div>
+                <div className="mb-1.5 font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-ink/45">
+                  Derived from
+                </div>
+                <ul className="font-serif text-sm text-ink/80">
+                  {parents.map((parent) => (
+                    <li key={`${parent.namespace}/${parent.slug}`}>
+                      <Link
+                        href={datasetHref(parent)}
+                        className="text-accent underline underline-offset-2"
+                      >
+                        {parent.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <SidebarField
               label="Status"
               value={isDraft(dataset) ? "Draft" : "Published"}

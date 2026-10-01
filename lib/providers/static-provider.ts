@@ -30,9 +30,21 @@ export class StaticProvider implements DataProvider {
   }
 
   private visibleDatasets(): Dataset[] {
-    return this.environment === 'development'
-      ? this.datasets
-      : this.datasets.filter((dataset) => dataset.draft !== true)
+    if (this.environment === 'development') return this.datasets
+
+    const visible = this.datasets.filter((dataset) => dataset.draft !== true)
+    const visibleIds = new Set(
+      visible.map((dataset) => JSON.stringify([dataset.namespace, dataset.slug])),
+    )
+    return visible.map((dataset) => {
+      if (!dataset.derivedFrom) return dataset
+      return {
+        ...dataset,
+        derivedFrom: dataset.derivedFrom.filter((parent) =>
+          visibleIds.has(JSON.stringify([parent.namespace, parent.slug])),
+        ),
+      }
+    })
   }
 
   async listDatasets(): Promise<Dataset[]> {

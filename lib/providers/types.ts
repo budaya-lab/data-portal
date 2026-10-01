@@ -107,6 +107,10 @@ export type Dataset = {
   licenses?: License[]
   sources?: Source[]
   keywords?: string[]
+  // Catalogue lineage is independent of source location and access. Omit role
+  // when unknown; derivedFrom may be absent or empty when parentage is unknown.
+  role?: 'master' | 'derived'
+  derivedFrom?: { namespace: string; slug: string }[]
   // Catalog access label. Restricted data stays at its source; this public
   // manifest contains only metadata and a login-protected landing page URL.
   // A restricted `sources[]` entry also makes the dataset restricted.

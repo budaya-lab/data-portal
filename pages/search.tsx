@@ -366,6 +366,11 @@ function DatasetRow({ ds }: { ds: Dataset }) {
         <span className={isRestricted(ds) ? "text-accent" : ""}>
           {isRestricted(ds) ? "Restricted" : "Public"}
         </span>
+        {ds.role && (
+          <span>
+            {ds.role === "master" ? "Master collection" : "Derived dataset"}
+          </span>
+        )}
         {isDraft(ds) && <span>Draft</span>}
       </div>
     </Link>

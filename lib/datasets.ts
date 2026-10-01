@@ -66,10 +66,61 @@ export function isRestricted(d: Dataset): boolean {
 // A public static export cannot enforce access to data. Reject restricted
 // resources at build time, before any file URLs can enter the generated pages.
 export function validateCatalogAccess(datasets: Dataset[]): void {
+  const byId = new Map<string, Dataset>();
+  for (const d of datasets) {
+    const id = JSON.stringify([d.namespace, d.slug]);
+    if (byId.has(id)) {
+      throw new Error(`Duplicate dataset identity ${d.namespace}/${d.slug}`);
+    }
+    byId.set(id, d);
+  }
+
+  const parentsById = new Map<string, string[]>();
   for (const d of datasets) {
     if (d.draft !== undefined && typeof d.draft !== "boolean") {
       throw new Error(`Invalid draft for dataset ${d.namespace}/${d.slug}`);
     }
+    if (d.role !== undefined && d.role !== "master" && d.role !== "derived") {
+      throw new Error(`Invalid role for dataset ${d.namespace}/${d.slug}`);
+    }
+    const id = JSON.stringify([d.namespace, d.slug]);
+    if (d.derivedFrom !== undefined && !Array.isArray(d.derivedFrom)) {
+      throw new Error(
+        `Invalid parent references for dataset ${d.namespace}/${d.slug}`,
+      );
+    }
+    const parentIds: string[] = [];
+    const seenParents = new Set<string>();
+    for (const parent of d.derivedFrom ?? []) {
+      if (
+        !parent ||
+        Object.keys(parent).some(
+          (key) => key !== "namespace" && key !== "slug",
+        ) ||
+        typeof parent.namespace !== "string" ||
+        !parent.namespace.trim() ||
+        typeof parent.slug !== "string" ||
+        !parent.slug.trim()
+      ) {
+        throw new Error(
+          `Invalid parent reference for dataset ${d.namespace}/${d.slug}`,
+        );
+      }
+      const parentId = JSON.stringify([parent.namespace, parent.slug]);
+      if (seenParents.has(parentId)) {
+        throw new Error(
+          `Duplicate parent reference for dataset ${d.namespace}/${d.slug}`,
+        );
+      }
+      seenParents.add(parentId);
+      if (!byId.has(parentId)) {
+        throw new Error(
+          `Unknown parent ${parent.namespace}/${parent.slug} for dataset ${d.namespace}/${d.slug}`,
+        );
+      }
+      parentIds.push(parentId);
+    }
+    parentsById.set(id, parentIds);
     if (
       d.access !== undefined &&
       d.access !== "public" &&
@@ -122,6 +173,19 @@ export function validateCatalogAccess(datasets: Dataset[]): void {
       }
     }
   }
+
+  const visiting = new Set<string>();
+  const visited = new Set<string>();
+  const visit = (id: string): void => {
+    if (visiting.has(id))
+      throw new Error(`Catalogue lineage cycle involving ${id}`);
+    if (visited.has(id)) return;
+    visiting.add(id);
+    for (const parentId of parentsById.get(id) ?? []) visit(parentId);
+    visiting.delete(id);
+    visited.add(id);
+  };
+  for (const id of Array.from(parentsById.keys())) visit(id);
 }
 
 // Canonical URL for a dataset's showcase page. Datasets are namespaced under `@`
