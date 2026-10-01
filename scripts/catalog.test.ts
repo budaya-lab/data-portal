@@ -265,6 +265,33 @@ test("static provider searches manifest keywords as well as catalog metadata", a
   assert.ok(matches.every((d) => matchesCatalogQuery(d, "geospatial")));
 });
 
+test("published CSSH datasets link to the example database except Jawi and Rumi", async () => {
+  const provider = new StaticProvider(undefined, "development");
+  const parent = await provider.getDataset(
+    "culturalheritagenus",
+    "example-supabase-database",
+  );
+  assert.equal(parent?.role, "master");
+
+  const linkedSlugs = [
+    "ds-article-20260902",
+    "ds-filteredum1956",
+    "ds-articlereconstruction-20260821",
+  ];
+  for (const slug of linkedSlugs) {
+    const dataset = await provider.getDataset("culturalheritagenus", slug);
+    assert.ok(dataset);
+    assert.equal(dataset.role, "derived");
+    assert.deepEqual(dataset.derivedFrom, [
+      { namespace: "culturalheritagenus", slug: "example-supabase-database" },
+    ]);
+  }
+
+  const jawiAndRumi = await provider.getDataset("culturalheritagenus", "rumi-data");
+  assert.ok(jawiAndRumi);
+  assert.equal(jawiAndRumi.derivedFrom, undefined);
+});
+
 test("private research repository is listed as a metadata-only restricted dataset", async () => {
   const provider = new StaticProvider();
   const dataset = await provider.getDataset(

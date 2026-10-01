@@ -200,6 +200,13 @@
     "slug": "ds-article-20260902",
     "namespace": "culturalheritagenus",
     "name": "UM Newspaper pages",
+    "role": "derived",
+    "derivedFrom": [
+      {
+        "namespace": "culturalheritagenus",
+        "slug": "example-supabase-database"
+      }
+    ],
     "description": "80 articles manually annotated by Syafiq and Frial for the article reconstruction task. OCR has not yet been performed.",
     "keywords": [
       "newspapers",
@@ -238,6 +245,13 @@
     "slug": "ds-filteredum1956",
     "namespace": "culturalheritagenus",
     "name": "UM-1956 Newspaper pages",
+    "role": "derived",
+    "derivedFrom": [
+      {
+        "namespace": "culturalheritagenus",
+        "slug": "example-supabase-database"
+      }
+    ],
     "description": "80 UM-1956 pages in ALTO and article XML format; every text region is empty or contains at least six characters, with no negative coordinates.",
     "keywords": [
       "newspapers",
@@ -260,6 +274,13 @@
     "slug": "ds-articlereconstruction-20260821",
     "namespace": "culturalheritagenus",
     "name": "Article Reconstruction Ground Truth",
+    "role": "derived",
+    "derivedFrom": [
+      {
+        "namespace": "culturalheritagenus",
+        "slug": "example-supabase-database"
+      }
+    ],
     "description": "Region (JSON) and article (XML) ground-truth data for evaluating article reconstruction, with helper scripts for verification and exploration.",
     "keywords": [
       "article reconstruction",
@@ -1486,6 +1507,7 @@
     "slug": "example-supabase-database",
     "namespace": "culturalheritagenus",
     "name": "Example Supabase Database",
+    "role": "master",
     "description": "Illustrative PostgreSQL source only; no database is provisioned. Remote Supabase project URL (placeholder): https://your-project-ref.supabase.co. No connection or credentials are provided.",
     "keywords": [
       "database",
