@@ -21,6 +21,12 @@ Visit `http://localhost:3000/`. To check a production build, run `pnpm build`. T
 | `TSX_TSCONFIG_PATH=scripts/tsconfig.test.json node --import tsx --test scripts/catalog.test.ts scripts/github-repositories.test.ts scripts/harvest-roundtrip.test.ts` | Run catalogue, GitHub onboarding, and metadata tests |
 | `pnpm lint` / `pnpm check` | Run Biome lint / lint + format checks |
 
+## Releases
+
+`Validate portal` runs the catalogue tests, typecheck, and build on PRs to `main` and pushes to `main`. Repository-wide `pnpm lint` / `pnpm check` currently have pre-existing diagnostics, so they are not CI gates yet. After a successful **push** validation on the current `main` commit, `Release portal` runs Release Please. It uses Conventional Commits to propose a release PR that updates the version in `package.json`, the manifest, and `CHANGELOG.md`; merging that PR creates a tag and GitHub Release. The first release starts at `0.1.0`. Releases do not publish catalogue records or deploy the portal; review dataset metadata and access separately.
+
+Use reviewed PRs and Conventional Commit titles for squash merges (e.g. `feat(catalog): add search filters` or `fix(catalog): correct dataset links`). Enable **Settings → Actions → General → Allow GitHub Actions to create and approve pull requests** if repository policy requires it. The release workflow uses the built-in `GITHUB_TOKEN`, not a personal access token. GitHub does not trigger PR CI for PRs created with that token: manually run **Validate portal** with `workflow_dispatch` on the release PR branch, inspect the diff and passing result, then merge. Re-run validation if the release branch changes. Confirm your branch protection accepts this manual validation before relying on it as a required check.
+
 ## Catalogue workflow
 
 Edit [`datasets.json`](datasets.json) to add or update records; **do not create a page per dataset**. The search page at `/search` filters record names, publisher namespaces, descriptions, categories, and keywords (not the contents of source files). [`pages/[owner]/[slug].tsx`](pages/%5Bowner%5D/%5Bslug%5D.tsx) generates each showcase at `/@<namespace>/<slug>` at build time. This portal uses `NAMESPACE_TYPE = 'owner'`: `namespace` means publisher/owner, not subject. `(namespace, slug)` must be unique.
