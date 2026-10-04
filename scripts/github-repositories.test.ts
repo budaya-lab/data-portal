@@ -8,6 +8,7 @@ import {
   parseArguments,
   planRepositories,
   resolveGitHubToken,
+  readRepositoryMetadata,
   matchesRepositoryName,
   type Repository,
 } from './github-repositories';
@@ -148,6 +149,130 @@ test('metadata.yaml supplies title, description and keyword-list metadata', () =
     'Annotated newspaper pages for the article reconstruction study.',
   );
   assert.deepEqual(metadata.keywords, ['newspapers', 'article reconstruction']);
+});
+
+test('metadata.json supplies catalogue name, description and keywords', () => {
+  const metadata = extractMetadata(
+    { ...repo, description: null, topics: [] },
+    {
+      'metadata.json': JSON.stringify({
+        name: 'Jawi transcription subset',
+        description: 'Annotated Jawi pages for transcription research.',
+        keywords: ['jawi', 'transcription'],
+      }),
+    },
+  );
+  assert.deepEqual(metadata, {
+    title: 'Jawi transcription subset',
+    description: 'Annotated Jawi pages for transcription research.',
+    keywords: ['jawi', 'transcription'],
+  });
+});
+
+test('metadata.json carries declared lineage into a draft, without inventing parents', () => {
+  const metadata = extractMetadata(repo, {
+    'metadata.json': JSON.stringify({
+      name: 'Annotated subset',
+      role: 'derived',
+      derivedFrom: [{ namespace: 'cssh', slug: 'source-pages' }],
+    }),
+  });
+  assert.deepEqual(metadata.derivedFrom, [{ namespace: 'cssh', slug: 'source-pages' }]);
+  assert.equal(metadata.role, 'derived');
+  const candidate = buildCandidate(repo, 'cssh', metadata);
+  assert.equal(candidate.draft, true);
+  assert.equal(candidate.role, 'derived');
+  assert.deepEqual(candidate.derivedFrom, metadata.derivedFrom);
+  const noKnownParents = buildCandidate(repo, 'cssh', extractMetadata(repo, {
+    'metadata.json': JSON.stringify({ role: 'derived', derivedFrom: [] }),
+  }));
+  assert.equal(noKnownParents.role, 'derived');
+  assert.deepEqual(noKnownParents.derivedFrom, []);
+  assert.equal('derivedFrom' in buildCandidate(repo, 'cssh', {}), false);
+});
+
+test('invalid metadata.json lineage cannot enter draft candidates', () => {
+  for (const lineage of [
+    { role: 'unknown' },
+    { derivedFrom: null },
+    { derivedFrom: [{ namespace: '', slug: 'source-pages' }] },
+    { derivedFrom: [{ namespace: 'cssh', slug: 'source-pages', path: 'private' }] },
+    { derivedFrom: [{ namespace: 'cssh', slug: 'source-pages' }, { namespace: 'cssh', slug: 'source-pages' }] },
+  ]) {
+    assert.throws(() => extractMetadata(repo, {
+      'metadata.json': JSON.stringify(lineage),
+    }), /role|derivedFrom|parent/i);
+  }
+});
+
+test('catalogue merge refuses unknown lineage parents instead of writing a broken manifest', () => {
+  const draft = buildCandidate(repo, 'cssh', {
+    title: 'Annotated subset',
+    role: 'derived',
+    derivedFrom: [{ namespace: 'cssh', slug: 'source-pages' }],
+  });
+  assert.throws(() => mergeCandidates('[]', [draft]), /unknown parent/i);
+  const parent = { slug: 'source-pages', namespace: 'cssh', name: 'Source pages' };
+  const merged = JSON.parse(mergeCandidates(JSON.stringify([parent]), [draft]));
+  assert.deepEqual(merged[1].derivedFrom, [{ namespace: 'cssh', slug: 'source-pages' }]);
+});
+
+test('metadata.json takes precedence but datapackage.json remains a fallback', () => {
+  const metadata = extractMetadata(repo, {
+    'metadata.json': JSON.stringify({ name: 'Repository title' }),
+    'datapackage.json': JSON.stringify({
+      title: 'Package title',
+      description: 'Package description',
+      keywords: ['package keyword'],
+    }),
+  });
+  assert.equal(metadata.title, 'Repository title');
+  assert.equal(metadata.description, 'Package description');
+  assert.deepEqual(metadata.keywords, ['package keyword']);
+  assert.equal(
+    extractMetadata(repo, {
+      'metadata.json': '{invalid',
+      'datapackage.json': JSON.stringify({ title: 'Package title' }),
+    }).title,
+    'Package title',
+  );
+});
+
+test('invalid metadata.json keywords fall back to valid datapackage keywords', () => {
+  const metadata = extractMetadata(
+    { ...repo, topics: ['repository keyword'] },
+    {
+      'metadata.json': JSON.stringify({ keywords: ['https://private.example/file.csv'] }),
+      'datapackage.json': JSON.stringify({ keywords: ['package keyword'] }),
+    },
+  );
+  assert.deepEqual(metadata.keywords, ['package keyword']);
+});
+
+test('repository metadata reader fetches metadata.json without dropping datapackage.json', async () => {
+  const originalFetch = globalThis.fetch;
+  const requested: string[] = [];
+  globalThis.fetch = async (input) => {
+    const url = String(input);
+    requested.push(url);
+    const file = url.includes('/contents/metadata.json')
+      ? { name: 'Repository title' }
+      : url.includes('/contents/datapackage.json')
+        ? { description: 'Package description' }
+        : undefined;
+    return file
+      ? new Response(JSON.stringify({ content: Buffer.from(JSON.stringify(file)).toString('base64'), encoding: 'base64' }))
+      : new Response('', { status: 404 });
+  };
+  try {
+    const metadata = await readRepositoryMetadata('cssh', repo, 'test-token');
+    assert.equal(metadata.title, 'Repository title');
+    assert.equal(metadata.description, 'Package description');
+    assert.ok(requested.some((url) => url.includes('/contents/metadata.json')));
+    assert.ok(requested.some((url) => url.includes('/contents/datapackage.json')));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test('README and structured metadata are used conservatively', () => {

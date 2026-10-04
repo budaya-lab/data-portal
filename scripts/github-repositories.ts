@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { validateCatalogAccess, type Dataset } from "../lib/datasets";
 
 const API = "https://api.github.com";
 const PAGE_SIZE = 100;
@@ -34,6 +35,8 @@ type Candidate = {
   name: string;
   description?: string;
   keywords?: string[];
+  role?: "master" | "derived";
+  derivedFrom?: { namespace: string; slug: string }[];
   draft: true;
   access: "public" | "restricted";
   sources: [{ title: string; path: string; access: "public" | "restricted" }];
@@ -49,6 +52,8 @@ export type ExtractedMetadata = {
   title?: string;
   description?: string;
   keywords?: string[];
+  role?: "master" | "derived";
+  derivedFrom?: { namespace: string; slug: string }[];
 };
 
 export function resolveGitHubToken(
@@ -217,53 +222,84 @@ function parseMetadataYaml(text: string): Record<string, unknown> {
   return result;
 }
 
+function parseOptionalJson(text: string | undefined): Record<string, unknown> {
+  if (!text) return {};
+  try {
+    const parsed: unknown = JSON.parse(text);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed))
+      return parsed as Record<string, unknown>;
+  } catch {
+    // Invalid optional metadata is ignored and surfaced by missing-field review.
+  }
+  return {};
+}
+
 export function extractMetadata(
   repo: Repository,
   files: Record<string, string>,
 ): ExtractedMetadata {
-  let packageMetadata: Record<string, unknown> = {};
-  if (files["datapackage.json"]) {
-    try {
-      const parsed: unknown = JSON.parse(files["datapackage.json"]);
-      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        packageMetadata = parsed as Record<string, unknown>;
-      }
-    } catch {
-      // Invalid optional metadata is ignored and surfaced by missing-field review.
+  const metadata = parseOptionalJson(files["metadata.json"]);
+  if (metadata.role !== undefined && metadata.role !== "master" && metadata.role !== "derived")
+    throw new Error(`Invalid role in metadata.json for ${repo.full_name}.`);
+  if (metadata.derivedFrom !== undefined) {
+    if (!Array.isArray(metadata.derivedFrom))
+      throw new Error(`Invalid derivedFrom in metadata.json for ${repo.full_name}.`);
+    const seen = new Set<string>();
+    for (const parent of metadata.derivedFrom) {
+      if (!parent || typeof parent !== "object" || Array.isArray(parent) ||
+          Object.keys(parent).length !== 2 ||
+          typeof parent.namespace !== "string" || !parent.namespace.trim() ||
+          typeof parent.slug !== "string" || !parent.slug.trim())
+        throw new Error(`Invalid parent in metadata.json for ${repo.full_name}.`);
+      const key = JSON.stringify([parent.namespace, parent.slug]);
+      if (seen.has(key)) throw new Error(`Duplicate parent in metadata.json for ${repo.full_name}.`);
+      seen.add(key);
     }
   }
+  const packageMetadata = parseOptionalJson(files["datapackage.json"]);
   const yamlMetadata = files["metadata.yaml"]
     ? parseMetadataYaml(files["metadata.yaml"])
     : {};
   const readme = readmeMetadata(
     files["README.md"] ?? files["README.rst"] ?? files["README.txt"] ?? "",
   );
-  const rawKeywords =
-    Array.isArray(packageMetadata.keywords) && packageMetadata.keywords.length
-      ? packageMetadata.keywords
-      : Array.isArray(yamlMetadata.keywords) && yamlMetadata.keywords.length
-        ? yamlMetadata.keywords
-        : (repo.topics ?? []);
-  const keywords = Array.from(
-    new Set(
-      rawKeywords
-        .map((value) => safeText(value, 80))
-        .filter((v): v is string => Boolean(v)),
-    ),
-  ).slice(0, 20);
+  const keywordSources = [
+    metadata.keywords,
+    packageMetadata.keywords,
+    yamlMetadata.keywords,
+    repo.topics,
+  ];
+  const keywords = keywordSources
+    .map((source) =>
+      Array.isArray(source)
+        ? Array.from(
+            new Set(
+              source
+                .map((value) => safeText(value, 80))
+                .filter((value): value is string => Boolean(value)),
+            ),
+          ).slice(0, 20)
+        : [],
+    )
+    .find((values) => values.length > 0);
   return {
     title:
+      safeText(metadata.name, 160) ??
+      safeText(metadata.title, 160) ??
       safeText(packageMetadata.title, 160) ??
       safeText(packageMetadata.name, 160) ??
       safeText(yamlMetadata.title, 160) ??
       safeText(yamlMetadata.name, 160) ??
       readme.title,
     description:
+      safeText(metadata.description, 500) ??
       safeText(packageMetadata.description, 500) ??
       safeText(yamlMetadata.description, 500) ??
       safeText(repo.description, 500) ??
       readme.description,
-    keywords: keywords.length ? keywords : undefined,
+    keywords,
+    ...(metadata.role !== undefined ? { role: metadata.role as "master" | "derived" } : {}),
+    ...(metadata.derivedFrom !== undefined ? { derivedFrom: metadata.derivedFrom as { namespace: string; slug: string }[] } : {}),
   };
 }
 
@@ -310,6 +346,8 @@ export function buildCandidate(
   };
   if (metadata.description) candidate.description = metadata.description;
   if (metadata.keywords?.length) candidate.keywords = metadata.keywords;
+  if (metadata.role) candidate.role = metadata.role;
+  if (metadata.derivedFrom) candidate.derivedFrom = metadata.derivedFrom;
   return candidate;
 }
 
@@ -433,7 +471,9 @@ export function mergeCandidates(
       );
     additions.push(candidate);
   }
-  return `${JSON.stringify([...existing, ...additions], null, 2)}\n`;
+  const merged = [...existing, ...additions];
+  validateCatalogAccess(merged as unknown as Dataset[]);
+  return `${JSON.stringify(merged, null, 2)}\n`;
 }
 
 async function readBounded(response: Response): Promise<string> {
