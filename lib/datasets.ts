@@ -5,6 +5,7 @@
 // holds only the provider-independent bits: the Dataset shape, the namespace
 // mode, and the canonical URL helper.
 
+import stageLabels from "../stage.config.json";
 import type { Dataset, Resource } from "./providers";
 
 export type {
@@ -56,6 +57,42 @@ export function isDraft(d: Dataset): boolean {
   return d.draft === true;
 }
 
+export type DatasetStage = keyof typeof stageLabels;
+
+const configuredStages = Object.entries(stageLabels);
+if (configuredStages.length === 0 || configuredStages.some(([name, label]) =>
+  !/^[a-z][a-z0-9-]*$/.test(name) || typeof label !== "string" || !label.trim()
+)) {
+  throw new Error("Invalid stage.config.json: expected nonempty stage names and labels");
+}
+
+export function getDatasetStage(d: Dataset): DatasetStage | undefined {
+  if (d.keywords === undefined) return undefined;
+  if (!Array.isArray(d.keywords) || d.keywords.some((keyword) => typeof keyword !== "string")) {
+    throw new Error(`Invalid keywords for dataset ${d.namespace}/${d.slug}`);
+  }
+  const stages = d.keywords.filter((keyword) => keyword.startsWith("stage:"));
+  if (stages.length > 1) {
+    throw new Error(`Invalid stage keywords for dataset ${d.namespace}/${d.slug}`);
+  }
+  const keyword = stages[0];
+  if (keyword === undefined) return undefined;
+  const stage = keyword.slice("stage:".length);
+  if (!Object.hasOwn(stageLabels, stage)) {
+    throw new Error(`Invalid stage keyword for dataset ${d.namespace}/${d.slug}`);
+  }
+  return stage as DatasetStage;
+}
+
+export function stageLabel(d: Dataset): string | undefined {
+  const stage = getDatasetStage(d);
+  return stage === undefined ? undefined : stageLabels[stage];
+}
+
+export function subjectKeywords(d: Dataset): string[] {
+  return (d.keywords ?? []).filter((keyword) => !keyword.startsWith("stage:"));
+}
+
 export function isRestricted(d: Dataset): boolean {
   return (
     d.access === "restricted" ||
@@ -80,8 +117,9 @@ export function validateCatalogAccess(datasets: Dataset[]): void {
     if (d.draft !== undefined && typeof d.draft !== "boolean") {
       throw new Error(`Invalid draft for dataset ${d.namespace}/${d.slug}`);
     }
-    if (d.role !== undefined && d.role !== "master" && d.role !== "derived") {
-      throw new Error(`Invalid role for dataset ${d.namespace}/${d.slug}`);
+    getDatasetStage(d);
+    if (Object.hasOwn(d, "role")) {
+      throw new Error(`Catalogue role is unsupported for dataset ${d.namespace}/${d.slug}; use a stage: keyword`);
     }
     const id = JSON.stringify([d.namespace, d.slug]);
     if (d.derivedFrom !== undefined && !Array.isArray(d.derivedFrom)) {
@@ -289,7 +327,7 @@ export function suggestedQueries(datasets: Dataset[], limit = 4): string[] {
     else cands.set(key, { display, score: weight, order: order++ });
   };
 
-  for (const d of datasets) for (const kw of d.keywords ?? []) add(kw, 10);
+  for (const d of datasets) for (const kw of subjectKeywords(d)) add(kw, 10);
 
   if (cands.size < limit) {
     for (const d of datasets) {

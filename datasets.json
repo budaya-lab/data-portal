@@ -200,7 +200,6 @@
     "slug": "ds-article-20260902",
     "namespace": "culturalheritagenus",
     "name": "UM Newspaper pages",
-    "role": "derived",
     "derivedFrom": [
       {
         "namespace": "culturalheritagenus",
@@ -212,7 +211,8 @@
       "newspapers",
       "articles",
       "article reconstruction",
-      "Jawi"
+      "Jawi",
+      "stage:annotated"
     ],
     "access": "restricted",
     "sources": [
@@ -245,7 +245,6 @@
     "slug": "ds-filteredum1956",
     "namespace": "culturalheritagenus",
     "name": "UM-1956 Newspaper pages",
-    "role": "derived",
     "derivedFrom": [
       {
         "namespace": "culturalheritagenus",
@@ -259,7 +258,8 @@
       "article reconstruction",
       "Jawi",
       "UM-1956",
-      "ALTO XML"
+      "ALTO XML",
+      "stage:curated"
     ],
     "access": "restricted",
     "sources": [
@@ -274,7 +274,6 @@
     "slug": "ds-articlereconstruction-20260821",
     "namespace": "culturalheritagenus",
     "name": "Article Reconstruction Ground Truth",
-    "role": "derived",
     "derivedFrom": [
       {
         "namespace": "culturalheritagenus",
@@ -286,7 +285,8 @@
       "article reconstruction",
       "ground truth",
       "regions",
-      "articles"
+      "articles",
+      "stage:annotated"
     ],
     "access": "restricted",
     "sources": [
@@ -1507,14 +1507,14 @@
     "slug": "example-supabase-database",
     "namespace": "culturalheritagenus",
     "name": "Example Supabase Database",
-    "role": "master",
     "description": "Illustrative PostgreSQL source only; no database is provisioned. Remote Supabase project URL (placeholder): https://your-project-ref.supabase.co. No connection or credentials are provided.",
     "keywords": [
       "database",
       "newspapers",
       "Jawi",
       "postgresql",
-      "supabase"
+      "supabase",
+      "stage:master"
     ],
     "access": "restricted",
     "sources": [

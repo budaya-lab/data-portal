@@ -10,6 +10,7 @@ import {
   isDraft,
   isRestricted,
   matchesCatalogQuery,
+  stageLabel,
 } from "../lib/datasets";
 import { provider } from "../lib/providers";
 
@@ -311,9 +312,10 @@ function ShapeTile({ ds }: { ds: Dataset }) {
 // tabular), name + truncated description, a record-count + field-chip meta
 // line, and the namespace tag. No index number — results are filtered and
 // re-ordered freely, so a position number would be meaningless.
-function DatasetRow({ ds }: { ds: Dataset }) {
+export function DatasetRow({ ds }: { ds: Dataset }) {
   const geo = isGeo(ds);
   const fields = fieldNames(ds);
+  const stage = stageLabel(ds);
   return (
     <Link
       href={datasetHref(ds)}
@@ -366,11 +368,7 @@ function DatasetRow({ ds }: { ds: Dataset }) {
         <span className={isRestricted(ds) ? "text-accent" : ""}>
           {isRestricted(ds) ? "Restricted" : "Public"}
         </span>
-        {ds.role && (
-          <span>
-            {ds.role === "master" ? "Master collection" : "Derived dataset"}
-          </span>
-        )}
+        {stage && <span>{stage}</span>}
         {isDraft(ds) && <span>Draft</span>}
       </div>
     </Link>

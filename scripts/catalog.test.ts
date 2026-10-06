@@ -2,18 +2,24 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import stageLabels from "../stage.config.json";
 import type { Dataset } from "../lib/datasets";
 import {
   datasetHref,
+  getDatasetStage,
   isDraft,
   isRestricted,
   matchesCatalogQuery,
   publishedDatasets,
+  stageLabel,
+  subjectKeywords,
+  suggestedQueries,
   validateCatalogAccess,
 } from "../lib/datasets";
 import { toDCAT } from "../lib/metadata/dcat";
 import { StaticProvider } from "../lib/providers/static-provider";
 import DatasetPage from "../pages/[owner]/[slug]";
+import { DatasetRow } from "../pages/search";
 
 const tagged: Dataset = {
   slug: "oral-history",
@@ -36,18 +42,47 @@ test("catalog search finds Frictionless keywords without searching source data",
   );
 });
 
+test("controlled stage keywords describe data without inventing parentage", () => {
+  for (const [stage, label] of Object.entries(stageLabels)) {
+    const dataset: Dataset = { ...tagged, keywords: ["fieldwork", `stage:${stage}`] };
+    assert.equal(getDatasetStage(dataset), stage);
+    assert.equal(stageLabel(dataset), label);
+    assert.deepEqual(subjectKeywords(dataset), ["fieldwork"]);
+    assert.doesNotThrow(() => validateCatalogAccess([dataset]));
+  }
+  assert.equal(getDatasetStage(tagged), undefined);
+  assert.equal(stageLabel(tagged), undefined);
+  assert.equal(getDatasetStage({ ...tagged, derivedFrom: [] }), undefined);
+  assert.deepEqual(suggestedQueries([{ ...tagged, keywords: ["stage:curated", "history"] }], 2), ["history", "interviews"]);
+});
+
+test("catalogue rejects unknown, duplicate, or malformed stages and obsolete roles", () => {
+  for (const keywords of [
+    ["stage:unknown"],
+    ["stage:Master"],
+    ["stage:master", "stage:annotated"],
+    ["stage:master", "stage:master"],
+    ["stage:master", 12],
+  ]) {
+    assert.throws(() => validateCatalogAccess([{ ...tagged, keywords } as Dataset]), /stage|keyword/i);
+  }
+  assert.throws(
+    () => validateCatalogAccess([{ ...tagged, role: "derived" } as unknown as Dataset]),
+    /role.*unsupported/i,
+  );
+});
+
 test("lineage is optional and may reference multiple catalogue parents", async () => {
-  const master: Dataset = { ...tagged, slug: "master", role: "master" };
+  const master: Dataset = { ...tagged, slug: "master", keywords: ["stage:master"] };
   const secondMaster: Dataset = {
     ...tagged,
     slug: "second-master",
     namespace: "archives",
-    role: "master",
+    keywords: ["stage:master"],
   };
   const derived: Dataset = {
     ...tagged,
     slug: "derived",
-    role: "derived",
     derivedFrom: [
       { namespace: master.namespace, slug: master.slug },
       { namespace: secondMaster.namespace, slug: secondMaster.slug },
@@ -66,18 +101,17 @@ test("lineage is optional and may reference multiple catalogue parents", async (
   );
   assert.doesNotThrow(() =>
     validateCatalogAccess([
-      { ...tagged, slug: "derived-without-parents", role: "derived" },
+      { ...tagged, slug: "stage-without-parents", keywords: ["stage:curated"] },
       { ...tagged, slug: "empty-parents", derivedFrom: [] },
     ]),
   );
 });
 
 test("catalogue validates lineage references and rejects cycles", () => {
-  const parent: Dataset = { ...tagged, slug: "parent", role: "master" };
+  const parent: Dataset = { ...tagged, slug: "parent", keywords: ["stage:master"] };
   const derived: Dataset = {
     ...tagged,
     slug: "derived",
-    role: "derived",
     derivedFrom: [{ namespace: parent.namespace, slug: parent.slug }],
   };
   const restrictedParent: Dataset = {
@@ -88,13 +122,6 @@ test("catalogue validates lineage references and rejects cycles", () => {
     ],
   };
   assert.doesNotThrow(() => validateCatalogAccess([restrictedParent, derived]));
-  assert.throws(
-    () =>
-      validateCatalogAccess([
-        { ...tagged, role: "unknown" } as unknown as Dataset,
-      ]),
-    /invalid role/i,
-  );
   assert.throws(
     () =>
       validateCatalogAccess([
@@ -155,7 +182,6 @@ test("catalogue validates lineage references and rejects cycles", () => {
       validateCatalogAccess([
         {
           ...parent,
-          role: "derived",
           derivedFrom: [{ namespace: "humanities", slug: "derived" }],
         },
         derived,
@@ -169,7 +195,6 @@ test("production provider omits draft parents without mutating manifest records"
   const publishedChild: Dataset = {
     ...tagged,
     slug: "published-child",
-    role: "derived",
     derivedFrom: [{ namespace: tagged.namespace, slug: draftParent.slug }],
   };
   const records = [draftParent, publishedChild];
@@ -265,23 +290,20 @@ test("static provider searches manifest keywords as well as catalog metadata", a
   assert.ok(matches.every((d) => matchesCatalogQuery(d, "geospatial")));
 });
 
-test("published CSSH datasets link to the example database except Jawi and Rumi", async () => {
+test("CSSH exploration records have provisional stages without changing parent links", async () => {
   const provider = new StaticProvider(undefined, "development");
-  const parent = await provider.getDataset(
-    "culturalheritagenus",
-    "example-supabase-database",
-  );
-  assert.equal(parent?.role, "master");
+  const parent = await provider.getDataset("culturalheritagenus", "example-supabase-database");
+  assert.ok(parent);
+  assert.equal(getDatasetStage(parent), "master");
 
-  const linkedSlugs = [
-    "ds-article-20260902",
-    "ds-filteredum1956",
-    "ds-articlereconstruction-20260821",
-  ];
-  for (const slug of linkedSlugs) {
+  for (const [slug, stage] of [
+    ["ds-article-20260902", "annotated"],
+    ["ds-filteredum1956", "curated"],
+    ["ds-articlereconstruction-20260821", "annotated"],
+  ] as const) {
     const dataset = await provider.getDataset("culturalheritagenus", slug);
     assert.ok(dataset);
-    assert.equal(dataset.role, "derived");
+    assert.equal(getDatasetStage(dataset), stage);
     assert.deepEqual(dataset.derivedFrom, [
       { namespace: "culturalheritagenus", slug: "example-supabase-database" },
     ]);
@@ -289,6 +311,7 @@ test("published CSSH datasets link to the example database except Jawi and Rumi"
 
   const jawiAndRumi = await provider.getDataset("culturalheritagenus", "rumi-data");
   assert.ok(jawiAndRumi);
+  assert.equal(getDatasetStage(jawiAndRumi), undefined);
   assert.equal(jawiAndRumi.derivedFrom, undefined);
 });
 
@@ -505,10 +528,20 @@ test("unmarked existing datasets retain their public resource display", () => {
   assert.match(html, /\/data\/data\.csv/);
 });
 
-test("dataset showcase renders role and catalogue parent links", () => {
+test("search result shows the controlled stage without exposing a raw keyword", () => {
+  const html = renderToStaticMarkup(
+    createElement(DatasetRow, {
+      ds: { ...tagged, keywords: ["fieldwork", "stage:curated"] },
+    }),
+  );
+  assert.match(html, /Curated dataset/);
+  assert.doesNotMatch(html, /stage:curated/);
+});
+
+test("dataset showcase renders the stage and confirmed catalogue parent links", () => {
   const dataset: Dataset = {
     ...tagged,
-    role: "derived",
+    keywords: ["fieldwork", "stage:annotated"],
     derivedFrom: [{ namespace: "archives", slug: "master-record" }],
   };
   const parent: Dataset = {
@@ -529,22 +562,23 @@ test("dataset showcase renders role and catalogue parent links", () => {
       activity: [],
     }),
   );
-  assert.match(html, /Derived dataset/);
+  assert.match(html, /Annotated dataset/);
+  assert.doesNotMatch(html, /stage:annotated/);
   assert.match(html, /Master collection/);
   assert.match(html, /href="\/@archives\/master-record"/);
   assert.match(html, /Second master collection/);
   assert.match(html, /href="\/@other-archives\/second-master"/);
 });
 
-test("dataset showcase supports a derived role without parent metadata", () => {
+test("dataset showcase displays a curated stage without inventing parent metadata", () => {
   const html = renderToStaticMarkup(
     createElement(DatasetPage, {
-      dataset: { ...tagged, role: "derived", derivedFrom: [] },
+      dataset: { ...tagged, keywords: ["fieldwork", "stage:curated"], derivedFrom: [] },
       parents: [],
       resources: [],
       activity: [],
     }),
   );
-  assert.match(html, /Derived dataset/);
-  assert.doesNotMatch(html, /Derived from/);
+  assert.match(html, /Curated dataset/);
+  assert.doesNotMatch(html, /stage:curated|Derived from/);
 });

@@ -173,20 +173,16 @@ test('metadata.json carries declared lineage into a draft, without inventing par
   const metadata = extractMetadata(repo, {
     'metadata.json': JSON.stringify({
       name: 'Annotated subset',
-      role: 'derived',
       derivedFrom: [{ namespace: 'cssh', slug: 'source-pages' }],
     }),
   });
   assert.deepEqual(metadata.derivedFrom, [{ namespace: 'cssh', slug: 'source-pages' }]);
-  assert.equal(metadata.role, 'derived');
   const candidate = buildCandidate(repo, 'cssh', metadata);
   assert.equal(candidate.draft, true);
-  assert.equal(candidate.role, 'derived');
   assert.deepEqual(candidate.derivedFrom, metadata.derivedFrom);
   const noKnownParents = buildCandidate(repo, 'cssh', extractMetadata(repo, {
-    'metadata.json': JSON.stringify({ role: 'derived', derivedFrom: [] }),
+    'metadata.json': JSON.stringify({ derivedFrom: [] }),
   }));
-  assert.equal(noKnownParents.role, 'derived');
   assert.deepEqual(noKnownParents.derivedFrom, []);
   assert.equal('derivedFrom' in buildCandidate(repo, 'cssh', {}), false);
 });
@@ -194,6 +190,8 @@ test('metadata.json carries declared lineage into a draft, without inventing par
 test('invalid metadata.json lineage cannot enter draft candidates', () => {
   for (const lineage of [
     { role: 'unknown' },
+    { role: 'derived' },
+    { role: 'master' },
     { derivedFrom: null },
     { derivedFrom: [{ namespace: '', slug: 'source-pages' }] },
     { derivedFrom: [{ namespace: 'cssh', slug: 'source-pages', path: 'private' }] },
@@ -208,7 +206,6 @@ test('invalid metadata.json lineage cannot enter draft candidates', () => {
 test('catalogue merge refuses unknown lineage parents instead of writing a broken manifest', () => {
   const draft = buildCandidate(repo, 'cssh', {
     title: 'Annotated subset',
-    role: 'derived',
     derivedFrom: [{ namespace: 'cssh', slug: 'source-pages' }],
   });
   assert.throws(() => mergeCandidates('[]', [draft]), /unknown parent/i);
