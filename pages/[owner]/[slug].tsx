@@ -12,6 +12,8 @@ import {
   isDraft,
   isRestricted,
   NAMESPACE_TYPE,
+  stageLabel,
+  subjectKeywords,
   type Resource,
   type ResourceVersion,
   resourceLabel,
@@ -94,6 +96,8 @@ export default function DatasetPage({
 }: PageProps) {
   const namespaceLabel = NAMESPACE_TYPE === "owner" ? "Owner" : "Theme";
   const restricted = isRestricted(dataset);
+  const stage = stageLabel(dataset);
+  const keywords = subjectKeywords(dataset);
   const visibleResources = restricted ? [] : resources;
   const visibleActivity = restricted ? [] : activity;
   const primary = visibleResources[0];
@@ -297,12 +301,7 @@ export default function DatasetPage({
               label="Access"
               value={restricted ? "Restricted" : "Public"}
             />
-            {dataset.role && (
-              <SidebarField
-                label="Collection role"
-                value={dataset.role === "master" ? "Master collection" : "Derived dataset"}
-              />
-            )}
+            {stage && <SidebarField label="Dataset stage" value={stage} />}
             {parents.length > 0 && (
               <div>
                 <div className="mb-1.5 font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-ink/45">
@@ -346,13 +345,13 @@ export default function DatasetPage({
               <SidebarField label="Last updated" value={lastUpdated} />
             )}
             {migratedAt && <SidebarField label="Migrated" value={migratedAt} />}
-            {dataset.keywords && dataset.keywords.length > 0 && (
+            {keywords.length > 0 && (
               <div>
                 <div className="mb-2 font-sans text-[10px] font-semibold uppercase tracking-[0.08em] text-ink/45">
                   Keywords
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {dataset.keywords.map((kw) => (
+                  {keywords.map((kw) => (
                     <span
                       key={kw}
                       className="bg-cream-panel px-2 py-0.5 font-sans text-[11px] text-ink/60"

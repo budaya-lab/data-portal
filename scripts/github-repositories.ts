@@ -35,7 +35,6 @@ type Candidate = {
   name: string;
   description?: string;
   keywords?: string[];
-  role?: "master" | "derived";
   derivedFrom?: { namespace: string; slug: string }[];
   draft: true;
   access: "public" | "restricted";
@@ -52,7 +51,6 @@ export type ExtractedMetadata = {
   title?: string;
   description?: string;
   keywords?: string[];
-  role?: "master" | "derived";
   derivedFrom?: { namespace: string; slug: string }[];
 };
 
@@ -239,8 +237,8 @@ export function extractMetadata(
   files: Record<string, string>,
 ): ExtractedMetadata {
   const metadata = parseOptionalJson(files["metadata.json"]);
-  if (metadata.role !== undefined && metadata.role !== "master" && metadata.role !== "derived")
-    throw new Error(`Invalid role in metadata.json for ${repo.full_name}.`);
+  if (Object.hasOwn(metadata, "role"))
+    throw new Error(`Unsupported role in metadata.json for ${repo.full_name}; use a stage: keyword.`);
   if (metadata.derivedFrom !== undefined) {
     if (!Array.isArray(metadata.derivedFrom))
       throw new Error(`Invalid derivedFrom in metadata.json for ${repo.full_name}.`);
@@ -298,7 +296,6 @@ export function extractMetadata(
       safeText(repo.description, 500) ??
       readme.description,
     keywords,
-    ...(metadata.role !== undefined ? { role: metadata.role as "master" | "derived" } : {}),
     ...(metadata.derivedFrom !== undefined ? { derivedFrom: metadata.derivedFrom as { namespace: string; slug: string }[] } : {}),
   };
 }
@@ -346,7 +343,6 @@ export function buildCandidate(
   };
   if (metadata.description) candidate.description = metadata.description;
   if (metadata.keywords?.length) candidate.keywords = metadata.keywords;
-  if (metadata.role) candidate.role = metadata.role;
   if (metadata.derivedFrom) candidate.derivedFrom = metadata.derivedFrom;
   return candidate;
 }
