@@ -2,20 +2,21 @@ import { execFileSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { validateCatalogAccess, type Dataset } from "../lib/datasets";
+import { type Dataset, validateCatalogAccess } from "../lib/datasets";
+import { type ExtractedMetadata, parseDataPackage } from "./data-package";
+import {
+  type ReleaseSummary,
+  resourcesAtRelease,
+  selectLatestMainRelease,
+  type TreeEntry,
+} from "./release-resources";
+
+export type { ExtractedMetadata } from "./data-package";
 
 const API = "https://api.github.com";
 const PAGE_SIZE = 100;
 const MAX_RESPONSE_BYTES = 1_000_000;
 const DEFAULT_PATTERN = "^ds[-_].*";
-const METADATA_FILES = [
-  "datapackage.json",
-  "metadata.json",
-  "metadata.yaml",
-  "README.md",
-  "README.rst",
-  "README.txt",
-];
 
 type RepositoryOwner = { login: string };
 export type Repository = {
@@ -35,7 +36,9 @@ type Candidate = {
   name: string;
   description?: string;
   keywords?: string[];
-  derivedFrom?: { namespace: string; slug: string }[];
+  created?: string;
+  licenses?: ExtractedMetadata["licenses"];
+  resources?: ExtractedMetadata["verifiedResources"];
   draft: true;
   access: "public" | "restricted";
   sources: [{ title: string; path: string; access: "public" | "restricted" }];
@@ -46,12 +49,6 @@ export type Options = {
   namespace: string;
   pattern: string;
   apply: boolean;
-};
-export type ExtractedMetadata = {
-  title?: string;
-  description?: string;
-  keywords?: string[];
-  derivedFrom?: { namespace: string; slug: string }[];
 };
 
 export function resolveGitHubToken(
@@ -129,175 +126,11 @@ export function matchesRepositoryName(name: string, pattern: string): boolean {
   return matcher.test(name);
 }
 
-function safeText(value: unknown, maxLength: number): string | undefined {
-  if (typeof value !== "string") return undefined;
-  const text = value.replace(/\s+/g, " ").trim();
-  if (
-    !text ||
-    text.length > maxLength ||
-    /https?:\/\/|git@github\.com:|github\.com\/.+\/(?:blob|raw|tree)\/|\b(?:token|password|secret|api[_ -]?key)\b|\bgh[pousr]_[A-Za-z0-9]{20,}\b|\bgithub_pat_[A-Za-z0-9_]{20,}\b|\bAKIA[0-9A-Z]{16}\b/i.test(
-      text,
-    )
-  )
-    return undefined;
-  return text;
-}
-
-function readmeMetadata(text: string): ExtractedMetadata {
-  const lines = text.split(/\r?\n/);
-  const title = lines
-    .find((line) => /^#\s+\S/.test(line))
-    ?.replace(/^#\s+/, "");
-  const paragraph = lines
-    .find((line) => {
-      const value = line.trim();
-      return (
-        value.length >= 30 &&
-        !value.startsWith("#") &&
-        !value.startsWith("![") &&
-        !value.startsWith("[") &&
-        !value.startsWith("```") &&
-        !value.startsWith("<")
-      );
-    })
-    ?.trim()
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    .replace(/\*\*|__|`/g, "");
-  return {
-    title: safeText(title, 160),
-    description: safeText(paragraph, 500),
-  };
-}
-
-function yamlScalar(value: string): string | undefined {
-  const scalar = value.trim();
-  if (!scalar || scalar === "null" || scalar === "~") return undefined;
-  if (scalar.startsWith('"')) {
-    try {
-      const parsed: unknown = JSON.parse(scalar);
-      return typeof parsed === "string" ? parsed : undefined;
-    } catch {
-      return undefined;
-    }
-  }
-  if (scalar.startsWith("'") && scalar.endsWith("'")) {
-    return scalar.slice(1, -1).replace(/''/g, "'");
-  }
-  return scalar.replace(/\s+#.*$/, "").trim();
-}
-
-function parseMetadataYaml(text: string): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-  const lines = text.split(/\r?\n/);
-  for (let i = 0; i < lines.length; i++) {
-    const match = lines[i].match(/^([A-Za-z][A-Za-z0-9_-]*):(?:\s*(.*))?$/);
-    if (!match) continue;
-    const key = match[1].toLowerCase();
-    const raw = (match[2] ?? "").trim();
-    if (["|", "|-", "|+", ">", ">-", ">+"].includes(raw)) {
-      const block: string[] = [];
-      while (i + 1 < lines.length && /^\s+/.test(lines[i + 1]))
-        block.push(lines[++i].trim());
-      result[key] = raw.startsWith(">") ? block.join(" ") : block.join("\n");
-    } else if (key === "keywords" && raw.startsWith("[") && raw.endsWith("]")) {
-      result[key] = raw
-        .slice(1, -1)
-        .split(",")
-        .map(yamlScalar)
-        .filter((v): v is string => Boolean(v));
-    } else if (raw) {
-      result[key] = yamlScalar(raw);
-    } else if (key === "keywords") {
-      const keywords: string[] = [];
-      while (i + 1 < lines.length && /^\s+-\s+/.test(lines[i + 1])) {
-        const item = lines[++i].replace(/^\s+-\s+/, "");
-        const value = yamlScalar(item);
-        if (value) keywords.push(value);
-      }
-      result[key] = keywords;
-    }
-  }
-  return result;
-}
-
-function parseOptionalJson(text: string | undefined): Record<string, unknown> {
-  if (!text) return {};
-  try {
-    const parsed: unknown = JSON.parse(text);
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed))
-      return parsed as Record<string, unknown>;
-  } catch {
-    // Invalid optional metadata is ignored and surfaced by missing-field review.
-  }
-  return {};
-}
-
 export function extractMetadata(
-  repo: Repository,
+  _repo: Repository,
   files: Record<string, string>,
 ): ExtractedMetadata {
-  const metadata = parseOptionalJson(files["metadata.json"]);
-  if (Object.hasOwn(metadata, "role"))
-    throw new Error(`Unsupported role in metadata.json for ${repo.full_name}; use a stage: keyword.`);
-  if (metadata.derivedFrom !== undefined) {
-    if (!Array.isArray(metadata.derivedFrom))
-      throw new Error(`Invalid derivedFrom in metadata.json for ${repo.full_name}.`);
-    const seen = new Set<string>();
-    for (const parent of metadata.derivedFrom) {
-      if (!parent || typeof parent !== "object" || Array.isArray(parent) ||
-          Object.keys(parent).length !== 2 ||
-          typeof parent.namespace !== "string" || !parent.namespace.trim() ||
-          typeof parent.slug !== "string" || !parent.slug.trim())
-        throw new Error(`Invalid parent in metadata.json for ${repo.full_name}.`);
-      const key = JSON.stringify([parent.namespace, parent.slug]);
-      if (seen.has(key)) throw new Error(`Duplicate parent in metadata.json for ${repo.full_name}.`);
-      seen.add(key);
-    }
-  }
-  const packageMetadata = parseOptionalJson(files["datapackage.json"]);
-  const yamlMetadata = files["metadata.yaml"]
-    ? parseMetadataYaml(files["metadata.yaml"])
-    : {};
-  const readme = readmeMetadata(
-    files["README.md"] ?? files["README.rst"] ?? files["README.txt"] ?? "",
-  );
-  const keywordSources = [
-    metadata.keywords,
-    packageMetadata.keywords,
-    yamlMetadata.keywords,
-    repo.topics,
-  ];
-  const keywords = keywordSources
-    .map((source) =>
-      Array.isArray(source)
-        ? Array.from(
-            new Set(
-              source
-                .map((value) => safeText(value, 80))
-                .filter((value): value is string => Boolean(value)),
-            ),
-          ).slice(0, 20)
-        : [],
-    )
-    .find((values) => values.length > 0);
-  return {
-    title:
-      safeText(metadata.name, 160) ??
-      safeText(metadata.title, 160) ??
-      safeText(packageMetadata.title, 160) ??
-      safeText(packageMetadata.name, 160) ??
-      safeText(yamlMetadata.title, 160) ??
-      safeText(yamlMetadata.name, 160) ??
-      readme.title,
-    description:
-      safeText(metadata.description, 500) ??
-      safeText(packageMetadata.description, 500) ??
-      safeText(yamlMetadata.description, 500) ??
-      safeText(repo.description, 500) ??
-      readme.description,
-    keywords,
-    ...(metadata.derivedFrom !== undefined ? { derivedFrom: metadata.derivedFrom as { namespace: string; slug: string }[] } : {}),
-  };
+  return parseDataPackage(files["datapackage.json"]);
 }
 
 function slugify(value: string): string {
@@ -314,7 +147,7 @@ function slugify(value: string): string {
 export function buildCandidate(
   repo: Repository,
   namespace: string,
-  metadata: ExtractedMetadata,
+  metadata: Partial<ExtractedMetadata>,
 ): Candidate {
   if (
     !/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/.test(repo.owner.login) ||
@@ -343,7 +176,10 @@ export function buildCandidate(
   };
   if (metadata.description) candidate.description = metadata.description;
   if (metadata.keywords?.length) candidate.keywords = metadata.keywords;
-  if (metadata.derivedFrom) candidate.derivedFrom = metadata.derivedFrom;
+  if (metadata.created) candidate.created = metadata.created;
+  if (metadata.licenses?.length) candidate.licenses = metadata.licenses;
+  if (access === "public" && metadata.verifiedResources?.length)
+    candidate.resources = metadata.verifiedResources;
   return candidate;
 }
 
@@ -603,10 +439,11 @@ async function readContent(
   repo: Repository,
   filename: string,
   token: string,
+  ref: string,
 ): Promise<string | undefined> {
   const path = filename.split("/").map(encodeURIComponent).join("/");
   const url = new URL(
-    `repos/${encodeURIComponent(account)}/${encodeURIComponent(repo.name)}/contents/${path}?ref=${encodeURIComponent(repo.default_branch)}`,
+    `repos/${encodeURIComponent(account)}/${encodeURIComponent(repo.name)}/contents/${path}?ref=${encodeURIComponent(ref)}`,
     API,
   );
   const { response, text } = await githubGet(url, token);
@@ -630,17 +467,197 @@ async function readContent(
   return Buffer.from(content, "base64").toString("utf8");
 }
 
+function repositoryApiPath(account: string, repo: Repository): string {
+  return `repos/${encodeURIComponent(account)}/${encodeURIComponent(repo.name)}`;
+}
+
+async function listReleases(
+  account: string,
+  repo: Repository,
+  token: string,
+): Promise<ReleaseSummary[]> {
+  const releases: ReleaseSummary[] = [];
+  let url: URL | undefined = new URL(
+    `${repositoryApiPath(account, repo)}/releases?per_page=100&page=1`,
+    API,
+  );
+  while (url) {
+    const { response, text } = await githubGet(url, token);
+    if (!response.ok)
+      throw new Error(
+        `Could not list GitHub releases for ${repo.full_name} (${response.status}).`,
+      );
+    const page: unknown = JSON.parse(text);
+    if (
+      !Array.isArray(page) ||
+      page.some(
+        (item) =>
+          !item ||
+          typeof item.tag_name !== "string" ||
+          typeof item.draft !== "boolean" ||
+          typeof item.prerelease !== "boolean",
+      )
+    )
+      throw new Error("Invalid GitHub releases response.");
+    releases.push(...(page as ReleaseSummary[]));
+    url =
+      page.length === 100 ? nextPage(response.headers.get("link")) : undefined;
+    if (page.length === 100 && !url)
+      throw new Error("Incomplete GitHub releases response.");
+  }
+  return releases;
+}
+
+class MissingReleaseTagError extends Error {}
+
+async function releaseIsOnMain(
+  account: string,
+  repo: Repository,
+  token: string,
+  tag: string,
+): Promise<boolean> {
+  const url = new URL(
+    `${repositoryApiPath(account, repo)}/compare/${encodeURIComponent(tag)}...main`,
+    API,
+  );
+  const { response, text } = await githubGet(url, token);
+  if (response.status === 404)
+    throw new MissingReleaseTagError(
+      "Release tag is unavailable; review the repository releases.",
+    );
+  if (!response.ok)
+    throw new Error(`Could not compare release to main (${response.status}).`);
+  const result: unknown = JSON.parse(text);
+  if (
+    !result ||
+    typeof result !== "object" ||
+    typeof (result as { status?: unknown }).status !== "string"
+  )
+    throw new Error("Invalid GitHub compare response.");
+  return ["ahead", "identical"].includes((result as { status: string }).status);
+}
+
+async function readReleaseTree(
+  account: string,
+  repo: Repository,
+  token: string,
+  tag: string,
+): Promise<TreeEntry[] | undefined> {
+  const url = new URL(
+    `${repositoryApiPath(account, repo)}/git/trees/${encodeURIComponent(tag)}?recursive=1`,
+    API,
+  );
+  const { response, text } = await githubGet(url, token);
+  if (response.status === 404) return undefined;
+  if (!response.ok)
+    throw new Error(
+      `Could not verify GitHub release files (${response.status}).`,
+    );
+  const result: unknown = JSON.parse(text);
+  if (!result || typeof result !== "object")
+    throw new Error("Invalid GitHub release tree.");
+  const tree = result as { truncated?: unknown; tree?: unknown };
+  if (tree.truncated === true) return undefined;
+  if (
+    tree.truncated !== false ||
+    !Array.isArray(tree.tree) ||
+    tree.tree.some(
+      (entry) =>
+        !entry ||
+        typeof entry.path !== "string" ||
+        typeof entry.type !== "string" ||
+        typeof entry.mode !== "string",
+    )
+  )
+    throw new Error("Invalid GitHub release tree.");
+  return tree.tree as TreeEntry[];
+}
+
 export async function readRepositoryMetadata(
   account: string,
   repo: Repository,
   token: string,
 ): Promise<ExtractedMetadata> {
-  const files: Record<string, string> = {};
-  for (const filename of METADATA_FILES) {
-    const content = await readContent(account, repo, filename, token);
-    if (content !== undefined) files[filename] = content;
+  if (repo.private !== false) {
+    const descriptor = await readContent(
+      account,
+      repo,
+      "datapackage.json",
+      token,
+      "main",
+    );
+    return parseDataPackage(descriptor);
   }
-  return extractMetadata(repo, files);
+  const releases = await listReleases(account, repo, token);
+  let tag: string | undefined;
+  try {
+    tag = await selectLatestMainRelease(releases, (releaseTag) =>
+      releaseIsOnMain(account, repo, token, releaseTag),
+    );
+  } catch (error) {
+    if (!(error instanceof MissingReleaseTagError)) throw error;
+    const descriptor = await readContent(
+      account,
+      repo,
+      "datapackage.json",
+      token,
+      "main",
+    );
+    return {
+      ...parseDataPackage(descriptor),
+      review: [
+        "release tag unavailable; resources need review before publication",
+      ],
+    };
+  }
+  const descriptor = await readContent(
+    account,
+    repo,
+    "datapackage.json",
+    token,
+    tag ?? "main",
+  );
+  if (tag && descriptor === undefined) {
+    const current = await readContent(
+      account,
+      repo,
+      "datapackage.json",
+      token,
+      "main",
+    );
+    return {
+      ...parseDataPackage(current),
+      review: [
+        "descriptor unavailable at release; resources need review before publication",
+      ],
+    };
+  }
+  const metadata = parseDataPackage(descriptor);
+  if (!tag)
+    return {
+      ...metadata,
+      review: [
+        "no suitable release from main; resources need review before publication",
+      ],
+    };
+  const tree = await readReleaseTree(account, repo, token, tag);
+  if (!tree)
+    return {
+      ...metadata,
+      review: ["resources need review before publication"],
+    };
+  const result = resourcesAtRelease(
+    metadata.resources,
+    tree,
+    tag,
+    repo.owner.login,
+    repo.name,
+  );
+  return {
+    ...metadata,
+    verifiedResources: result.resources,
+    review: result.review,
+  };
 }
 
 async function confirmApply(): Promise<boolean> {
@@ -714,7 +731,7 @@ async function main(): Promise<void> {
       review: [
         !candidate.description && "description missing",
         !candidate.keywords && "subject keywords missing",
-        !extracted[index].title && "title derived from repository name; review",
+        ...(extracted[index].review ?? []),
         "verify metadata and access classification before publication",
       ].filter(Boolean),
     })),
