@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1](https://github.com/nus-dh/data-portal/compare/v0.2.0...v0.2.1) (2026-10-06)
+
+
+### Bug Fixes
+
+* **release:** use unprefixed portal version tags ([c5ce6fe](https://github.com/nus-dh/data-portal/commit/c5ce6fe1741cb5cc7a8b841e7bdba3db831b0aff))
+* **release:** use unprefixed portal version tags ([228e1f1](https://github.com/nus-dh/data-portal/commit/228e1f1b3d1af1d9c4978d304764042084e99734))
+
 ## [0.2.0](https://github.com/nus-dh/data-portal/compare/cssh-data-portal-v0.1.0...cssh-data-portal-v0.2.0) (2026-10-06)
 
 
