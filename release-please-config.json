@@ -1,7 +1,6 @@
 {
   "include-component-in-tag": false,
   "include-v-in-tag": true,
-  "last-release-sha": "e6052d8a889051722a899e705d273221394a8a69",
   "packages": {
     ".": {
       "release-type": "node",
