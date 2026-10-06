@@ -16,6 +16,6 @@ Read `ARCHITECTURE.md` and `README.md` before changing catalogue behavior. This 
 
 - Package manager: pnpm (`pnpm-lock.yaml`); Node.js 22+. Do not install dependencies unless asked.
 - Build: `pnpm build` (also generates optional DCAT feeds). Typecheck: `pnpm exec tsc --noEmit`.
-- Tests: `TSX_TSCONFIG_PATH=scripts/tsconfig.test.json node --import tsx --test scripts/catalog.test.ts scripts/harvest-roundtrip.test.ts`.
+- Tests: `TSX_TSCONFIG_PATH=scripts/tsconfig.test.json node --import tsx --test scripts/catalog.test.ts scripts/data-package.test.ts scripts/github-repositories.test.ts scripts/release-resources.test.ts scripts/harvest-roundtrip.test.ts`.
 - Lint: `pnpm lint`; format/check: `pnpm check`. These currently have existing diagnostics; do not make unrelated cleanup changes.
 - Review the diff and `git status` before reporting. Do not commit unless asked.
