@@ -1,6 +1,6 @@
-# CSSH Data Portal — agent notes
+# Data Portal — agent notes
 
-Read `ARCHITECTURE.md` and `README.md` before changing catalogue behavior. This is a public, metadata-first CSSH research-data catalogue built on an existing PortalJS template; it is not a data warehouse or an access-control service.
+Read `ARCHITECTURE.md` and `README.md` before changing catalogue behavior. This is a public, metadata-first research-data catalogue currently containing CSSH records, built on an existing PortalJS template; it is not a data warehouse, an access-control service, or yet a reusable portal template.
 
 ## Boundaries
 

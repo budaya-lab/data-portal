@@ -1,6 +1,6 @@
-# CSSH Data Portal
+# Data Portal
 
-A public catalogue of research datasets for CSSH. Use it to discover records by publisher and keywords, then follow links to the systems that hold the data. The catalogue is **metadata-first**: most data stays in GitHub repositories or other source systems, and access to restricted sources is enforced there, not by this public site. See [ARCHITECTURE.md](ARCHITECTURE.md) for the decisions and planned work.
+A public catalogue of research datasets, currently including CSSH records. Use it to discover records by publisher and keywords, then follow links to the systems that hold the data. The catalogue is **metadata-first**: most data stays in GitHub repositories or other source systems, and access to restricted sources is enforced there, not by this public site. This repository is not yet a reusable template; existing catalogue records must be separated before it becomes `tpl-data-portal`. See [ARCHITECTURE.md](ARCHITECTURE.md) for the decisions and planned work.
 
 ## Run locally
 

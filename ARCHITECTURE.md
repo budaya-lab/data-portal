@@ -1,4 +1,4 @@
-# Architecture brief — CSSH research data catalogue
+# Architecture brief — research data catalogue
 
 **Building:** A public research-data catalogue for a centre with multiple publishers/owners.
 **Data:** Approximately 100 datasets and growing; mostly MB-sized CSV, JSON, and XML in GitHub repositories, plus PostgreSQL sources to link to. Existing datasets rarely change; new datasets arrive continuously. Catalogue records are public; some sources require access control.
