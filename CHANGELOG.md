@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/nus-dh/data-portal/compare/v0.2.1...v0.3.0) (2026-10-06)
+
+
+### Features
+
+* **catalog:** onboard reviewed data packages ([b9d743c](https://github.com/nus-dh/data-portal/commit/b9d743c2aa3ca3db8d8af9d58fee54ec4cc3ca9b))
+
 ## [0.2.1](https://github.com/nus-dh/data-portal/compare/v0.2.0...v0.2.1) (2026-10-06)
 
 
