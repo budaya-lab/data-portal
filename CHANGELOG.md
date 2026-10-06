@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.0](https://github.com/nus-dh/data-portal/compare/cssh-data-portal-v0.1.0...cssh-data-portal-v0.2.0) (2026-10-06)
+
+
+### Features
+
+* **catalog:** display configurable dataset stages ([12400f0](https://github.com/nus-dh/data-portal/commit/12400f061a4e63451e13b20403054f1d95f12524))
+* **catalog:** display configurable dataset stages ([98d9f6e](https://github.com/nus-dh/data-portal/commit/98d9f6e7316a934c8edbd007abecbd9632e98bfa))
+
 ## 0.1.0 (2026-10-04)
 
 
