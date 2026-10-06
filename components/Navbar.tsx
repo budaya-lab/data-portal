@@ -5,10 +5,7 @@ import Link from 'next/link'
 // italic wordmark on the left and an uppercase Work Sans "Search" link on the
 // right, over the warm cream canvas.
 //
-// BRANDING IS A PLACEHOLDER — the wordmark is the portal name (`CSSH Data Portal`,
-// substituted by /portaljs-new-portal) set in Newsreader italic. Change the name
-// in your portal's metadata; swap the files in `public/` for your own marks. A
-// generated portal should not permanently wear the PortalJS name.
+// The wordmark is the portal name, set in Newsreader italic.
 export default function Navbar() {
   return (
     <header className="border-b border-ink/[0.12] bg-cream">
@@ -16,9 +13,9 @@ export default function Navbar() {
         <Link
           href="/"
           className="font-serif text-[21px] font-medium italic text-ink no-underline"
-          aria-label="CSSH Data Portal — home"
+          aria-label="Data Portal — home"
         >
-          CSSH Data Portal
+          Data Portal
         </Link>
         <Link
           href="/search"

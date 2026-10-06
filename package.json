@@ -1,5 +1,5 @@
 {
-  "name": "cssh-data-portal",
+  "name": "data-portal",
   "version": "0.3.0",
   "private": true,
   "packageManager": "pnpm@12.6.0",

@@ -28,14 +28,14 @@ export default function Home({ suggested }: { suggested: string[] }) {
   return (
     <>
       <Head>
-        <title>CSSH Data Portal</title>
+        <title>Data Portal</title>
       </Head>
       <main className="mx-auto max-w-[660px] px-6 pb-24 pt-16 sm:px-16 sm:pt-[104px]">
         <div className="mb-6 font-sans text-xs font-semibold uppercase tracking-[0.14em] text-accent">
           Open Data Portal
         </div>
         <h1 className="mb-7 font-serif text-[44px] font-semibold leading-[1.06] tracking-[-0.01em] text-ink sm:text-[62px]">
-          CSSH Data Portal
+          Data Portal
         </h1>
         <p className="mb-11 max-w-[520px] font-serif text-xl leading-[1.55] text-ink/70">
           A data portal for Social Sciences and Humanities data
