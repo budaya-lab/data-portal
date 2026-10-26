@@ -317,6 +317,17 @@ test("budaya-lab repository is listed as metadata-only with its curated stage", 
   ]);
 });
 
+test("published Budaya Lab annotated dataset is visible in the production catalog", async () => {
+  const provider = new StaticProvider();
+  const dataset = await provider.getDataset(
+    "budaya-lab",
+    "ds-layout-um-v2-hirwan-atd",
+  );
+  assert.ok(dataset);
+  assert.equal(dataset.draft, undefined);
+  assert.equal(getDatasetStage(dataset), "annotated");
+});
+
 test("a restricted source marks its dataset as restricted", () => {
   assert.equal(
     isRestricted({
