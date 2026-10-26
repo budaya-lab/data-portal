@@ -10,7 +10,7 @@ export default function Document() {
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" type="image/svg+xml" href="/icon.svg" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <meta name="description" content="A data portal for Social Sciences and Humanities data" />
+        <meta name="description" content="Browse datasets catalogued by Budaya Lab." />
         <meta name="theme-color" content="#f6f2e9" />
         {/* DCAT feed autodiscovery — lets national/EU/US open-data portals (and
             harvesters like data.europa.eu) find this catalog's machine-readable

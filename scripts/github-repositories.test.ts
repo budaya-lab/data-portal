@@ -15,9 +15,9 @@ import {
 
 const repo: Repository = {
   name: "ds-example",
-  full_name: "cssh/ds-example",
-  owner: { login: "CSSH" },
-  html_url: "https://github.com/cssh/ds-example",
+  full_name: "budaya-lab/ds-example",
+  owner: { login: "budaya-lab" },
+  html_url: "https://github.com/budaya-lab/ds-example",
   description: "A study of printed newspapers.",
   topics: ["newspapers", "history"],
   private: true,
@@ -53,25 +53,25 @@ test("GitHub CLI authentication is used unless an explicit token is provided", (
 
 test("CLI requires an account and derives a lowercase namespace unless overridden", () => {
   assert.throws(() => parseArguments([]), /organisation or username/i);
-  assert.deepEqual(parseArguments(["cssh"]), {
-    account: "cssh",
-    namespace: "cssh",
+  assert.deepEqual(parseArguments(["budaya-lab"]), {
+    account: "budaya-lab",
+    namespace: "budaya-lab",
     pattern: "^ds[-_].*",
     apply: false,
   });
   assert.equal(
-    parseArguments(["cssh", "--namespace", "culturalheritagenus"]).namespace,
+    parseArguments(["budaya-lab", "--namespace", "culturalheritagenus"]).namespace,
     "culturalheritagenus",
   );
   assert.throws(
-    () => parseArguments(["cssh", "--namespace", "../bad"]),
+    () => parseArguments(["budaya-lab", "--namespace", "../bad"]),
     /namespace/i,
   );
 });
 
 test("repository planning skips existing entries and reports slug conflicts", () => {
-  const existing = buildCandidate(repo, "cssh", {});
-  const other = { ...repo, name: "ds-new", full_name: "cssh/ds-new" };
+  const existing = buildCandidate(repo, "budaya-lab", {});
+  const other = { ...repo, name: "ds-new", full_name: "budaya-lab/ds-new" };
   const conflict = {
     ...repo,
     name: "ds-example",
@@ -80,18 +80,18 @@ test("repository planning skips existing entries and reports slug conflicts", ()
   };
   const plan = planRepositories(
     [repo, other, conflict],
-    "cssh",
+    "budaya-lab",
     JSON.stringify([existing]),
   );
-  assert.deepEqual(plan.alreadyCatalogued, ["cssh/ds-example"]);
+  assert.deepEqual(plan.alreadyCatalogued, ["budaya-lab/ds-example"]);
   assert.deepEqual(
     plan.repositories.map((item) => item.full_name),
-    ["cssh/ds-new"],
+    ["budaya-lab/ds-new"],
   );
   assert.deepEqual(plan.conflicts, [
     {
       repository: "other/ds-example",
-      reason: "catalogue slug cssh/ds-example belongs to a different source",
+      reason: "catalogue slug budaya-lab/ds-example belongs to a different source",
     },
   ]);
 });
@@ -120,7 +120,7 @@ test("private repository candidate contains only metadata and a safe landing lin
     sources: [
       {
         title: "GitHub repository (sign in for access)",
-        path: "https://github.com/cssh/ds-example",
+        path: "https://github.com/budaya-lab/ds-example",
         access: "restricted",
       },
     ],
@@ -152,7 +152,7 @@ test("Data Package metadata supplies the title, stage, creation date and public-
   );
   const candidate = buildCandidate(
     { ...repo, private: false },
-    "cssh",
+    "budaya-lab",
     metadata,
   );
   assert.equal(candidate.name, "Example corpus");
@@ -217,19 +217,19 @@ test("public onboarding reads the latest release from main and pins verified res
   };
   try {
     const metadata = await readRepositoryMetadata(
-      "cssh",
+      "budaya-lab",
       { ...repo, private: false },
       "test-token",
     );
     const candidate = buildCandidate(
       { ...repo, private: false },
-      "cssh",
+      "budaya-lab",
       metadata,
     );
     assert.deepEqual(
       candidate.resources?.map((resource) => resource.path),
       [
-        "https://raw.githubusercontent.com/cssh/ds-example/v0.3.0/tables/data.csv",
+        "https://raw.githubusercontent.com/budaya-lab/ds-example/v0.3.0/tables/data.csv",
       ],
     );
     assert.ok(requested.every((url) => !url.includes("metadata.json")));
@@ -276,13 +276,13 @@ test("unsupported public resources keep the whole release metadata-only with a g
   };
   try {
     const metadata = await readRepositoryMetadata(
-      "cssh",
+      "budaya-lab",
       { ...repo, private: false },
       "test-token",
     );
     const candidate = buildCandidate(
       { ...repo, private: false },
-      "cssh",
+      "budaya-lab",
       metadata,
     );
     assert.equal("resources" in candidate, false);
@@ -326,13 +326,13 @@ test("a missing latest tag produces a public metadata-only draft with a generic 
   };
   try {
     const metadata = await readRepositoryMetadata(
-      "cssh",
+      "budaya-lab",
       { ...repo, private: false },
       "test-token",
     );
     const candidate = buildCandidate(
       { ...repo, private: false },
-      "cssh",
+      "budaya-lab",
       metadata,
     );
     assert.equal("resources" in candidate, false);
@@ -376,13 +376,13 @@ test("missing descriptor at the selected release holds the public record as meta
   };
   try {
     const metadata = await readRepositoryMetadata(
-      "cssh",
+      "budaya-lab",
       { ...repo, private: false },
       "test-token",
     );
     assert.equal(
       "resources" in
-        buildCandidate({ ...repo, private: false }, "cssh", metadata),
+        buildCandidate({ ...repo, private: false }, "budaya-lab", metadata),
       false,
     );
     assert.ok(
@@ -414,8 +414,8 @@ test("private onboarding reads main without requesting releases or exposing its 
     throw new Error(`Unexpected API request: ${url}`);
   };
   try {
-    const metadata = await readRepositoryMetadata("cssh", repo, "test-token");
-    const candidate = buildCandidate(repo, "cssh", metadata);
+    const metadata = await readRepositoryMetadata("budaya-lab", repo, "test-token");
+    const candidate = buildCandidate(repo, "budaya-lab", metadata);
     assert.equal("resources" in candidate, false);
     assert.doesNotMatch(
       JSON.stringify(candidate),
@@ -437,7 +437,7 @@ test("repository listing follows GitHub pagination and rejects incomplete full p
   globalThis.fetch = async (input) => {
     const url = String(input);
     requests.push(url);
-    if (url.endsWith("/users/cssh"))
+    if (url.endsWith("/users/budaya-lab"))
       return new Response(JSON.stringify({ type: "Organization" }), {
         status: 200,
       });
@@ -455,37 +455,37 @@ test("repository listing follows GitHub pagination and rejects incomplete full p
         page === "2"
           ? {}
           : {
-              link: '<https://api.github.com/orgs/cssh/repos?type=all&per_page=100&page=2>; rel="next"',
+              link: '<https://api.github.com/orgs/budaya-lab/repos?type=all&per_page=100&page=2>; rel="next"',
             },
     });
   };
   try {
-    const repositories = await listRepositories("cssh", "test-token");
+    const repositories = await listRepositories("budaya-lab", "test-token");
     assert.equal(repositories.length, 101);
     assert.equal(requests.length, 3);
     assert.ok(
       requests.every((url) => url.startsWith("https://api.github.com/")),
     );
-    assert.ok(requests[1].includes("/orgs/cssh/repos"));
+    assert.ok(requests[1].includes("/orgs/budaya-lab/repos"));
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
 
 test("public candidate defaults metadata to human-review placeholders", () => {
-  const candidate = buildCandidate({ ...repo, private: false }, "cssh", {});
+  const candidate = buildCandidate({ ...repo, private: false }, "budaya-lab", {});
   assert.equal(candidate.name, "ds-example");
   assert.equal(candidate.description, undefined);
   assert.equal(candidate.keywords, undefined);
   assert.equal(candidate.access, "public");
   assert.equal(
-    buildCandidate({ ...repo, private: undefined }, "cssh", {}).access,
+    buildCandidate({ ...repo, private: undefined }, "budaya-lab", {}).access,
     "restricted",
   );
 });
 
 test("merge is idempotent and refuses source or namespace-slug collisions", () => {
-  const candidate = buildCandidate(repo, "cssh", {});
+  const candidate = buildCandidate(repo, "budaya-lab", {});
   const empty = `${JSON.stringify([], null, 2)}\n`;
   const once = mergeCandidates(empty, [candidate]);
   assert.equal(JSON.parse(mergeCandidates(once, [candidate])).length, 1);
@@ -496,7 +496,7 @@ test("merge is idempotent and refuses source or namespace-slug collisions", () =
   assert.throws(
     () =>
       mergeCandidates(
-        JSON.stringify([{ slug: candidate.slug, namespace: "cssh" }]),
+        JSON.stringify([{ slug: candidate.slug, namespace: "budaya-lab" }]),
         [candidate],
       ),
     /collision/i,

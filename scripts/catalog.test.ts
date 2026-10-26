@@ -290,49 +290,28 @@ test("static provider searches manifest keywords as well as catalog metadata", a
   assert.ok(matches.every((d) => matchesCatalogQuery(d, "geospatial")));
 });
 
-test("CSSH exploration records have provisional stages without changing parent links", async () => {
+test("catalogue no longer includes culturalheritagenus records", async () => {
   const provider = new StaticProvider(undefined, "development");
-  const parent = await provider.getDataset("culturalheritagenus", "example-supabase-database");
-  assert.ok(parent);
-  assert.equal(getDatasetStage(parent), "master");
-
-  for (const [slug, stage] of [
-    ["ds-article-20260902", "annotated"],
-    ["ds-filteredum1956", "curated"],
-    ["ds-articlereconstruction-20260821", "annotated"],
-  ] as const) {
-    const dataset = await provider.getDataset("culturalheritagenus", slug);
-    assert.ok(dataset);
-    assert.equal(getDatasetStage(dataset), stage);
-    assert.deepEqual(dataset.derivedFrom, [
-      { namespace: "culturalheritagenus", slug: "example-supabase-database" },
-    ]);
-  }
-
-  const jawiAndRumi = await provider.getDataset("culturalheritagenus", "rumi-data");
-  assert.ok(jawiAndRumi);
-  assert.equal(getDatasetStage(jawiAndRumi), undefined);
-  assert.equal(jawiAndRumi.derivedFrom, undefined);
+  const datasets = await provider.listDatasets();
+  assert.equal(
+    datasets.some((dataset) => dataset.namespace === "culturalheritagenus"),
+    false,
+  );
 });
 
-test("private research repository is listed as a metadata-only restricted dataset", async () => {
+test("budaya-lab repository is listed as metadata-only with its curated stage", async () => {
   const provider = new StaticProvider();
-  const dataset = await provider.getDataset(
-    "culturalheritagenus",
-    "ds-article-20260902",
-  );
+  const dataset = await provider.getDataset("budaya-lab", "ds-layout-um-v2");
   assert.ok(dataset);
-  assert.equal(
-    datasetHref(dataset),
-    "/@culturalheritagenus/ds-article-20260902",
-  );
+  assert.equal(datasetHref(dataset), "/@budaya-lab/ds-layout-um-v2");
   assert.equal(isRestricted(dataset), true);
   assert.equal(dataset.file, undefined);
   assert.equal(dataset.resources, undefined);
+  assert.equal(getDatasetStage(dataset), "curated");
   assert.deepEqual(dataset.sources, [
     {
       title: "GitHub repository (sign in for access)",
-      path: "https://github.com/culturalheritagenus/ds_article_20260902",
+      path: "https://github.com/budaya-lab/ds-layout-um-v2",
       access: "restricted",
     },
   ]);

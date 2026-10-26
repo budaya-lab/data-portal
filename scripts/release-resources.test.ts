@@ -33,17 +33,17 @@ test("maps every verified single-file resource to the selected tag, never a movi
     { path: "annotations/labels.json", type: "blob", mode: "100644" },
   ];
   assert.deepEqual(
-    resourcesAtRelease(input, tree, "v1.2.0", "CSSH", "ds-example"),
+    resourcesAtRelease(input, tree, "v1.2.0", "budaya-lab", "ds-example"),
     {
       resources: [
         {
           name: "records",
-          path: "https://raw.githubusercontent.com/cssh/ds-example/v1.2.0/tables/records.csv",
+          path: "https://raw.githubusercontent.com/budaya-lab/ds-example/v1.2.0/tables/records.csv",
           format: "csv",
         },
         {
           name: "labels",
-          path: "https://raw.githubusercontent.com/cssh/ds-example/v1.2.0/annotations/labels.json",
+          path: "https://raw.githubusercontent.com/budaya-lab/ds-example/v1.2.0/annotations/labels.json",
           format: "json",
         },
       ],
@@ -67,7 +67,7 @@ test("holds all public resources as metadata-only on unsupported format, path ar
       resources,
       [...tree, { path: "link.csv", type: "blob", mode: "120000" }],
       "v1.2.0",
-      "cssh",
+      "budaya-lab",
       "ds-example",
     );
     assert.equal(result.resources, undefined);
