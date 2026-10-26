@@ -195,5 +195,44 @@
       "duckdb"
     ],
     "version": "1.1.0"
+  },
+  {
+    "slug": "ds-layout-um-v2",
+    "namespace": "budaya-lab",
+    "name": "Layout UM v2",
+    "description": "Private repository for the DS Layout UM v2 dataset.",
+    "keywords": ["layout", "UM", "stage:curated"],
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/budaya-lab/ds-layout-um-v2",
+        "access": "restricted"
+      }
+    ]
+  },
+  {
+    "slug": "ds-layout-um-v2-hirwan-atd",
+    "namespace": "budaya-lab",
+    "name": "Layout UM v2 - Annotated",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/budaya-lab/ds-layout-um-v2-hirwan-atd",
+        "access": "restricted"
+      }
+    ],
+    "description": "152 images from the 60s, used for layout classification. Annotated copy, of ds-layout-um-v2, by Hirwan.",
+    "keywords": ["layout", "UM", "stage:annotated"],
+    "created": "2026-10-26T00:00:00Z",
+    "review": ["verify metadata and access classification before publication"],
+    "derivedFrom": [
+      {
+        "namespace": "budaya-lab",
+        "slug": "ds-layout-um-v2"
+      }
+    ]
   }
 ]

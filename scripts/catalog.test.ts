@@ -299,6 +299,24 @@ test("catalogue no longer includes culturalheritagenus records", async () => {
   );
 });
 
+test("budaya-lab repository is listed as metadata-only with its curated stage", async () => {
+  const provider = new StaticProvider();
+  const dataset = await provider.getDataset("budaya-lab", "ds-layout-um-v2");
+  assert.ok(dataset);
+  assert.equal(datasetHref(dataset), "/@budaya-lab/ds-layout-um-v2");
+  assert.equal(isRestricted(dataset), true);
+  assert.equal(dataset.file, undefined);
+  assert.equal(dataset.resources, undefined);
+  assert.equal(getDatasetStage(dataset), "curated");
+  assert.deepEqual(dataset.sources, [
+    {
+      title: "GitHub repository (sign in for access)",
+      path: "https://github.com/budaya-lab/ds-layout-um-v2",
+      access: "restricted",
+    },
+  ]);
+});
+
 test("a restricted source marks its dataset as restricted", () => {
   assert.equal(
     isRestricted({
