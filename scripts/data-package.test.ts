@@ -13,7 +13,7 @@ test('rejects unsafe and malformed Data Packages without exposing private resour
     { resources: [{ name: 'private', path: '/internal/secret.csv' }] },
     { resources: [{ name: 'private', path: 'internal/secret.csv', data: ['inline'] }] },
     { keywords: ['stage:unknown'] },
-    { title: 'github.com/cssh/ds-example/blob/main/private.csv' },
+    { title: 'github.com/budaya-lab/ds-example/blob/main/private.csv' },
     { created: '2026-02-30T00:00:00Z' },
     { created: '2000-01-01T00:00:00Z' },
     { licenses: [{ name: 'Private', path: 'https://private.example/internal/secret.csv' }] },

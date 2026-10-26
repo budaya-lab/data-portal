@@ -13,9 +13,9 @@ export default function Navbar() {
         <Link
           href="/"
           className="font-serif text-[21px] font-medium italic text-ink no-underline"
-          aria-label="Data Portal — home"
+          aria-label="Budaya Lab Data Portal — home"
         >
-          Data Portal
+          Budaya Lab Data Portal
         </Link>
         <Link
           href="/search"
