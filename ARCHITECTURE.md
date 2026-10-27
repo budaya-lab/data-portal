@@ -10,8 +10,10 @@
 | Catalog | `datasets.json` in GitHub | Git-managed, reviewable records suit the current catalogue size and publishing workflow. GitHub is the catalogue's source of truth, not a runtime database or access-control backend. |
 | Compute | Flat preview where appropriate; no catalogue-wide data-query engine | Catalogue search is metadata search, not queries over file contents or database rows. |
 | Access | Static, public catalogue; record whether each linked source is public or restricted | Source systems, not the portal, enforce access. Never publish private data, credentials, or privileged download URLs in the static site. |
-| Hosting | Cloudflare Pages built from GitHub | Static hosting supports a public Git-managed catalogue without a runtime service. |
+| Hosting | GitHub Pages at `data.budaya-lab.org`, deployed by GitHub Actions after validation of `main` | Next.js exports static HTML/assets to `out/`; directory routes work without a runtime service. This replaces the earlier Cloudflare Pages plan. |
 | Metadata | Frictionless Data Package keywords for subjects and a controlled dataset stage; optional catalogue-parent links | Reuse the portal's metadata model and keep publisher/access independent of stage. DCAT export exists, but confirmed parent links are not yet serialized with PROV-O. |
+
+**Deployment:** `Validate portal` tests and checks the static export on PRs and `main`. A separate `Deploy portal` workflow accepts only successful validation of the current repository's current `main` commit, rebuilds and checks that exact commit, and deploys its Pages artifact. PRs do not deploy; Release Please remains separate. The Pages environment is restricted to `main`, and the custom domain uses the root path. See [README.md](README.md#github-pages-deployment) for verification and rollback.
 
 **Namespace mode:** `owner` — group datasets by publisher/owner.
 

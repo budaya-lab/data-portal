@@ -24,3 +24,4 @@ jobs:
       - run: TSX_TSCONFIG_PATH=scripts/tsconfig.test.json node --import tsx --test scripts/catalog.test.ts scripts/data-package.test.ts scripts/github-repositories.test.ts scripts/release-resources.test.ts scripts/harvest-roundtrip.test.ts
       - run: pnpm exec tsc --noEmit
       - run: pnpm build
+      - run: pnpm check:pages
