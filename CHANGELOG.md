@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.0](https://github.com/budaya-lab/data-portal/compare/v0.3.0...v0.4.0) (2026-10-27)
+
+
+### Features
+
+* **catalog:** add budaya-lab repository records ([3c4c2a9](https://github.com/budaya-lab/data-portal/commit/3c4c2a975ea2fcd4e893554bdbb059719aff4daf))
+* **catalog:** publish Budaya Lab annotated dataset ([98e5d7b](https://github.com/budaya-lab/data-portal/commit/98e5d7bcc594ade3dcc308c7c3640e7c684eee6b))
+* **catalog:** publish Budaya Lab annotated dataset ([09ea8d1](https://github.com/budaya-lab/data-portal/commit/09ea8d154c37262f98af39cf9b069bbb3dca90fa))
+
 ## [0.3.0](https://github.com/nus-dh/data-portal/compare/v0.2.1...v0.3.0) (2026-10-06)
 
 
