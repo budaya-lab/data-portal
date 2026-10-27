@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/budaya-lab/data-portal/compare/v0.5.0...v0.6.0) (2026-10-27)
+
+
+### Features
+
+* **build:** export portal for github pages ([a31e7d1](https://github.com/budaya-lab/data-portal/commit/a31e7d1263ffd0ce96fc5e3f0dc0890c9eb44b53))
+
 ## [0.5.0](https://github.com/budaya-lab/data-portal/compare/v0.4.0...v0.5.0) (2026-10-27)
 
 
