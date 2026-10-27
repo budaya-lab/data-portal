@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import stageLabels from "../stage.config.json";
+import { Chart, ChartPlot } from "../components/Chart";
+import { parseCsv } from "../components/ui/parseCsv";
 import type { Dataset } from "../lib/datasets";
 import {
   datasetHref,
@@ -20,6 +22,7 @@ import { toDCAT } from "../lib/metadata/dcat";
 import { StaticProvider } from "../lib/providers/static-provider";
 import DatasetPage from "../pages/[owner]/[slug]";
 import { DatasetRow } from "../pages/search";
+import stageLabels from "../stage.config.json";
 
 const tagged: Dataset = {
   slug: "oral-history",
@@ -326,6 +329,105 @@ test("published Budaya Lab annotated dataset is visible in the production catalo
   assert.ok(dataset);
   assert.equal(dataset.draft, undefined);
   assert.equal(getDatasetStage(dataset), "annotated");
+});
+
+test("horizontal bar chart renders every category and value label", () => {
+  const rows = parseCsv(
+    readFileSync("public/data/ds-layout-um-v2-buckets.csv", "utf8"),
+  ).rows;
+  assert.equal(rows.length, 7);
+  const markup = renderToStaticMarkup(
+    createElement(Chart, {
+      data: rows,
+      type: "bar",
+      barOrientation: "horizontal",
+      x: "year",
+      y: "count",
+    }),
+  );
+
+  assert.equal((markup.match(/data-chart-row=/g) ?? []).length, rows.length);
+  assert.match(markup, /data-axis-label="y"/);
+  assert.match(markup, /data-axis-label="x"/);
+  assert.equal((markup.match(/<button /g) ?? []).length, 7);
+  assert.equal((markup.match(/role="tooltip" hidden=""/g) ?? []).length, 7);
+  const tooltipIds = Array.from(
+    markup.matchAll(/id="([^"]+)" role="tooltip"/g),
+    (match) => match[1],
+  );
+  assert.equal(new Set(tooltipIds).size, 7);
+  for (const id of tooltipIds) {
+    assert.ok(markup.includes(`aria-describedby="${id}"`));
+  }
+  const widths = Array.from(
+    markup.matchAll(/data-chart-bar="[^"]*"[^>]*style="width:([\d.]+)%/g),
+    (match) => Number(match[1]),
+  );
+  assert.deepEqual(widths, [20, 20, 20, 20, 24, 100, 100]);
+  assert.match(markup, /1962: count 10/);
+  for (const { year, count } of rows) {
+    assert.match(markup, new RegExp(`>${year}<`));
+    assert.match(markup, new RegExp(`>${count}<`));
+  }
+});
+
+test("Cartesian chart modes render category and value axes with React 19", () => {
+  const data = parseCsv(
+    readFileSync("public/data/ds-layout-um-v2-buckets.csv", "utf8"),
+  ).rows.map((row) => ({ year: row.year, count: Number(row.count) }));
+  for (const type of ["bar", "area", "line"] as const) {
+    const markup = renderToStaticMarkup(
+      createElement(ChartPlot, {
+        rows: data,
+        type,
+        x: "year",
+        yKeys: ["count"],
+        width: 640,
+        height: 320,
+      }),
+    );
+    assert.match(markup, /recharts-xAxis/, `${type} has an X axis`);
+    assert.match(markup, /recharts-yAxis/, `${type} has a Y axis`);
+    for (const row of data) {
+      assert.match(markup, new RegExp(`>${row.year}</tspan>`));
+    }
+    if (type === "bar") {
+      const bars =
+        markup.match(/<path[^>]*class="recharts-rectangle"[^>]*>/g) ?? [];
+      assert.equal(bars.length, 7);
+      const heights = bars.map((bar) =>
+        Number(bar.match(/ height="([\d.]+)"/)?.[1]),
+      );
+      assert.ok(heights.every((height) => height > 0));
+      assert.ok(Math.abs(heights[5] / heights[0] - 5) < 0.001);
+    }
+  }
+});
+
+test("overview chart appears only on the selected Budaya Lab showcase", async () => {
+  const provider = new StaticProvider();
+  const dataset = await provider.getDataset("budaya-lab", "ds-layout-um-v2");
+  assert.ok(dataset);
+  const render = (item: Dataset) =>
+    renderToStaticMarkup(
+      createElement(DatasetPage, {
+        dataset: item,
+        parents: [],
+        resources: [],
+        activity: [],
+      }),
+    );
+
+  const targetMarkup = render(dataset);
+  assert.match(targetMarkup, /horizontal bar chart of count by year/);
+  assert.match(targetMarkup, /data-chart-type="bar"/);
+  assert.match(targetMarkup, /data-bar-orientation="horizontal"/);
+  assert.match(
+    targetMarkup,
+    /<h2 id="overview-chart-title" class="[^"]*font-sans/,
+  );
+  assert.doesNotMatch(targetMarkup, /<h3[^>]*>Record counts by year/);
+  assert.doesNotMatch(render(tagged), /horizontal bar chart of count by year/);
 });
 
 test("a restricted source marks its dataset as restricted", () => {

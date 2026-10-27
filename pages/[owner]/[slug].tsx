@@ -3,21 +3,22 @@ import dynamic from "next/dynamic";
 import Head from "next/head";
 import Link from "next/link";
 import { useState } from "react";
+import { Chart } from "../../components/Chart";
 import { Table } from "../../components/Table";
 import {
   type ActivityEntry,
   DATA_QUERY,
-  datasetHref,
   type Dataset,
+  datasetHref,
   isDraft,
   isRestricted,
   NAMESPACE_TYPE,
-  stageLabel,
-  subjectKeywords,
   type Resource,
   type ResourceVersion,
   resourceLabel,
   resourceUrl,
+  stageLabel,
+  subjectKeywords,
 } from "../../lib/datasets";
 import { formatDate } from "../../lib/format";
 import { withHistory } from "../../lib/history";
@@ -68,8 +69,9 @@ export const getStaticProps: GetStaticProps<PageProps> = async ({ params }) => {
   const catalog = await provider.listDatasets();
   const parents = (dataset.derivedFrom ?? [])
     .map(({ namespace: parentNamespace, slug }) =>
-      catalog.find((candidate) =>
-        candidate.namespace === parentNamespace && candidate.slug === slug,
+      catalog.find(
+        (candidate) =>
+          candidate.namespace === parentNamespace && candidate.slug === slug,
       ),
     )
     .filter((parent): parent is Dataset => parent !== undefined);
@@ -221,17 +223,36 @@ export default function DatasetPage({
               <ActivityFeed activity={visibleActivity} />
             )}
 
-            {/* Views placeholder — charts and maps are added here by the
-                /portaljs-add-chart and /portaljs-add-map skills. */}
+            {/* Views are scoped to their owning dataset; the public overview CSV
+                is a cleared summary of this otherwise restricted repository. */}
             <SectionLabel className="mt-11">Views</SectionLabel>
-            <div className="border border-ink/[0.15] p-11 text-center">
-              <div className="mb-2 font-serif text-[17px] italic text-ink/55">
-                No views yet.
+            {dataset.namespace === "budaya-lab" &&
+            dataset.slug === "ds-layout-um-v2" ? (
+              <section aria-labelledby="overview-chart-title">
+                <h2
+                  id="overview-chart-title"
+                  className="mb-6 font-sans text-sm font-medium text-ink/75"
+                >
+                  Record counts by year
+                </h2>
+                <Chart
+                  url="/data/ds-layout-um-v2-buckets.csv"
+                  type="bar"
+                  barOrientation="horizontal"
+                  x="year"
+                  y="count"
+                />
+              </section>
+            ) : (
+              <div className="border border-ink/[0.15] p-11 text-center">
+                <div className="mb-2 font-serif text-[17px] italic text-ink/55">
+                  No views yet.
+                </div>
+                <div className="font-sans text-xs text-ink/40">
+                  Charts and maps for this dataset are added here.
+                </div>
               </div>
-              <div className="font-sans text-xs text-ink/40">
-                Charts and maps for this dataset are added here.
-              </div>
-            </div>
+            )}
 
             {/* Sources & license — Data Package descriptor fields. */}
             {((dataset.licenses && dataset.licenses.length > 0) ||

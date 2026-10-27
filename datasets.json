@@ -200,8 +200,12 @@
     "slug": "ds-layout-um-v2",
     "namespace": "budaya-lab",
     "name": "Layout UM v2",
-    "description": "Private repository for the DS Layout UM v2 dataset.",
-    "keywords": ["layout", "UM", "stage:curated"],
+    "description": "152 images from the 60s, used for layout classification.",
+    "keywords": [
+      "layout",
+      "UM",
+      "stage:curated"
+    ],
     "access": "restricted",
     "sources": [
       {
@@ -224,9 +228,15 @@
       }
     ],
     "description": "152 images from the 60s, used for layout classification. Annotated copy, of ds-layout-um-v2, by Hirwan.",
-    "keywords": ["layout", "UM", "stage:annotated"],
+    "keywords": [
+      "layout",
+      "UM",
+      "stage:annotated"
+    ],
     "created": "2026-10-26T00:00:00Z",
-    "review": ["verify metadata and access classification before publication"],
+    "review": [
+      "verify metadata and access classification before publication"
+    ],
     "derivedFrom": [
       {
         "namespace": "budaya-lab",
