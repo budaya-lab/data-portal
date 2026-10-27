@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/budaya-lab/data-portal/compare/v0.4.0...v0.5.0) (2026-10-27)
+
+
+### Features
+
+* **charts:** add yearly layout overview ([60fa52e](https://github.com/budaya-lab/data-portal/commit/60fa52e145df9ad735635a73f84f86eb9c24d214))
+
 ## [0.4.0](https://github.com/budaya-lab/data-portal/compare/v0.3.0...v0.4.0) (2026-10-27)
 
 
