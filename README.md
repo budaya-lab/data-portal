@@ -11,12 +11,13 @@ pnpm install
 pnpm dev
 ```
 
-Visit `http://localhost:3000/`. To check a production build, run `pnpm build`. The build and dev scripts also generate optional DCAT feeds from the catalogue; `datasets.json` remains the source of truth.
+Visit `http://localhost:3000/`. `pnpm build` creates the production static export in `out/`; run `pnpm check:pages` afterwards to validate it. Preview `out/` with a static HTTP server. The inherited `next start` script is removed because this deployment does not use a Next.js server. The build and dev scripts also generate optional DCAT feeds from the catalogue; `datasets.json` remains the source of truth.
 
 | Command | Purpose |
 | --- | --- |
 | `pnpm dev` | Start the local Next.js server |
-| `pnpm build` | Generate the feeds and build the site |
+| `pnpm build` | Generate the feeds and export the static site to `out/` |
+| `pnpm check:pages` | Check the built export for LFS pointers, oversized files, missing routes/assets, and draft routes |
 | `pnpm exec tsc --noEmit` | Type-check |
 | `TSX_TSCONFIG_PATH=scripts/tsconfig.test.json node --import tsx --test scripts/catalog.test.ts scripts/github-repositories.test.ts scripts/harvest-roundtrip.test.ts` | Run catalogue, GitHub onboarding, and metadata tests |
 | `pnpm lint` / `pnpm check` | Run Biome lint / lint + format checks |
@@ -37,9 +38,23 @@ node --test scripts/chart.browser.test.mjs
 
 ## Releases
 
-`Validate portal` runs the catalogue tests, typecheck, and build on PRs to `main` and pushes to `main`. Repository-wide `pnpm lint` / `pnpm check` currently have pre-existing diagnostics, so they are not CI gates yet. After a successful **push** validation on the current `main` commit, `Release portal` runs Release Please. It uses Conventional Commits to propose a release PR that updates the version in `package.json`, the manifest, and `CHANGELOG.md`; merging that PR creates a tag and GitHub Release. The first release starts at `0.1.0`. Future portal tags and GitHub Release names use `vX.Y.Z`, like the dataset template; the existing legacy `v0.1.0` and `v0.2.0` tags remain unchanged. Both `v0.2.1` and `v0.3.0` have been published, so Release Please can now find the prior release using unprefixed tags. Do not create or rewrite tags to bypass review. Releases do not publish catalogue records or deploy the portal; review dataset metadata and access separately.
+`Validate portal` runs the catalogue tests, typecheck, and build on PRs to `main` and pushes to `main`. Repository-wide `pnpm lint` / `pnpm check` currently have pre-existing diagnostics, so they are not CI gates yet. After a successful **push** validation on the current `main` commit, `Release portal` runs Release Please. It uses Conventional Commits to propose a release PR that updates the version in `package.json`, the manifest, and `CHANGELOG.md`; merging that PR creates a tag and GitHub Release. The first release starts at `0.1.0`. Future portal tags and GitHub Release names use `vX.Y.Z`, like the dataset template; the existing legacy `v0.1.0` and `v0.2.0` tags remain unchanged. Both `v0.2.1` and `v0.3.0` have been published, so Release Please can now find the prior release using unprefixed tags. Do not create or rewrite tags to bypass review. Release tags do not trigger deployment; successful validation of `main` does. Review dataset metadata and access before merging catalogue changes.
 
 Use reviewed PRs and Conventional Commit titles for squash merges (e.g. `feat(catalog): add search filters` or `fix(catalog): correct dataset links`). Enable **Settings → Actions → General → Allow GitHub Actions to create and approve pull requests** if repository policy requires it. The release workflow uses the built-in `GITHUB_TOKEN`, not a personal access token. GitHub does not trigger PR CI for PRs created with that token: manually run **Validate portal** with `workflow_dispatch` on the release PR branch, inspect the diff and passing result, then merge. Re-run validation if the release branch changes. Confirm your branch protection accepts this manual validation before relying on it as a required check.
+
+## GitHub Pages deployment
+
+The production site is [data.budaya-lab.org](https://data.budaya-lab.org/). GitHub Pages must use **GitHub Actions**, not a branch/Jekyll source; building the repository root directly only renders the README.
+
+- `Validate portal` keeps its existing workflow/job names. It runs tests, typecheck, static build, and `pnpm check:pages` on PRs and `main`.
+- After successful validation of a push or manual validation on the current `main` commit, the separate `Deploy portal` workflow builds that exact commit, checks `out/`, uploads the Pages artifact, and deploys it to the `github-pages` environment. PR validation never deploys. Release Please remains independent of deployment success.
+- Only the deployment job receives Pages write and OIDC permissions. Deployments are serialized and recheck that their validated commit is still `main` before publishing. Keep the existing `github-pages` environment restricted to `main`.
+- Next.js uses `output: 'export'` and trailing-slash directory routes, so direct visits to `/search/` and `/@publisher/dataset/` work without server rewrites. The custom domain serves the portal at `/`, not `/data-portal/`. `public/CNAME` is copied to the export; keep the Pages custom-domain setting unchanged.
+- No repository source files, README, dependency tree, or private source data are uploaded: only the checked `out/` artifact. Non-draft catalogue records and generated feeds are public. Restricted data stays at its source; the approved chart summary is public.
+
+After deployment, check `/`, `/search/`, `/@budaya-lab/ds-layout-um-v2/`, its chart CSV, and `/catalog.jsonld` at the custom domain. The README page remains until the first successful Actions deployment. To retry the current main build, manually run `Validate portal` on `main`. To roll back, revert the bad change through a reviewed PR to `main`; its validated static export will redeploy. Do not rerun an old commit to bypass the current-main guard.
+
+Build and deployment follow the official [Next.js static export guide](https://nextjs.org/docs/pages/guides/static-exports) and [GitHub Pages deployment action](https://github.com/actions/deploy-pages).
 
 ## Catalogue workflow
 

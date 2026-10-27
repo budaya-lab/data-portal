@@ -15,8 +15,8 @@
     "lint": "biome lint .",
     "check": "biome check .",
     "check-export": "node scripts/check-export.mjs",
-    "catalogue:github": "tsx scripts/github-repositories.ts",
-    "start": "next start"
+    "check:pages": "pnpm check-export && node --test scripts/pages-export.test.mjs",
+    "catalogue:github": "tsx scripts/github-repositories.ts"
   },
   "dependencies": {
     "@duckdb/duckdb-wasm": "^1.32.0",

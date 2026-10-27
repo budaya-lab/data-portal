@@ -10,12 +10,13 @@ Read `ARCHITECTURE.md` and `README.md` before changing catalogue behavior. This 
 - For restricted sources, use `access: 'restricted'` and a credential-free HTTPS landing-page link in `sources` (no query or fragment). Omit `file` and `resources`: the public build rejects restricted resources. Never put private URLs, tokens, credentials, or restricted bytes into public files. Access is enforced by the source, not by this static site.
 - A GitHub repository URL is a landing page, not a CSV/JSON file URL. If a repo is inaccessible without login, request enough metadata from the user instead of guessing its contents.
 - Catalogue records may optionally declare one controlled `stage:` keyword from `stage.config.json` (currently `master`, `curated`, or `annotated`); omit the stage when unknown, and do not use the removed `role` field. Coordinate config changes with the separate dataset template. Confirmed parent links use internal `derivedFrom` references by `(namespace, slug)`, independent of stage and package `sources[]`. Validate references/cycles; in production omit draft-parent references from provider-visible output. Do not infer relationships from hosting/URLs or assume access inherits. PROV-O lineage export remains separate pending a canonical-URI decision.
-- The intended query setting is `flat` per `ARCHITECTURE.md`, but code still sets `DATA_QUERY = 'duckdb'`; don't claim the migration is complete or change it incidentally. Cloudflare Pages is intended hosting, not a runtime RBAC backend.
+- The intended query setting is `flat` per `ARCHITECTURE.md`, but code still sets `DATA_QUERY = 'duckdb'`; don't claim the migration is complete or change it incidentally. GitHub Pages serves the static export at `data.budaya-lab.org`; it is not a runtime RBAC backend.
 
 ## Verification
 
 - Package manager: pnpm (`pnpm-lock.yaml`); Node.js 22+. Do not install dependencies unless asked.
-- Build: `pnpm build` (also generates optional DCAT feeds). Typecheck: `pnpm exec tsc --noEmit`.
+- Build: `pnpm build` (generates optional DCAT feeds and static `out/`). Then run `pnpm check:pages` for export hygiene and route/asset checks. Typecheck: `pnpm exec tsc --noEmit`.
+- Preserve the `Validate portal` workflow/job names. Pages deployment is a separate, current-main-only workflow; do not couple release management to deployment or publish PR artifacts. `public/CNAME` preserves the custom domain.
 - Tests: `TSX_TSCONFIG_PATH=scripts/tsconfig.test.json node --import tsx --test scripts/catalog.test.ts scripts/data-package.test.ts scripts/github-repositories.test.ts scripts/release-resources.test.ts scripts/harvest-roundtrip.test.ts`.
 - Lint: `pnpm lint`; format/check: `pnpm check`. These currently have existing diagnostics; do not make unrelated cleanup changes.
 - Review the diff and `git status` before reporting. Do not commit unless asked.
