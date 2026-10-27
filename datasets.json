@@ -200,7 +200,7 @@
     "slug": "ds-layout-um-v2",
     "namespace": "budaya-lab",
     "name": "Layout UM v2",
-    "description": "Private repository for the DS Layout UM v2 dataset.",
+    "description": "152 images from the 60s, used for layout classification.",
     "keywords": [
       "layout",
       "UM",
