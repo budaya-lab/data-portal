@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
-import LoadingSpinner from './ui/LoadingSpinner'
-import { DuckDbQuery } from '../lib/query/duckdb'
-import { resourceUrl, type Resource } from '../lib/datasets'
+import { useEffect, useMemo, useState } from "react";
+import { type Resource, resourceUrl } from "../lib/datasets";
+import { DuckDbQuery } from "../lib/query/duckdb";
+import LoadingSpinner from "./ui/LoadingSpinner";
 
 // A DuckDB-Wasm-backed data view for a single resource. Loads the file into an
 // in-browser DuckDB, previews it, and lets the visitor run SQL against the table
@@ -9,68 +9,69 @@ import { resourceUrl, type Resource } from '../lib/datasets'
 // when the portal's DATA_QUERY engine is 'duckdb' (see lib/datasets.ts). Import it
 // via next/dynamic with { ssr: false } so DuckDB only loads in the browser.
 
-const PREVIEW_LIMIT = 50
+const PREVIEW_LIMIT = 50;
 
 export default function DataExplorer({ resource }: { resource: Resource }) {
   // resourceUrl() returns the bundled /data/<file> path for local files and the
   // absolute URL untouched for remote ones (e.g. a Parquet file on R2) — the
   // latter is what lets DuckDB range-query it in place.
-  const url = resourceUrl(resource)
+  const url = resourceUrl(resource);
   // A query-first dataset can ship a starter query (resource.query) — otherwise
   // open on a generic preview. The in-browser table is always named `data`.
-  const defaultSql = resource.query ?? `SELECT * FROM data LIMIT ${PREVIEW_LIMIT}`
+  const defaultSql =
+    resource.query ?? `SELECT * FROM data LIMIT ${PREVIEW_LIMIT}`;
 
   // One engine instance per source file.
-  const engine = useMemo(() => new DuckDbQuery(), [url])
+  const engine = useMemo(() => new DuckDbQuery(), [url]);
 
-  const [draft, setDraft] = useState(defaultSql)
-  const [columns, setColumns] = useState<string[]>([])
-  const [rows, setRows] = useState<Record<string, unknown>[]>([])
-  const [total, setTotal] = useState<number | null>(null)
-  const [ranged, setRanged] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [draft, setDraft] = useState(defaultSql);
+  const [columns, setColumns] = useState<string[]>([]);
+  const [rows, setRows] = useState<Record<string, unknown>[]>([]);
+  const [total, setTotal] = useState<number | null>(null);
+  const [ranged, setRanged] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Open the file once, then run the default preview + a row count.
   useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    setError(null)
-    ;(async () => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    (async () => {
       try {
-        await engine.open({ url, format: resource.format })
-        const count = await engine.query('SELECT count(*) AS n FROM data')
-        const res = await engine.query(defaultSql)
-        if (cancelled) return
-        setTotal(Number(count.rows[0]?.n ?? 0))
-        setRanged(engine.ranged)
-        setColumns(res.columns)
-        setRows(res.rows)
+        await engine.open({ url, format: resource.format });
+        const count = await engine.query("SELECT count(*) AS n FROM data");
+        const res = await engine.query(defaultSql);
+        if (cancelled) return;
+        setTotal(Number(count.rows[0]?.n ?? 0));
+        setRanged(engine.ranged);
+        setColumns(res.columns);
+        setRows(res.rows);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : String(e))
+        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
       } finally {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) setLoading(false);
       }
-    })()
+    })();
     return () => {
-      cancelled = true
-      void engine.close()
-    }
-  }, [engine, url, resource.format, defaultSql])
+      cancelled = true;
+      void engine.close();
+    };
+  }, [engine, url, resource.format, defaultSql]);
 
   const run = async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
     try {
-      const res = await engine.query(draft)
-      setColumns(res.columns)
-      setRows(res.rows)
+      const res = await engine.query(draft);
+      setColumns(res.columns);
+      setRows(res.rows);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div>
@@ -100,7 +101,7 @@ export default function DataExplorer({ resource }: { resource: Resource }) {
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
             // Cmd/Ctrl+Enter runs the query.
-            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') run()
+            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") run();
           }}
           rows={4}
           spellCheck={false}
@@ -116,15 +117,15 @@ export default function DataExplorer({ resource }: { resource: Resource }) {
             disabled={loading}
             className="bg-accent px-[18px] py-2.5 font-sans text-xs font-semibold uppercase tracking-[0.06em] text-cream hover:opacity-90 disabled:opacity-50"
           >
-            {loading ? 'Running…' : 'Run ▶'}
+            {loading ? "Running…" : "Run ▶"}
           </button>
         </div>
       </div>
 
       <p className="mt-2 font-sans text-xs text-ink/45">
         {ranged
-          ? 'This Parquet file is queried directly on object storage; add a WHERE / column list so only the rows and columns you need are fetched.'
-          : 'Keep a LIMIT on exploratory queries so large results don’t overwhelm the browser.'}
+          ? "This Parquet file is queried directly on object storage; add a WHERE / column list so only the rows and columns you need are fetched."
+          : "Keep a LIMIT on exploratory queries so large results don’t overwhelm the browser."}
       </p>
 
       <div className="mt-[18px]">
@@ -154,7 +155,10 @@ export default function DataExplorer({ resource }: { resource: Resource }) {
                 </thead>
                 <tbody>
                   {rows.map((row, i) => (
-                    <tr key={i} className="border-t border-ink/[0.1] hover:bg-cream-panel/50">
+                    <tr
+                      key={i}
+                      className="border-t border-ink/[0.1] hover:bg-cream-panel/50"
+                    >
                       {columns.map((c) => (
                         <td
                           key={c}
@@ -175,18 +179,18 @@ export default function DataExplorer({ resource }: { resource: Resource }) {
         )}
       </div>
     </div>
-  )
+  );
 }
 
 function formatCell(value: unknown): string {
-  if (value === null || value === undefined) return ''
+  if (value === null || value === undefined) return "";
   // DuckDB returns wide integers (a HUGEINT from SUM/COUNT, or a BIGINT) as a
   // BigInt or a small wrapper object whose toString() is the number — print that
   // rather than JSON.stringify, which would wrap it in escaped quotes.
-  if (typeof value === 'bigint') return value.toString()
-  if (typeof value === 'object') {
-    const s = String(value)
-    return s === '[object Object]' ? JSON.stringify(value) : s
+  if (typeof value === "bigint") return value.toString();
+  if (typeof value === "object") {
+    const s = String(value);
+    return s === "[object Object]" ? JSON.stringify(value) : s;
   }
-  return String(value)
+  return String(value);
 }

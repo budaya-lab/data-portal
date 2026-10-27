@@ -7,17 +7,17 @@ import { Table } from "../../components/Table";
 import {
   type ActivityEntry,
   DATA_QUERY,
-  datasetHref,
   type Dataset,
+  datasetHref,
   isDraft,
   isRestricted,
   NAMESPACE_TYPE,
-  stageLabel,
-  subjectKeywords,
   type Resource,
   type ResourceVersion,
   resourceLabel,
   resourceUrl,
+  stageLabel,
+  subjectKeywords,
 } from "../../lib/datasets";
 import { formatDate } from "../../lib/format";
 import { withHistory } from "../../lib/history";
@@ -68,8 +68,9 @@ export const getStaticProps: GetStaticProps<PageProps> = async ({ params }) => {
   const catalog = await provider.listDatasets();
   const parents = (dataset.derivedFrom ?? [])
     .map(({ namespace: parentNamespace, slug }) =>
-      catalog.find((candidate) =>
-        candidate.namespace === parentNamespace && candidate.slug === slug,
+      catalog.find(
+        (candidate) =>
+          candidate.namespace === parentNamespace && candidate.slug === slug,
       ),
     )
     .filter((parent): parent is Dataset => parent !== undefined);
