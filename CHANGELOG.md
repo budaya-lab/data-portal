@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.7.0](https://github.com/budaya-lab/data-portal/compare/v0.6.0...v0.7.0) (2026-11-02)
+
+
+### Features
+
+* **home:** distinguish portal from lab identity ([cc1598b](https://github.com/budaya-lab/data-portal/commit/cc1598b08f933853b97881ac9206ceacfead9867))
+* **identity:** apply Budaya Lab visual identity ([8a4853f](https://github.com/budaya-lab/data-portal/commit/8a4853f5b627bc9be8bbce9569349a6ea59cd54c))
+* **identity:** apply Budaya Lab visual identity ([ef01b20](https://github.com/budaya-lab/data-portal/commit/ef01b20b7760e207941a21dacf417608d5e0bcd4))
+* **navbar:** add Lab mark and portal label ([9a7cf17](https://github.com/budaya-lab/data-portal/commit/9a7cf17dc0e9a1bb6b99fd351d583eebc130209b))
+
+
+### Bug Fixes
+
+* **navbar:** support static image export ([1823226](https://github.com/budaya-lab/data-portal/commit/18232260eda37311fde2decbc78f861846283988))
+
 ## [0.6.0](https://github.com/budaya-lab/data-portal/compare/v0.5.0...v0.6.0) (2026-10-27)
 
 
