@@ -12,10 +12,12 @@
     "dev": "next dev",
     "prebuild": "pnpm generate:dcat",
     "build": "next build",
+    "test": "TSX_TSCONFIG_PATH=scripts/tsconfig.test.json node --import tsx --test scripts/*.test.ts",
     "lint": "biome lint .",
     "check": "biome check .",
     "check-export": "node scripts/check-export.mjs",
     "check:pages": "pnpm check-export && node --test scripts/pages-export.test.mjs",
+    "validate": "pnpm test && pnpm exec tsc --noEmit && pnpm build && pnpm check:pages",
     "catalogue:github": "tsx scripts/github-repositories.ts"
   },
   "dependencies": {
