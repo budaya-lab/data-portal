@@ -1,29 +1,31 @@
-import Head from 'next/head'
-import Link from 'next/link'
-import { useRouter } from 'next/router'
-import { useState } from 'react'
-import { suggestedQueries } from '../lib/datasets'
-import { provider } from '../lib/providers'
+import Head from "next/head";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { useState } from "react";
+import { suggestedQueries } from "../lib/datasets";
+import { provider } from "../lib/providers";
 
 // Popular searches are derived from the portal's own datasets at build time (see
 // suggestedQueries) rather than hardcoded, so every portal surfaces its real
 // topics without editing this file.
 export async function getStaticProps() {
-  return { props: { suggested: suggestedQueries(await provider.listDatasets()) } }
+  return {
+    props: { suggested: suggestedQueries(await provider.listDatasets()) },
+  };
 }
 
-// Home surface (editorial design imported from the Claude Design mockups): an
-// eyebrow, the portal name in Newsreader, a one-line description, and search as
-// the primary call to action — an editorial input plus popular-search links that
-// route into the /search catalog.
+// Home surface: a portal name, one-line description, and search as the primary
+// call to action, followed by popular-search links into the catalog.
 export default function Home({ suggested }: { suggested: string[] }) {
-  const router = useRouter()
-  const [query, setQuery] = useState('')
+  const router = useRouter();
+  const [query, setQuery] = useState("");
 
   const search = (q: string) => {
-    const trimmed = q.trim()
-    router.push(trimmed ? `/search?q=${encodeURIComponent(trimmed)}` : '/search')
-  }
+    const trimmed = q.trim();
+    router.push(
+      trimmed ? `/search?q=${encodeURIComponent(trimmed)}` : "/search",
+    );
+  };
 
   return (
     <>
@@ -32,22 +34,29 @@ export default function Home({ suggested }: { suggested: string[] }) {
       </Head>
       <main className="mx-auto max-w-[660px] px-6 pb-24 pt-16 sm:px-16 sm:pt-[104px]">
         <div className="mb-6 font-sans text-xs font-semibold uppercase tracking-[0.14em] text-accent">
-          Budaya Lab Data Portal
+          Budaya Lab
         </div>
         <h1 className="mb-7 font-serif text-[44px] font-semibold leading-[1.06] tracking-[-0.01em] text-ink sm:text-[62px]">
-          Budaya Lab Data Portal
+          Data Portal
         </h1>
         <p className="mb-11 max-w-[520px] font-serif text-xl leading-[1.55] text-ink/70">
-          Browse datasets catalogued by Budaya Lab.
+          Browse datasets catalogued by the{" "}
+          <Link
+            className="underline decoration-1 underline-offset-[3px] hover:text-ink"
+            href="https://budaya-lab.org/"
+          >
+            Budaya Lab
+          </Link>
+          .
         </p>
 
         {/* Search is the primary call to action — submitting navigates to /search. */}
         <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            search(query)
-          }}
           role="search"
+          onSubmit={(e) => {
+            e.preventDefault();
+            search(query);
+          }}
           className="mb-12"
         >
           <input
@@ -89,5 +98,5 @@ export default function Home({ suggested }: { suggested: string[] }) {
         </div>
       </main>
     </>
-  )
+  );
 }
