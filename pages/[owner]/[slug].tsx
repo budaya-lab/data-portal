@@ -81,7 +81,7 @@ export const getStaticProps: GetStaticProps<PageProps> = async ({ params }) => {
   return { props: { dataset, parents, resources, activity } };
 };
 
-// Showcase surface (editorial design imported from the Claude Design mockups): an
+// Showcase surface:
 // eyebrow + title + italic description, then a two-column body that follows the
 // user's mental model — see it → query it → download it. First the data preview
 // (ONE map for a geo dataset — PMTiles render + GeoParquet query on a single
@@ -406,7 +406,7 @@ export default function DatasetPage({
   );
 }
 
-// Uppercase Work Sans section label, matching the mockups' hairline dividers.
+// Compact sans-serif section label.
 function SectionLabel({
   children,
   className = "",

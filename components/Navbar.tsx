@@ -1,21 +1,32 @@
-import Link from 'next/link'
+import Link from "next/link";
 
-// Site navbar, rendered on every page via `_app.tsx`. Editorial style imported
-// from the Claude Design mockups: a tall hairline-ruled bar with a Newsreader
-// italic wordmark on the left and an uppercase Work Sans "Search" link on the
-// right, over the warm cream canvas.
-//
-// The wordmark is the portal name, set in Newsreader italic.
+// Site navbar, rendered on every page via `_app.tsx`. It uses the Budaya Lab
+// paper, serif wordmark, and sans-serif navigation styles.
 export default function Navbar() {
   return (
     <header className="border-b border-ink/[0.12] bg-cream">
       <nav className="mx-auto flex h-[88px] max-w-6xl items-center justify-between px-6 sm:px-16">
         <Link
           href="/"
-          className="font-serif text-[21px] font-medium italic text-ink no-underline"
+          className="flex items-center gap-3 text-ink no-underline"
           aria-label="Budaya Lab Data Portal — home"
         >
-          Budaya Lab Data Portal
+          {/* biome-ignore lint/performance/noImgElement: This local brand mark is unoptimized for static export. */}
+          <img
+            src="/favicon.png"
+            alt=""
+            width={40}
+            height={40}
+            className="shrink-0"
+          />
+          <span className="flex flex-col gap-1">
+            <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.14em] text-accent">
+              Budaya Lab
+            </span>
+            <span className="font-serif text-[21px] font-semibold leading-tight">
+              Data Portal
+            </span>
+          </span>
         </Link>
         <Link
           href="/search"
@@ -25,5 +36,5 @@ export default function Navbar() {
         </Link>
       </nav>
     </header>
-  )
+  );
 }
