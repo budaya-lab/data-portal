@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.0](https://github.com/budaya-lab/data-portal/compare/v0.7.1...v0.8.0) (2026-11-02)
+
+
+### Features
+
+* add footer ([544d0be](https://github.com/budaya-lab/data-portal/commit/544d0be734a7db745d07b5445830bf16ba5a9e4e))
+* add footer ([d2d399d](https://github.com/budaya-lab/data-portal/commit/d2d399dc7b51ed2a2ecb9a70a00a5e86a988cadc))
+
 ## [0.7.1](https://github.com/budaya-lab/data-portal/compare/v0.7.0...v0.7.1) (2026-11-02)
 
 
