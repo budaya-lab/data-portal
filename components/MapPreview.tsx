@@ -47,16 +47,13 @@ import { resourceUrl, type Resource } from '../lib/datasets'
 // Make PMTiles from GeoJSON/Shapefile with tippecanoe (see README "Maps"):
 //   tippecanoe -zg --drop-densest-as-needed -o out.pmtiles in.geojson
 
-// Terracotta accent from tailwind.config.js (oklch(0.48 0.12 40)) — MapLibre
-// paint needs a literal color, not a Tailwind class. The PMTiles base layer uses
-// this.
-const ACCENT = '#9d4a2c'
+// Soga brown from the Budaya Lab palette. MapLibre paint needs a literal
+// colour, not a Tailwind class. The PMTiles base layer uses this.
+const ACCENT = '#8a4b22'
 
-// A high-contrast blue for the query-result HIGHLIGHT overlay, so features
-// returned by a spatial query pop clearly on top of the terracotta base render
-// and the light basemap. Deliberately NOT the accent — the highlight has to read
-// as "these are the rows your query matched", distinct from the full render.
-const HIGHLIGHT = '#1d4ed8'
+// Budaya Lab indigo for query-result highlights. It remains distinct from the
+// soga-brown base render so matched rows are clear.
+const HIGHLIGHT = '#2d3f63'
 
 // Light, neutral, keyless vector basemap (Carto Positron via OpenFreeMap),
 // loaded at runtime in the browser only. Low-contrast greys/whites so the data
@@ -83,7 +80,7 @@ const BASE_CSS = `
 .maplibregl-canvas-container.maplibregl-interactive{cursor:grab;user-select:none}
 .maplibregl-canvas-container.maplibregl-interactive:active{cursor:grabbing}
 .maplibregl-ctrl-bottom-left{position:absolute;bottom:0;left:0;z-index:2;pointer-events:none}
-.maplibregl-ctrl-scale{background:rgba(247,244,236,0.8);border:1px solid rgba(43,40,38,0.25);border-top:none;color:#2b2826;font:10px/1.4 ui-sans-serif,system-ui,sans-serif;padding:1px 5px;white-space:nowrap}
+.maplibregl-ctrl-scale{background:rgba(250,250,248,0.8);border:1px solid rgba(29,26,22,0.25);border-top:none;color:#1d1a16;font:10px/1.4 ui-sans-serif,system-ui,sans-serif;padding:1px 5px;white-space:nowrap}
 `
 
 function injectBaseCss() {
@@ -395,7 +392,7 @@ export default function MapPreview({
         sources: {},
         layers: [
           // Matches the cream-panel canvas so a basemap-less map still looks placed.
-          { id: 'background', type: 'background', paint: { 'background-color': '#ece7db' } },
+          { id: 'background', type: 'background', paint: { 'background-color': '#e3e8f2' } },
         ],
       }
 
@@ -656,7 +653,7 @@ export default function MapPreview({
         {queryResource && ranged && (
           <span
             title="GeoParquet queried in place over HTTP range requests — the bbox pre-filter prunes row groups, so only the bytes a query touches are fetched, never the whole file."
-            className="border border-[#1d4ed8]/50 px-1.5 py-0.5 font-sans text-[10px] font-medium uppercase tracking-[0.06em] text-[#1d4ed8]"
+            className="border border-indigo/50 px-1.5 py-0.5 font-sans text-[10px] font-medium uppercase tracking-[0.06em] text-indigo"
           >
             geoparquet · queried in place
           </span>

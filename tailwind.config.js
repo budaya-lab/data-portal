@@ -6,26 +6,24 @@ module.exports = {
   ],
   theme: {
     extend: {
-      // Editorial palette (imported from the Claude Design mockups). Warm cream
-      // canvas, near-black "ink" text, and a single terracotta accent. Colours
-      // carry the `<alpha-value>` placeholder so Tailwind's opacity modifiers
-      // work (e.g. `text-ink/70`, `border-ink/12`) — the mockups lean heavily on
-      // tinted ink for secondary text and hairline borders.
+      // Budaya Lab palette: paper, soga brown, and indigo. Colours carry the
+      // `<alpha-value>` placeholder so opacity modifiers remain available.
       colors: {
-        cream: 'oklch(0.97 0.012 75 / <alpha-value>)',
-        'cream-panel': 'oklch(0.94 0.015 75 / <alpha-value>)',
-        'cream-code': 'oklch(0.955 0.01 75 / <alpha-value>)',
-        ink: 'oklch(0.19 0.01 60 / <alpha-value>)',
-        accent: 'oklch(0.48 0.12 40 / <alpha-value>)',
+        cream: 'rgb(250 250 248 / <alpha-value>)',
+        'cream-panel': 'rgb(255 255 255 / <alpha-value>)',
+        'cream-code': 'rgb(255 255 255 / <alpha-value>)',
+        ink: 'rgb(29 26 22 / <alpha-value>)',
+        accent: 'rgb(138 75 34 / <alpha-value>)',
+        'accent-soft': 'rgb(241 227 212 / <alpha-value>)',
+        indigo: 'rgb(45 63 99 / <alpha-value>)',
+        'indigo-soft': 'rgb(227 232 242 / <alpha-value>)',
       },
-      // Three families, loaded from Google Fonts in pages/_document.tsx:
-      //   serif — Newsreader: headings, dataset titles, and editorial prose.
-      //   sans  — Work Sans: labels, metadata, uppercase eyebrows, table cells.
-      //   mono  — IBM Plex Mono: the SQL editor and query result cells.
+      // Budaya Lab's source-serif and sans-serif families are loaded in
+      // pages/_document.tsx. The portal uses the system monospace stack for code.
       fontFamily: {
-        serif: ['Newsreader', 'Georgia', 'serif'],
-        sans: ['"Work Sans"', 'system-ui', 'sans-serif'],
-        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+        serif: ['"Source Serif 4"', 'Georgia', 'serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
     },
   },
