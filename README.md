@@ -1,114 +1,61 @@
 # Budaya Lab Data Portal
 
-A public, metadata-first data catalogue. The records in `datasets.json` are the source of truth; review metadata and access classification before publication. The intended workflow is to discover records by publisher and keywords, then follow links to the systems that hold the data; access to restricted sources is enforced there, not by this public site. This repository is not yet a reusable template. See [ARCHITECTURE.md](ARCHITECTURE.md) for the decisions and planned work.
+Public dataset catalogue at [data.budaya-lab.org](https://data.budaya-lab.org/). Search metadata and follow links to the data at its source. The portal does not control access to source data.
+
+[`datasets.json`](datasets.json) is the catalogue's source of truth. It includes placeholder records for testing.
 
 ## Run locally
 
-Requires Node.js 22+ and pnpm (this project uses `pnpm-lock.yaml`). From this directory:
+Requires Node.js 22+ and pnpm.
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-Visit `http://localhost:3000/`. `pnpm build` creates the production static export in `out/`; run `pnpm check:pages` afterwards to validate it. Preview `out/` with a static HTTP server. The inherited `next start` script is removed because this deployment does not use a Next.js server. The build and dev scripts also generate optional DCAT feeds from the catalogue; `datasets.json` remains the source of truth.
+Open <http://localhost:3000/>. Draft records are visible locally but excluded from production pages and feeds.
 
-| Command | Purpose |
-| --- | --- |
-| `pnpm dev` | Start the local Next.js server |
-| `pnpm build` | Generate the feeds and export the static site to `out/` |
-| `pnpm check:pages` | Check the built export for LFS pointers, oversized files, missing routes/assets, and draft routes |
-| `pnpm exec tsc --noEmit` | Type-check |
-| `TSX_TSCONFIG_PATH=scripts/tsconfig.test.json node --import tsx --test scripts/catalog.test.ts scripts/github-repositories.test.ts scripts/harvest-roundtrip.test.ts` | Run catalogue, GitHub onboarding, and metadata tests |
-| `pnpm lint` / `pnpm check` | Run Biome lint / lint + format checks |
+## Add a dataset
 
-### Chart browser check
+### From a GitHub repository
 
-The overview chart has an opt-in, dependency-free WebDriver test for proportional bars, axis placement, responsive layout, and hover/keyboard tooltips. Tooltip focus, hover, and Escape behavior follows the [WAI-ARIA tooltip pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/). It needs a local portal and an isolated browser automation session. For Safari, remote automation must already be enabled by the user; this check does not change browser settings.
+1. Create the dataset repository from [`tpl-dataset`](https://github.com/nus-dh/tpl-dataset#readme). Follow its instructions to replace the example metadata and data, fill in `datapackage.json`, and validate it. The template requires one primary-stage keyword: `stage:master`, `stage:curated`, or `stage:annotated`.
+2. For public datasets, create a reviewed GitHub Release using the template's release workflow. The portal links verified resources from the highest non-prerelease SemVer release reachable from `main`; it does not copy the files. Without a suitable release or supported resources, onboarding produces a metadata-only draft. Private repositories contribute safe metadata and a landing-page link only.
+3. From this directory, discover candidates and review the report:
+
+   ```bash
+   # Uses your gh login, or GITHUB_TOKEN if set.
+   pnpm catalogue:github OWNER
+   pnpm catalogue:github OWNER --apply
+   ```
+
+   `OWNER` is the GitHub organisation or username. The default repository-name pattern is `^ds[-_].*`; override it with `--pattern`. The publisher namespace defaults to the account's lowercase login; override it with `--namespace`.
+
+   The first command writes a report under `.tmp/` without changing the catalogue. `--apply` requires typing `apply` in a terminal and appends drafts to `datasets.json`. Existing records are skipped, not updated. A valid root `datapackage.json` is required; README text and repository descriptions are not metadata fallbacks.
+4. Review metadata, access, licences, resource links, and report warnings. Remove `draft` only when approved for publication. Run the checks below and submit a PR. A dataset release does not automatically publish a catalogue record.
+
+### Manually
+
+Edit `datasets.json`; no new page file is needed. Use a unique `(namespace, slug)`, where `namespace` identifies the publisher. Add a title (`name`), description, subject keywords, and source landing-page link. Pages appear at `/@<namespace>/<slug>/`.
+
+- For restricted sources, set `access: "restricted"`, use a credential-free HTTPS landing URL without a query or fragment, and omit `file` and `resources`. Never add private paths, credentials, or restricted data to the portal. Drafts are not a confidentiality boundary: their metadata remains in Git.
+- Set a stage only when known, using one keyword from [`stage.config.json`](stage.config.json). Keep its values aligned with the dataset template.
+- Use `derivedFrom` only for confirmed catalogue parents. It is separate from Data Package `sources[]`; onboarding does not infer lineage.
+
+## Checks
 
 ```bash
-# In separate terminals, with Safari automation already enabled:
-pnpm dev
-safaridriver --port 4815
-# Then run:
-node --test scripts/chart.browser.test.mjs
+pnpm validate  # tests, typecheck, build, and static-export checks
+pnpm lint
+pnpm check
 ```
 
-`CHART_WEBDRIVER_URL`, `CHART_PORTAL_URL`, and `CHART_BROWSER_NAME` can select another local WebDriver/browser. This test is separate from the regular Node suite and fails rather than skips when automation is unavailable. For manual verification, check all seven bars and labels, hover a bar, Tab between bars, dismiss a tooltip with Escape, and check the layout at narrow and wide widths.
-
-## Releases
-
-`Validate portal` runs the catalogue tests, typecheck, and build on PRs to `main` and pushes to `main`. Repository-wide `pnpm lint` / `pnpm check` currently have pre-existing diagnostics, so they are not CI gates yet. After a successful **push** validation on the current `main` commit, `Release portal` runs Release Please. It uses Conventional Commits to propose a release PR that updates the version in `package.json`, the manifest, and `CHANGELOG.md`; merging that PR creates a tag and GitHub Release. The first release starts at `0.1.0`. Future portal tags and GitHub Release names use `vX.Y.Z`, like the dataset template; the existing legacy `v0.1.0` and `v0.2.0` tags remain unchanged. Both `v0.2.1` and `v0.3.0` have been published, so Release Please can now find the prior release using unprefixed tags. Do not create or rewrite tags to bypass review. Release tags do not trigger deployment; successful validation of `main` does. Review dataset metadata and access before merging catalogue changes.
-
-Use reviewed PRs and Conventional Commit titles for squash merges (e.g. `feat(catalog): add search filters` or `fix(catalog): correct dataset links`). Enable **Settings → Actions → General → Allow GitHub Actions to create and approve pull requests** if repository policy requires it. The release workflow uses the built-in `GITHUB_TOKEN`, not a personal access token. GitHub does not trigger PR CI for PRs created with that token: manually run **Validate portal** with `workflow_dispatch` on the release PR branch, inspect the diff and passing result, then merge. Re-run validation if the release branch changes. Confirm your branch protection accepts this manual validation before relying on it as a required check.
+Lint and format checks currently report existing diagnostics. `pnpm build` writes the static site to `out/` and generates the configured metadata feeds.
 
 ## GitHub Pages deployment
 
-The production site is [data.budaya-lab.org](https://data.budaya-lab.org/). GitHub Pages must use **GitHub Actions**, not a branch/Jekyll source; building the repository root directly only renders the README.
+PRs run **Validate portal**. Successful validation of the current `main` commit triggers **Deploy portal** to publish the static site. Keep `public/CNAME` for the custom domain. To retry, run **Validate portal** on `main`; to roll back, revert through a reviewed PR.
 
-- `Validate portal` keeps its existing workflow/job names. It runs tests, typecheck, static build, and `pnpm check:pages` on PRs and `main`.
-- After successful validation of a push or manual validation on the current `main` commit, the separate `Deploy portal` workflow builds that exact commit, checks `out/`, uploads the Pages artifact, and deploys it to the `github-pages` environment. PR validation never deploys. Release Please remains independent of deployment success.
-- Only the deployment job receives Pages write and OIDC permissions. Deployments are serialized and recheck that their validated commit is still `main` before publishing. Keep the existing `github-pages` environment restricted to `main`.
-- Next.js uses `output: 'export'` and trailing-slash directory routes, so direct visits to `/search/` and `/@publisher/dataset/` work without server rewrites. The custom domain serves the portal at `/`, not `/data-portal/`. `public/CNAME` is copied to the export; keep the Pages custom-domain setting unchanged.
-- No repository source files, README, dependency tree, or private source data are uploaded: only the checked `out/` artifact. Non-draft catalogue records and generated feeds are public. Restricted data stays at its source; the approved chart summary is public.
+Portal releases are separate from deployment. Use Conventional Commit PR titles. Release Please proposes version/changelog PRs after validated pushes to `main`; manually run **Validate portal** on each release PR branch before merging because its `GITHUB_TOKEN`-created PR does not trigger CI automatically.
 
-After deployment, check `/`, `/search/`, `/@budaya-lab/ds-layout-um-v2/`, its chart CSV, and `/catalog.jsonld` at the custom domain. The README page remains until the first successful Actions deployment. To retry the current main build, manually run `Validate portal` on `main`. To roll back, revert the bad change through a reviewed PR to `main`; its validated static export will redeploy. Do not rerun an old commit to bypass the current-main guard.
-
-Build and deployment follow the official [Next.js static export guide](https://nextjs.org/docs/pages/guides/static-exports) and [GitHub Pages deployment action](https://github.com/actions/deploy-pages).
-
-## Catalogue workflow
-
-Edit [`datasets.json`](datasets.json) to add or update records; **do not create a page per dataset**. The search page at `/search` filters record names, publisher namespaces, descriptions, categories, and keywords (not the contents of source files). [`pages/[owner]/[slug].tsx`](pages/%5Bowner%5D/%5Bslug%5D.tsx) generates each showcase at `/@<namespace>/<slug>` at build time. This portal uses `NAMESPACE_TYPE = 'owner'`: `namespace` means publisher/owner, not subject. `(namespace, slug)` must be unique.
-
-For an access-controlled GitHub repository, a metadata-only record needs no `file`, `format`, or `resources`:
-
-```json
-{
-  "slug": "example-repository",
-  "namespace": "publisher",
-  "name": "Example Project",
-  "description": "A one-line description of the dataset.",
-  "keywords": ["topic", "method"],
-  "access": "restricted",
-  "sources": [
-    {
-      "title": "GitHub repository (sign in for access)",
-      "path": "https://github.com/OWNER/REPOSITORY",
-      "access": "restricted"
-    }
-  ]
-}
-```
-
-The link is a **landing page**, not a public data URL; GitHub may show 404 to signed-out visitors. Use a credential-free HTTPS URL with no query string or fragment for restricted sources. Never put private file URLs, tokens, database credentials, or restricted data in `datasets.json` or `public/data/`. A restricted record cannot have `file` or `resources`; the build rejects that combination. This public static site displays an access label but provides **no authentication or authorization** for source data. The source system remains responsible for access.
-
-For public sources, prefer linking to an existing public landing page with `sources`. If an accessible CSV/TSV/JSON/GeoJSON resource needs a preview, an absolute URL can be used in `file` (with `format`), subject to the remote host's CORS support. Avoid copying source data into the portal by default. New records should use informative titles, descriptions, and subject keywords so they are discoverable without exposing private content. After editing, build the site and check both `/search` and the generated showcase URL. No per-dataset page is needed.
-
-### Dataset stages and catalogue parents
-
-Use exactly one controlled `stage:` keyword from `stage.config.json` **when the stage is known**. The current values are `stage:master` (source-of-record data), `stage:curated` (cleaned/transformed data), and `stage:annotated` (labelled/enriched data). This file also supplies the stage labels shown in the portal; coordinate changes with the separate dataset-template configuration. This is a local convention within the standard Data Package `keywords` field, not a globally defined Data Package type. Other keywords describe subjects. The portal validates stage keywords, displays the stage separately on search and showcase pages, and hides the raw `stage:` keyword from subject tags and suggested searches. Records without a known stage remain unlabelled; do not infer one from hosting, description, or known parents. Set a stage only when it is known; do not treat hosting or other metadata as evidence of a dataset's stage.
-
-Confirmed catalogue parent relationships may independently use `derivedFrom`, an **internal portal reference** containing `{ "namespace": "...", "slug": "..." }`. It is not a Data Package field; package `sources[]` means upstream origins, and portal `sources[]` currently lists landing pages. Parent references must exist, be unique, and have no cycles. A published record may reference a draft parent, but production output omits that parent's reference and link; the relationship remains visible in development. Access is independent per record: a public subset does not inherit its parent's access label. The portal does not connect to source databases, and lineage is not yet exported as PROV-O `prov:wasDerivedFrom` in DCAT feeds. That would require a separately reviewed canonical dataset-URI policy. Never infer lineage or publish private URLs or credentials. See [ARCHITECTURE.md](ARCHITECTURE.md) for design details.
-
-### GitHub repository onboarding
-
-`scripts/github-repositories.ts` proposes drafts from repositories in a GitHub organisation or user account, matching repository **names** locally (default `^ds[-_].*`). A root `datapackage.json` is required for each new candidate; invalid or missing packages stop the harvest rather than falling back to `metadata.json`, YAML, README, or repository descriptions. Package `title`, `description`, `keywords`, optional `created` and public-safe `licenses` become catalogue metadata. License URLs must point to public Creative Commons, SPDX or Open Data Commons pages; otherwise correct the package before onboarding. Contributors and raw upstream `sources[]` stay in the package; no parent relationship is inferred. Replace the template example data and date before onboarding. Repository names and the publisher namespace determine catalogue identity, not package `name`.
-
-For public repositories, the harvester chooses the highest published, non-prerelease SemVer GitHub Release whose tag points to a commit reachable from `main`. It reads the package and verifies every declared file against that release's Git tree **without downloading dataset bytes**. Supported single-file resources link to that release **tag**, not a moving branch or a commit SHA. If there is no suitable release, a tag or resource is missing, the tree is truncated, any format is unsupported, or any resource uses a path array, the public candidate is a metadata-only draft with a generic review warning: no partially linked resource list is published. Git tags can move or disappear; recheck the tag and links before removing `draft`. Private/unknown-visibility repositories read their package from `main` but produce safe metadata and a credential-free landing link only, never resource paths or previews.
-
-```bash
-# Uses your active `gh` login; set GITHUB_TOKEN only if you want to override it.
-pnpm catalogue:github OWNER                         # dry-run (default)
-pnpm catalogue:github OWNER --namespace PUBLISHER    # publisher override
-pnpm catalogue:github OWNER --pattern '^example-.*' --apply
-```
-
-The required first argument is the GitHub organisation or username. By default, the catalogue namespace is that account's lowercase login; `--namespace` overrides it without changing source links. `--pattern` overrides the default regular expression. The tool uses GitHub's [REST API](https://docs.github.com/en/rest) for [repository listing](https://docs.github.com/en/rest/repos/repos#list-organization-repositories), [releases](https://docs.github.com/en/rest/releases/releases#list-releases), [commit comparison](https://docs.github.com/en/rest/commits/commits#compare-two-commits), [Git trees](https://docs.github.com/en/rest/git/trees#get-a-tree), and [package contents](https://docs.github.com/en/rest/repos/contents#get-repository-content); provide a token with only the read permissions needed for those repositories. Already-catalogued repositories are skipped before metadata files are read. A TTY shows a progress bar while new candidates are processed; instead of printing candidate JSON, the script saves a review report to `.tmp/github-repository-review-<namespace>-<account>.json` and prints its path and a count summary. `.tmp/` is gitignored. `--apply` saves the same report and then requires typing `apply` in a terminal before appending new records; it is not suitable for unattended use. Missing descriptions/keywords and slug conflicts are flagged in the report. Existing records are never overwritten.
-
-New records are `draft: true`. They are visible locally in development, but omitted from production catalogue routes/search/home and all generated DCAT feeds. Remove `draft` only after reviewing the metadata and access classification. Drafts are a production visibility gate, not confidentiality: the repository is private, but draft metadata is visible to its collaborators and remains in Git history. Only complete, verified public packages get tag-pinned `resources[]` URLs in their drafts; restricted or unknown-visibility repositories never receive `file`/`resources` fields. Review package metadata for sensitive titles, descriptions, keywords and licences before publication. Private resource filenames and paths must never enter public records or review reports.
-
-## Implementation status
-
-- [`lib/providers/static-provider.ts`](lib/providers/static-provider.ts) loads the manifest at build time; [`lib/datasets.ts`](lib/datasets.ts) supplies search, routing, and restricted-access validation. [`lib/providers/types.ts`](lib/providers/types.ts) defines the record shape.
-- The current UI still contains PortalJS template preview, map, and DuckDB features. `DATA_QUERY` is **still `'duckdb'`** in `lib/datasets.ts`; [ARCHITECTURE.md](ARCHITECTURE.md) calls for a later switch to `'flat'` for the catalogue's preview-only use case. Do not assume that switch has been made.
-- Git LFS/R2 configuration and optional template commands are present, but the catalogue defaults to **external linked data**, not ingesting files into R2. Sources can be listed by metadata and landing-page link without adding a preview or a database connection to the site.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for design decisions and remaining work.
