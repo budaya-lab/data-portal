@@ -5,10 +5,23 @@
 /* Budaya Lab uses its paper colour as the canvas. Setting it on the body
    avoids a white flash before the page wrapper paints. */
 @layer base {
+  :root {
+    /* Bridge the shared Tailwind palette to SVG and inline chart styles.
+           https://v3.tailwindcss.com/docs/functions-and-directives#theme */
+    --chart-series-1: theme("colors.accent");
+    --chart-series-2: theme("colors.indigo");
+    --chart-series-3: theme("colors.teal.700");
+    --chart-series-4: theme("colors.rose.700");
+    --chart-series-5: theme("colors.amber.700");
+    --chart-axis: theme("colors.ink / 65%");
+    --chart-grid: theme("colors.ink / 15%");
+  }
+
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
   body {
     background-color: #fafaf8;
     font-family: Inter, system-ui, sans-serif;

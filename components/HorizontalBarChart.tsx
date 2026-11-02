@@ -1,8 +1,8 @@
 import { useEffect, useId, useState } from "react";
+import { CHART_SERIES } from "../lib/chart-theme";
 
 type Row = Record<string, string | number>;
 
-const PALETTE = ["#8a4b2b", "#2f6f68", "#b56d3d", "#526b7a", "#8b6b35"];
 const ROW_GRID =
   "grid grid-cols-[2.5rem_minmax(0,1fr)_1.75rem] items-center gap-x-2";
 
@@ -134,7 +134,7 @@ export function HorizontalBarChart({
                   series={key}
                   value={value}
                   axisMax={axisMax}
-                  color={PALETTE[seriesIndex % PALETTE.length]}
+                  color={CHART_SERIES[seriesIndex % CHART_SERIES.length]}
                 />
                 <span className="tabular-nums">
                   {Number.isFinite(value) ? value : "–"}

@@ -19,6 +19,7 @@ import {
   YAxis,
   ZAxis,
 } from "recharts";
+import { CHART_AXIS, CHART_GRID, CHART_SERIES } from "../lib/chart-theme";
 import { HorizontalBarChart } from "./HorizontalBarChart";
 import { parseCsv } from "./ui/parseCsv";
 
@@ -26,7 +27,6 @@ type Row = Record<string, string | number>;
 type ChartType = "line" | "bar" | "area" | "pie" | "scatter";
 
 const EMPTY_DATA: Row[] = [];
-const PALETTE = ["#8a4b2b", "#2f6f68", "#b56d3d", "#526b7a", "#8b6b35"];
 
 export interface ChartProps {
   /** CSV file URL under /public, e.g. "/data/file.csv" */
@@ -177,7 +177,7 @@ export function ChartPlot({
   height?: number;
 }) {
   const size = { width, height };
-  const grid = <CartesianGrid strokeDasharray="3 3" stroke="#d8d1c4" />;
+  const grid = <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />;
   // Recharts 2's react-is cannot unwrap React 19 fragments. Keep axes direct.
   const axes = [
     <XAxis
@@ -185,9 +185,9 @@ export function ChartPlot({
       dataKey={x}
       interval={0}
       tick={{ fontSize: 12 }}
-      stroke="#766c60"
+      stroke={CHART_AXIS}
     />,
-    <YAxis key="y" tick={{ fontSize: 12 }} stroke="#766c60" />,
+    <YAxis key="y" tick={{ fontSize: 12 }} stroke={CHART_AXIS} />,
   ];
 
   return type === "bar" ? (
@@ -197,7 +197,11 @@ export function ChartPlot({
       <Tooltip />
       <Legend />
       {yKeys.map((key, index) => (
-        <Bar key={key} dataKey={key} fill={PALETTE[index % PALETTE.length]} />
+        <Bar
+          key={key}
+          dataKey={key}
+          fill={CHART_SERIES[index % CHART_SERIES.length]}
+        />
       ))}
     </BarChart>
   ) : type === "area" ? (
@@ -211,8 +215,8 @@ export function ChartPlot({
           key={key}
           type="monotone"
           dataKey={key}
-          stroke={PALETTE[index % PALETTE.length]}
-          fill={PALETTE[index % PALETTE.length]}
+          stroke={CHART_SERIES[index % CHART_SERIES.length]}
+          fill={CHART_SERIES[index % CHART_SERIES.length]}
           fillOpacity={0.2}
         />
       ))}
@@ -233,7 +237,7 @@ export function ChartPlot({
         {rows.map((row, index) => (
           <Cell
             key={`${String(row[x])}-${String(row[yKeys[0]])}`}
-            fill={PALETTE[index % PALETTE.length]}
+            fill={CHART_SERIES[index % CHART_SERIES.length]}
           />
         ))}
       </Pie>
@@ -245,18 +249,18 @@ export function ChartPlot({
         dataKey={x}
         type="number"
         tick={{ fontSize: 12 }}
-        stroke="#766c60"
+        stroke={CHART_AXIS}
       />
       <YAxis
         dataKey={yKeys[0]}
         type="number"
         tick={{ fontSize: 12 }}
-        stroke="#766c60"
+        stroke={CHART_AXIS}
       />
       <ZAxis range={[60, 60]} />
       <Tooltip cursor={{ strokeDasharray: "3 3" }} />
       <Legend />
-      <Scatter data={rows} fill={PALETTE[0]} />
+      <Scatter data={rows} fill={CHART_SERIES[0]} />
     </ScatterChart>
   ) : (
     <LineChart {...size} data={rows}>
@@ -269,7 +273,7 @@ export function ChartPlot({
           key={key}
           type="monotone"
           dataKey={key}
-          stroke={PALETTE[index % PALETTE.length]}
+          stroke={CHART_SERIES[index % CHART_SERIES.length]}
           dot={false}
         />
       ))}
