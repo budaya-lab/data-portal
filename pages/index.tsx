@@ -42,7 +42,7 @@ export default function Home({ suggested }: { suggested: string[] }) {
         <p className="mb-11 max-w-[520px] font-serif text-xl leading-[1.55] text-ink/70">
           Browse datasets catalogued by the{" "}
           <Link
-            className="underline decoration-1 underline-offset-[3px] hover:text-ink"
+            className="underline decoration-1 underline-offset-[3px] hover:text-accent"
             href="https://budaya-lab.org/"
           >
             Budaya Lab

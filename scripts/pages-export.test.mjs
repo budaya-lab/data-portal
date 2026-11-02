@@ -41,6 +41,34 @@ test("Pages artifact contains published dataset routes, but no draft routes", ()
   }
 });
 
+test("every portal page includes one footer with the package version and navigation", () => {
+  const { version } = JSON.parse(readFileSync("package.json", "utf8"));
+  const pages = [
+    "index.html",
+    "search/index.html",
+    "404.html",
+    ...records
+      .filter((record) => record.draft !== true)
+      .map((record) => join(`@${record.namespace}`, record.slug, "index.html")),
+  ];
+
+  for (const page of pages) {
+    const document = html(page);
+    const footers = [
+      ...document.matchAll(/<footer\b[^>]*>([\s\S]*?)<\/footer>/g),
+    ];
+    assert.equal(footers.length, 1, `${page} must have one site footer`);
+    const footer = footers[0][1];
+    assert.ok(
+      footer.replace(/<[^>]*>/g, "").includes(`v${version}`),
+    );
+    assert.match(footer, /aria-label="Footer"/);
+    assert.match(footer, /href="\/search\/?"/);
+    assert.match(footer, /href="https:\/\/budaya-lab\.org\/"/);
+    assert.ok(document.indexOf("<footer") > document.lastIndexOf("</main>"));
+  }
+});
+
 test("Pages artifact includes the custom domain, chart summary, and metadata feeds", () => {
   assert.equal(
     html("CNAME").trim(),
