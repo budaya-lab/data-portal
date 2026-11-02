@@ -1,13 +1,16 @@
 import type { AppProps } from "next/app";
+import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import "../styles/globals.css";
 
 export default function App({ Component, pageProps }: AppProps) {
-  // Navbar renders on every page (home, search, and each dataset showcase).
   return (
-    <>
+    <div className="flex min-h-screen flex-col">
       <Navbar />
-      <Component {...pageProps} />
-    </>
+      <div className="flex-1">
+        <Component {...pageProps} />
+      </div>
+      <Footer />
+    </div>
   );
 }
