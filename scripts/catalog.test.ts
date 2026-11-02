@@ -427,6 +427,81 @@ test("Cartesian chart modes render category and value axes with React 19", () =>
   }
 });
 
+test("chart modes use distinct shared theme colours and cycle the palette", () => {
+  const colours = [
+    "var(--chart-series-1)",
+    "var(--chart-series-2)",
+    "var(--chart-series-3)",
+    "var(--chart-series-4)",
+    "var(--chart-series-5)",
+  ];
+  const yKeys = ["a", "b", "c", "d", "e", "f"];
+  const rows = Array.from({ length: 6 }, (_, index) => ({
+    category: index + 1,
+    a: index + 2,
+    b: index + 3,
+    c: index + 4,
+    d: index + 5,
+    e: index + 6,
+    f: index + 7,
+  }));
+
+  for (const type of ["line", "bar", "area", "pie", "scatter"] as const) {
+    const markup = renderToStaticMarkup(
+      createElement(ChartPlot, {
+        rows,
+        type,
+        x: "category",
+        yKeys,
+        width: 640,
+        height: 320,
+      }),
+    );
+    for (const colour of type === "scatter" ? colours.slice(0, 1) : colours) {
+      assert.ok(markup.includes(colour), `${type} uses ${colour}`);
+    }
+    if (type !== "pie") {
+      assert.ok(markup.includes('stroke="var(--chart-axis)"'));
+      assert.ok(markup.includes('stroke="var(--chart-grid)"'));
+    }
+    if (type !== "scatter") {
+      const attribute = type === "line" || type === "area" ? "stroke" : "fill";
+      const markClass = {
+        line: "recharts-line-curve",
+        area: "recharts-area-curve",
+        bar: "recharts-rectangle",
+        pie: "recharts-sector",
+      }[type];
+      const assigned = Array.from(markup.matchAll(/<path\b[^>]*>/g))
+        .filter(([path]) => path.includes(markClass))
+        .map(([path]) => path.match(new RegExp(`${attribute}="([^"]+)"`))?.[1]);
+      const expected = [...colours, colours[0]];
+      assert.deepEqual(
+        assigned,
+        type === "bar"
+          ? expected.flatMap((colour) => rows.map(() => colour))
+          : expected,
+        `${type} cycles after five distinct series or slices`,
+      );
+    }
+  }
+
+  const horizontal = renderToStaticMarkup(
+    createElement(Chart, {
+      data: rows.slice(0, 1),
+      type: "bar",
+      barOrientation: "horizontal",
+      x: "category",
+      y: yKeys,
+    }),
+  );
+  const barColours = Array.from(
+    horizontal.matchAll(/background-color:([^";]+)/g),
+    (match) => match[1],
+  );
+  assert.deepEqual(barColours, [...colours, colours[0]]);
+});
+
 test("overview chart appears only on the selected Budaya Lab showcase", async () => {
   const provider = new StaticProvider();
   const dataset = await provider.getDataset("budaya-lab", "ds-layout-um-v2");
