@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 
 // Site navbar, rendered on every page via `_app.tsx`. It uses the Budaya Lab
@@ -12,8 +11,8 @@ export default function Navbar() {
           className="flex items-center gap-3 text-ink no-underline"
           aria-label="Budaya Lab Data Portal — home"
         >
-          <Image
-            unoptimized
+          {/* biome-ignore lint/performance/noImgElement: This local brand mark is unoptimized for static export. */}
+          <img
             src="/favicon.png"
             alt=""
             width={40}
