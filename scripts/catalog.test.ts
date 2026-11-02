@@ -47,7 +47,10 @@ test("catalog search finds Frictionless keywords without searching source data",
 
 test("controlled stage keywords describe data without inventing parentage", () => {
   for (const [stage, label] of Object.entries(stageLabels)) {
-    const dataset: Dataset = { ...tagged, keywords: ["fieldwork", `stage:${stage}`] };
+    const dataset: Dataset = {
+      ...tagged,
+      keywords: ["fieldwork", `stage:${stage}`],
+    };
     assert.equal(getDatasetStage(dataset), stage);
     assert.equal(stageLabel(dataset), label);
     assert.deepEqual(subjectKeywords(dataset), ["fieldwork"]);
@@ -56,7 +59,13 @@ test("controlled stage keywords describe data without inventing parentage", () =
   assert.equal(getDatasetStage(tagged), undefined);
   assert.equal(stageLabel(tagged), undefined);
   assert.equal(getDatasetStage({ ...tagged, derivedFrom: [] }), undefined);
-  assert.deepEqual(suggestedQueries([{ ...tagged, keywords: ["stage:curated", "history"] }], 2), ["history", "interviews"]);
+  assert.deepEqual(
+    suggestedQueries(
+      [{ ...tagged, keywords: ["stage:curated", "history"] }],
+      2,
+    ),
+    ["history", "interviews"],
+  );
 });
 
 test("catalogue rejects unknown, duplicate, or malformed stages and obsolete roles", () => {
@@ -67,16 +76,26 @@ test("catalogue rejects unknown, duplicate, or malformed stages and obsolete rol
     ["stage:master", "stage:master"],
     ["stage:master", 12],
   ]) {
-    assert.throws(() => validateCatalogAccess([{ ...tagged, keywords } as Dataset]), /stage|keyword/i);
+    assert.throws(
+      () => validateCatalogAccess([{ ...tagged, keywords } as Dataset]),
+      /stage|keyword/i,
+    );
   }
   assert.throws(
-    () => validateCatalogAccess([{ ...tagged, role: "derived" } as unknown as Dataset]),
+    () =>
+      validateCatalogAccess([
+        { ...tagged, role: "derived" } as unknown as Dataset,
+      ]),
     /role.*unsupported/i,
   );
 });
 
 test("lineage is optional and may reference multiple catalogue parents", async () => {
-  const master: Dataset = { ...tagged, slug: "master", keywords: ["stage:master"] };
+  const master: Dataset = {
+    ...tagged,
+    slug: "master",
+    keywords: ["stage:master"],
+  };
   const secondMaster: Dataset = {
     ...tagged,
     slug: "second-master",
@@ -111,7 +130,11 @@ test("lineage is optional and may reference multiple catalogue parents", async (
 });
 
 test("catalogue validates lineage references and rejects cycles", () => {
-  const parent: Dataset = { ...tagged, slug: "parent", keywords: ["stage:master"] };
+  const parent: Dataset = {
+    ...tagged,
+    slug: "parent",
+    keywords: ["stage:master"],
+  };
   const derived: Dataset = {
     ...tagged,
     slug: "derived",
@@ -288,9 +311,9 @@ test("catalogue rejects invalid draft values", () => {
 
 test("static provider searches manifest keywords as well as catalog metadata", async () => {
   const provider = new StaticProvider();
-  const matches = await provider.search({ q: "geospatial" });
-  assert.ok(matches.some((d) => d.slug === "world-boundaries"));
-  assert.ok(matches.every((d) => matchesCatalogQuery(d, "geospatial")));
+  const matches = await provider.search({ q: "images" });
+  assert.ok(matches.some((d) => d.slug === "ds-layout-um-v2"));
+  assert.ok(matches.every((d) => matchesCatalogQuery(d, "layout")));
 });
 
 test("catalogue no longer includes culturalheritagenus records", async () => {
@@ -665,7 +688,11 @@ test("dataset showcase renders the stage and confirmed catalogue parent links", 
 test("dataset showcase displays a curated stage without inventing parent metadata", () => {
   const html = renderToStaticMarkup(
     createElement(DatasetPage, {
-      dataset: { ...tagged, keywords: ["fieldwork", "stage:curated"], derivedFrom: [] },
+      dataset: {
+        ...tagged,
+        keywords: ["fieldwork", "stage:curated"],
+        derivedFrom: [],
+      },
       parents: [],
       resources: [],
       activity: [],
