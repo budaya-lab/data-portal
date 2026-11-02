@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/budaya-lab/data-portal/compare/v0.7.0...v0.7.1) (2026-11-02)
+
+
+### Bug Fixes
+
+* **charts:** use shared theme colours ([5c3c703](https://github.com/budaya-lab/data-portal/commit/5c3c703b3785fd6e7d7afe309841687681e164d4))
+
 ## [0.7.0](https://github.com/budaya-lab/data-portal/compare/v0.6.0...v0.7.0) (2026-11-02)
 
 
