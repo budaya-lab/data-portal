@@ -25,6 +25,26 @@ test('rejects unsafe and malformed Data Packages without exposing private resour
   }
 });
 
+test('accepts ground-truth packages and preserves subject keywords and resources', () => {
+  const keywords = ['fieldwork', 'stage:ground-truth'];
+  const metadata = parseDataPackage(JSON.stringify({ ...descriptor, keywords }));
+  assert.deepEqual(metadata.keywords, keywords);
+  assert.deepEqual(metadata.resources, descriptor.resources);
+});
+
+test('rejects duplicate, mixed, or miscapitalized ground-truth stages', () => {
+  for (const keywords of [
+    ['stage:ground-truth', 'stage:ground-truth'],
+    ['stage:ground-truth', 'stage:annotated'],
+    ['stage:Ground-truth'],
+  ]) {
+    assert.throws(
+      () => parseDataPackage(JSON.stringify({ ...descriptor, keywords })),
+      /Invalid datapackage\.json stage keyword/,
+    );
+  }
+});
+
 test('accepts valid public-safe optional fields without inventing dates or sources', () => {
   const metadata = parseDataPackage(JSON.stringify(descriptor));
   assert.equal(metadata.created, undefined);

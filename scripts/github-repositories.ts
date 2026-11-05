@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { parseBuckets } from "../lib/buckets";
 import { type Dataset, validateCatalogAccess } from "../lib/datasets";
 import { type ExtractedMetadata, parseDataPackage } from "./data-package";
 import {
@@ -10,6 +11,7 @@ import {
   selectLatestMainRelease,
   type TreeEntry,
 } from "./release-resources";
+import { writeGitHubImport } from "./write-github-import";
 
 export type { ExtractedMetadata } from "./data-package";
 
@@ -178,8 +180,19 @@ export function buildCandidate(
   if (metadata.keywords?.length) candidate.keywords = metadata.keywords;
   if (metadata.created) candidate.created = metadata.created;
   if (metadata.licenses?.length) candidate.licenses = metadata.licenses;
-  if (access === "public" && metadata.verifiedResources?.length)
-    candidate.resources = metadata.verifiedResources;
+  const resources =
+    access === "public" ? [...(metadata.verifiedResources ?? [])] : [];
+  if (metadata.bucketFile) {
+    if (!/^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/.test(namespace))
+      throw new Error("Invalid bucket publisher namespace.");
+    resources.push({
+      name: "buckets",
+      path: `buckets/${namespace}/${candidate.slug}.csv`,
+      format: "csv",
+      title: "Public bucket summary",
+    });
+  }
+  if (resources.length) candidate.resources = resources;
   return candidate;
 }
 
@@ -434,13 +447,13 @@ export async function listRepositories(
   }
 }
 
-async function readContent(
+async function readContentBytes(
   account: string,
   repo: Repository,
   filename: string,
   token: string,
   ref: string,
-): Promise<string | undefined> {
+): Promise<Uint8Array | undefined> {
   const path = filename.split("/").map(encodeURIComponent).join("/");
   const url = new URL(
     `repos/${encodeURIComponent(account)}/${encodeURIComponent(repo.name)}/contents/${path}?ref=${encodeURIComponent(ref)}`,
@@ -464,7 +477,28 @@ async function readContent(
       `GitHub returned unsupported content encoding for ${filename}.`,
     );
   }
-  return Buffer.from(content, "base64").toString("utf8");
+  const base64 = content.replace(/[\r\n]/g, "");
+  if (
+    !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(
+      base64,
+    )
+  ) {
+    throw new Error(`Invalid GitHub base64 content for ${filename}.`);
+  }
+  return Buffer.from(base64, "base64");
+}
+
+async function readContent(
+  account: string,
+  repo: Repository,
+  filename: string,
+  token: string,
+  ref: string,
+): Promise<string | undefined> {
+  const bytes = await readContentBytes(account, repo, filename, token, ref);
+  return bytes === undefined
+    ? undefined
+    : new TextDecoder("utf-8", { fatal: true }).decode(bytes);
 }
 
 function repositoryApiPath(account: string, repo: Repository): string {
@@ -537,6 +571,34 @@ async function releaseIsOnMain(
   return ["ahead", "identical"].includes((result as { status: string }).status);
 }
 
+async function readReleaseCommit(
+  account: string,
+  repo: Repository,
+  token: string,
+  tag: string,
+): Promise<{ sha: string; tree: string }> {
+  const { response, text } = await githubGet(
+    new URL(
+      `${repositoryApiPath(account, repo)}/commits/${encodeURIComponent(tag)}`,
+      API,
+    ),
+    token,
+  );
+  if (response.status === 404)
+    throw new MissingReleaseTagError(
+      "Release tag is unavailable; review the repository releases.",
+    );
+  if (!response.ok)
+    throw new Error(`Could not resolve release commit (${response.status}).`);
+  const value = JSON.parse(text);
+  if (
+    !/^[a-f0-9]{40}$/.test(value?.sha) ||
+    !/^[a-f0-9]{40}$/.test(value?.commit?.tree?.sha)
+  )
+    throw new Error("Invalid GitHub release commit.");
+  return { sha: value.sha, tree: value.commit.tree.sha };
+}
+
 async function readReleaseTree(
   account: string,
   repo: Repository,
@@ -578,22 +640,28 @@ export async function readRepositoryMetadata(
   repo: Repository,
   token: string,
 ): Promise<ExtractedMetadata> {
-  if (repo.private !== false) {
-    const descriptor = await readContent(
-      account,
-      repo,
-      "datapackage.json",
-      token,
-      "main",
-    );
-    return parseDataPackage(descriptor);
-  }
+  const restricted = repo.private !== false;
+  const current = restricted
+    ? parseDataPackage(
+        await readContent(account, repo, "datapackage.json", token, "main"),
+      )
+    : undefined;
   const releases = await listReleases(account, repo, token);
   let tag: string | undefined;
+  let commit: { sha: string; tree: string } | undefined;
   try {
-    tag = await selectLatestMainRelease(releases, (releaseTag) =>
-      releaseIsOnMain(account, repo, token, releaseTag),
-    );
+    tag = await selectLatestMainRelease(releases, async (releaseTag) => {
+      const resolved = await readReleaseCommit(
+        account,
+        repo,
+        token,
+        releaseTag,
+      );
+      if (!(await releaseIsOnMain(account, repo, token, resolved.sha)))
+        return false;
+      commit = resolved;
+      return true;
+    });
   } catch (error) {
     if (!(error instanceof MissingReleaseTagError)) throw error;
     const descriptor = await readContent(
@@ -604,20 +672,22 @@ export async function readRepositoryMetadata(
       "main",
     );
     return {
-      ...parseDataPackage(descriptor),
+      ...(current ?? parseDataPackage(descriptor)),
       review: [
         "release tag unavailable; resources need review before publication",
       ],
     };
   }
-  const descriptor = await readContent(
-    account,
-    repo,
-    "datapackage.json",
-    token,
-    tag ?? "main",
-  );
-  if (tag && descriptor === undefined) {
+  const descriptor = restricted
+    ? undefined
+    : await readContent(
+        account,
+        repo,
+        "datapackage.json",
+        token,
+        commit?.sha ?? "main",
+      );
+  if (!restricted && tag && descriptor === undefined) {
     const current = await readContent(
       account,
       repo,
@@ -632,31 +702,62 @@ export async function readRepositoryMetadata(
       ],
     };
   }
-  const metadata = parseDataPackage(descriptor);
-  if (!tag)
+  const metadata = current ?? parseDataPackage(descriptor);
+  if (!tag || !commit)
     return {
       ...metadata,
       review: [
-        "no suitable release from main; resources need review before publication",
+        "no suitable release from main; resources and bucket summaries need review before publication",
       ],
     };
-  const tree = await readReleaseTree(account, repo, token, tag);
+  const tree = await readReleaseTree(account, repo, token, commit.tree);
   if (!tree)
     return {
       ...metadata,
       review: ["resources need review before publication"],
     };
-  const result = resourcesAtRelease(
-    metadata.resources,
-    tree,
-    tag,
-    repo.owner.login,
-    repo.name,
-  );
+  const bucket = tree.find((entry) => entry.path === "buckets.csv");
+  let bucketFile: ExtractedMetadata["bucketFile"];
+  if (bucket) {
+    if (bucket.type !== "blob" || !["100644", "100755"].includes(bucket.mode))
+      throw new Error("buckets.csv must be a regular Git file.");
+    const bytes = await readContentBytes(
+      account,
+      repo,
+      "buckets.csv",
+      token,
+      commit.sha,
+    );
+    if (bytes === undefined)
+      throw new Error(
+        "Advertised buckets.csv is unavailable at the selected release.",
+      );
+    parseBuckets(bytes);
+    bucketFile = { bytes, ref: `${tag} (${commit.sha})` };
+  }
+  const result = restricted
+    ? {}
+    : resourcesAtRelease(
+        metadata.resources.filter(
+          (resource) => resource.path !== "buckets.csv",
+        ),
+        tree,
+        tag,
+        repo.owner.login,
+        repo.name,
+      );
   return {
     ...metadata,
     verifiedResources: result.resources,
-    review: result.review,
+    ...(bucketFile ? { bucketFile } : {}),
+    review: [
+      ...(result.review ?? []),
+      ...(bucketFile
+        ? [
+            `bucket summary from ${bucketFile.ref} will be public; review labels and counts before applying`,
+          ]
+        : []),
+    ],
   };
 }
 
@@ -670,12 +771,49 @@ async function confirmApply(): Promise<boolean> {
   try {
     return (
       (await terminal.question(
-        'Type "apply" to append these drafts to datasets.json: ',
+        'Type "apply" to append drafts and copy any public bucket summaries into public/data/: ',
       )) === "apply"
     );
   } finally {
     terminal.close();
   }
+}
+
+export async function applyCandidates(
+  candidates: Candidate[],
+  metadata: ExtractedMetadata[],
+  options: { apply: boolean; confirm?: () => Promise<boolean>; root?: string },
+): Promise<number> {
+  if (!options.apply || !candidates.length) return 0;
+  if (metadata.length !== candidates.length)
+    throw new Error("Import metadata does not match the candidate batch.");
+  if (!(await (options.confirm ?? confirmApply)()))
+    throw new Error("Apply cancelled; datasets.json was not changed.");
+  const root = options.root ?? process.cwd();
+  const current = await readFile(resolve(root, "datasets.json"), "utf8");
+  const updated = mergeCandidates(current, candidates);
+  const existingCount = JSON.parse(current).length;
+  const additions = (JSON.parse(updated) as Candidate[]).slice(existingCount);
+  if (!additions.length) return 0;
+  const files = additions.flatMap((candidate) => {
+    const index = candidates.findIndex(
+      (item) =>
+        item.namespace === candidate.namespace && item.slug === candidate.slug,
+    );
+    const bucket = candidate.resources?.find(
+      (resource) => resource.name === "buckets",
+    );
+    if (!bucket) return [];
+    const file = metadata[index].bucketFile;
+    if (
+      !file ||
+      bucket.path !== `buckets/${candidate.namespace}/${candidate.slug}.csv`
+    )
+      throw new Error("Invalid staged bucket resource.");
+    return [{ resource: bucket, bytes: file.bytes }];
+  });
+  await writeGitHubImport(root, current, updated, files);
+  return additions.length;
 }
 
 function showProgress(done: number, total: number): void {
@@ -754,12 +892,9 @@ async function main(): Promise<void> {
     throw new Error(
       "Resolve review-file conflicts before applying candidates.",
     );
-  if (!(await confirmApply()))
-    throw new Error("Apply cancelled; datasets.json was not changed.");
-  const current = await readFile(manifestPath, "utf8");
-  const updated = mergeCandidates(current, candidates);
-  await writeFile(manifestPath, updated, "utf8");
-  const added = JSON.parse(updated).length - JSON.parse(current).length;
+  const added = await applyCandidates(candidates, extracted, {
+    apply: options.apply,
+  });
   console.log(`Added ${added} draft dataset record(s) to ${manifestPath}.`);
 }
 

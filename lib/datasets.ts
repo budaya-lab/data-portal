@@ -6,6 +6,7 @@
 // mode, and the canonical URL helper.
 
 import stageLabels from "../stage.config.json";
+import { validateBucketResource } from "./buckets";
 import type { Dataset, Resource } from "./providers";
 
 export type {
@@ -100,8 +101,8 @@ export function isRestricted(d: Dataset): boolean {
   );
 }
 
-// A public static export cannot enforce access to data. Reject restricted
-// resources at build time, before any file URLs can enter the generated pages.
+// A public static export cannot enforce access to source data. Only validated
+// public bucket summaries may be resources on a restricted catalogue record.
 export function validateCatalogAccess(datasets: Dataset[]): void {
   const byId = new Map<string, Dataset>();
   for (const d of datasets) {
@@ -178,8 +179,14 @@ export function validateCatalogAccess(datasets: Dataset[]): void {
         `Invalid access for source of dataset ${d.namespace}/${d.slug}`,
       );
     }
+    if (d.resources !== undefined && !Array.isArray(d.resources)) {
+      throw new Error(`Invalid resources for dataset ${d.namespace}/${d.slug}`);
+    }
+    const buckets = (d.resources ?? []).filter((resource) => resource?.name === "buckets");
+    if (buckets.length > 1) throw new Error("Only one bucket resource is allowed per dataset");
+    for (const resource of buckets) validateBucketResource(resource);
     const restricted = isRestricted(d);
-    if (restricted && (d.file || (d.resources && d.resources.length > 0))) {
+    if (restricted && (d.file || d.resources?.some((resource) => resource?.name !== "buckets"))) {
       throw new Error(
         `Restricted dataset ${d.namespace}/${d.slug} cannot have resources in a public catalog`,
       );

@@ -1,5 +1,6 @@
 {
   "master": "Master collection",
   "curated": "Curated dataset",
-  "annotated": "Annotated dataset"
+  "annotated": "Annotated dataset",
+  "ground-truth": "Ground truth"
 }
