@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.10.0](https://github.com/budaya-lab/data-portal/compare/v0.9.1...v0.10.0) (2026-11-05)
+
+
+### Features
+
+* **catalogue:** add restricted dataset summaries ([c9155e9](https://github.com/budaya-lab/data-portal/commit/c9155e96557b00df315695d33877687bf6fb0580))
+* **catalogue:** add restricted dataset summaries ([8e5e1ee](https://github.com/budaya-lab/data-portal/commit/8e5e1ee3aad4aa890f47578309e25e975b7bf2ec))
+
+
+### Bug Fixes
+
+* **ui:** align resource download row ([2169f7a](https://github.com/budaya-lab/data-portal/commit/2169f7acee00f46048d37ae4421ae7b223f625d9))
+
 ## [0.9.1](https://github.com/budaya-lab/data-portal/compare/v0.9.0...v0.9.1) (2026-11-05)
 
 
