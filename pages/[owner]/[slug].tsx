@@ -540,7 +540,7 @@ function ResourceDownloadRow({ resource }: { resource: Resource }) {
 
   return (
     <div className="border-b border-dotted border-ink/25">
-      <div className="flex items-start justify-between gap-4 py-4">
+      <div className="flex items-end justify-between gap-4 py-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2.5">
             <span className="min-w-0 truncate font-sans text-[15px] font-medium text-ink">
