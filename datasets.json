@@ -4,6 +4,14 @@
     "namespace": "budaya-lab",
     "name": "Layout UM v2",
     "description": "152 images from the 60s, used for layout classification.",
+    "resources": [
+      {
+        "name": "buckets",
+        "path": "ds-layout-um-v2-buckets.csv",
+        "format": "csv",
+        "title": "Public bucket summary"
+      }
+    ],
     "keywords": [
       "layout",
       "UM",

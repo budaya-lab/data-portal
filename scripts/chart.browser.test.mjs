@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { writeFile } from "node:fs/promises";
 import { test } from "node:test";
 import { setTimeout as delay } from "node:timers/promises";
 
@@ -191,6 +192,13 @@ test("overview chart loads proportional bars, positions axes, and supports hover
     assert.equal(description, tooltipId);
     await keys(buttons[1], "\uE00C");
     assert.equal(await visible(tooltips[1]), false);
+    if (process.env.CHART_SCREENSHOT_PATH) {
+      const image = await request(`${session}/screenshot`);
+      await writeFile(
+        process.env.CHART_SCREENSHOT_PATH,
+        Buffer.from(image, "base64"),
+      );
+    }
   } finally {
     await request(session, "DELETE");
   }

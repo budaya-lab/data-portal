@@ -71,6 +71,7 @@ export type FrictionlessLike = PackageMetadata & {
   name?: string
   file?: string
   format?: string
+  resources?: { name: string; path: string; format: string; title?: string }[]
   schema?: TableSchema
   access?: 'public' | 'restricted'
 }
@@ -216,16 +217,22 @@ export function toDCAT(input: FrictionlessLike, opts: ToDcatOptions = {}): DcatD
     opts.downloadUrl ?? (input.file ? joinUrl(opts.baseUrl, `data/${input.file}`) : undefined)
   const landingPage = opts.landingPage
 
-  const distribution: DcatDistribution | undefined = input.file
-    ? compact({
-        '@type': 'dcat:Distribution',
-        'dct:title': input.title ?? input.name,
-        'dcat:downloadURL': downloadURL,
-        'dcat:accessURL': landingPage ?? downloadURL,
-        'dct:format': formatIri(input.format),
-        'dcat:mediaType': mediaTypeIri(input.format),
-      } as DcatDistribution)
-    : undefined
+  const resources = input.resources?.length ? input.resources : input.file
+    ? [{ name: 'data', path: input.file, format: input.format, title: input.title ?? input.name }]
+    : []
+  const distributions = resources.map((resource) => {
+    const url = !input.resources?.length ? downloadURL
+      : /^(?:https?:\/\/|\/)/.test(resource.path) ? resource.path
+      : joinUrl(opts.baseUrl, `data/${resource.path}`)
+    return compact({
+      '@type': 'dcat:Distribution',
+      'dct:title': resource.title ?? resource.name,
+      'dcat:downloadURL': url,
+      'dcat:accessURL': landingPage ?? url,
+      'dct:format': formatIri(resource.format),
+      'dcat:mediaType': mediaTypeIri(resource.format),
+    } as DcatDistribution)
+  })
 
   return compact({
     '@id': landingPage ?? (opts.identifier ? joinUrl(opts.baseUrl, opts.identifier) : undefined),
@@ -245,7 +252,7 @@ export function toDCAT(input: FrictionlessLike, opts: ToDcatOptions = {}): DcatD
     'dct:modified': input.modified,
     'dcat:version': input.version,
     'dcat:landingPage': landingPage,
-    'dcat:distribution': distribution ? [distribution] : undefined,
+    'dcat:distribution': distributions.length ? distributions : undefined,
   } as DcatDataset)
 }
 

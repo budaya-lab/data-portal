@@ -17,6 +17,7 @@ export type ExtractedMetadata = {
   licenses?: License[];
   resources: DeclaredResource[];
   verifiedResources?: Resource[];
+  bucketFile?: { bytes: Uint8Array; ref: string };
   review?: string[];
 };
 
@@ -150,6 +151,15 @@ export function parseDataPackage(text: string | undefined): ExtractedMetadata {
         resource.data !== undefined
       )
         throw new Error("Invalid datapackage.json resource path.");
+      if (
+        resource.name === "buckets" &&
+        (resource.path !== "buckets.csv" ||
+          (resource.format !== undefined && resource.format !== "csv"))
+      ) {
+        throw new Error(
+          "The buckets resource must reference root buckets.csv with CSV format.",
+        );
+      }
       if (
         resource.format !== undefined &&
         (typeof resource.format !== "string" ||

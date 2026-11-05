@@ -94,7 +94,10 @@ export function HorizontalBarChart({
   label: string;
 }) {
   const values = rows.flatMap((row) => yKeys.map((key) => Number(row[key])));
-  const maxValue = Math.max(0, ...values.filter(Number.isFinite));
+  const maxValue = values.reduce(
+    (max, value) => (Number.isFinite(value) ? Math.max(max, value) : max),
+    0,
+  );
   const axisMax = maxValue > 0 ? Math.ceil(maxValue / 5) * 5 : 5;
   const ticks = Array.from({ length: 6 }, (_, index) => (axisMax * index) / 5);
   const categoryTitle = x.charAt(0).toUpperCase() + x.slice(1);

@@ -81,6 +81,19 @@ test("Pages artifact includes the custom domain, chart summary, and metadata fee
   assert.ok(JSON.parse(html("catalog.jsonld")));
 });
 
+test("published bucket resources export their CSV, chart and download without changing dataset access", () => {
+  for (const record of records.filter((item) => item.draft !== true)) {
+    const bucket = record.resources?.find((resource) => resource.name === "buckets");
+    if (!bucket) continue;
+    assert.equal(html(`data/${bucket.path}`), readFileSync(join("public/data", bucket.path), "utf8"));
+    const page = html(`@${record.namespace}/${record.slug}/index.html`);
+    assert.match(page, /data-bar-orientation="horizontal"/);
+    assert.ok(page.includes(`href="/data/${bucket.path}"`));
+    if (record.access === "restricted") assert.match(page, /Restricted/);
+    assert.ok(html("catalog.jsonld").includes(`/data/${bucket.path}`));
+  }
+});
+
 test("Exported pages reference bundled assets that exist at the domain root", () => {
   const pages = [
     "index.html",

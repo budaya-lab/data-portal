@@ -24,7 +24,10 @@
 import { mkdir, writeFile, readFile } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import { join } from 'node:path'
+import manifest from '../datasets.json'
 import { provider } from '../lib/providers'
+import type { Dataset } from '../lib/providers'
+import { validateBucketFiles } from '../lib/bucket-files'
 import { publishedDatasets } from '../lib/datasets'
 import {
   toDCATCatalog,
@@ -67,7 +70,10 @@ async function main() {
     ? cfg.serializations
     : ['jsonld', 'ttl', 'rdf']
 
-  const datasets = publishedDatasets((await provider.listDatasets()) as CatalogEntry[])
+  // Draft CSVs also ship as public assets, even though their pages/feeds do not.
+  validateBucketFiles(manifest as Dataset[])
+  const visibleDatasets = await provider.listDatasets()
+  const datasets = publishedDatasets(visibleDatasets as CatalogEntry[])
 
   // Base DCAT-3 catalog (profile-agnostic). Profiles augment this.
   const base = toDCATCatalog(datasets, {

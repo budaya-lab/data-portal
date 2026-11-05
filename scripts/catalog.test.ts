@@ -5,6 +5,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Chart, ChartPlot } from "../components/Chart";
 import { parseCsv } from "../components/ui/parseCsv";
+import { type BucketData, parseBuckets } from "../lib/buckets";
 import type { Dataset } from "../lib/datasets";
 import {
   datasetHref,
@@ -20,7 +21,7 @@ import {
 } from "../lib/datasets";
 import { toDCAT } from "../lib/metadata/dcat";
 import { StaticProvider } from "../lib/providers/static-provider";
-import DatasetPage from "../pages/[owner]/[slug]";
+import DatasetPage, { getStaticProps } from "../pages/[owner]/[slug]";
 import { DatasetRow } from "../pages/search";
 import stageLabels from "../stage.config.json";
 
@@ -325,14 +326,21 @@ test("catalogue no longer includes culturalheritagenus records", async () => {
   );
 });
 
-test("budaya-lab repository is listed as metadata-only with its curated stage", async () => {
+test("budaya-lab repository stays restricted with its public summary and curated stage", async () => {
   const provider = new StaticProvider();
   const dataset = await provider.getDataset("budaya-lab", "ds-layout-um-v2");
   assert.ok(dataset);
   assert.equal(datasetHref(dataset), "/@budaya-lab/ds-layout-um-v2");
   assert.equal(isRestricted(dataset), true);
   assert.equal(dataset.file, undefined);
-  assert.equal(dataset.resources, undefined);
+  assert.deepEqual(dataset.resources, [
+    {
+      name: "buckets",
+      path: "ds-layout-um-v2-buckets.csv",
+      format: "csv",
+      title: "Public bucket summary",
+    },
+  ]);
   assert.equal(getDatasetStage(dataset), "curated");
   assert.deepEqual(dataset.sources, [
     {
@@ -502,30 +510,60 @@ test("chart modes use distinct shared theme colours and cycle the palette", () =
   assert.deepEqual(barColours, [...colours, colours[0]]);
 });
 
-test("overview chart appears only on the selected Budaya Lab showcase", async () => {
+test("bucket resources drive showcase charts for public and restricted datasets", async () => {
   const provider = new StaticProvider();
   const dataset = await provider.getDataset("budaya-lab", "ds-layout-um-v2");
   assert.ok(dataset);
-  const render = (item: Dataset) =>
-    renderToStaticMarkup(
-      createElement(DatasetPage, {
-        dataset: item,
-        parents: [],
-        resources: [],
-        activity: [],
-      }),
-    );
-
-  const targetMarkup = render(dataset);
+  assert.equal(dataset.resources?.[0]?.name, "buckets");
+  const result = await getStaticProps({
+    params: { owner: "@budaya-lab", slug: dataset.slug },
+  });
+  assert.ok("props" in result);
+  const targetMarkup = renderToStaticMarkup(
+    createElement(DatasetPage, await result.props),
+  );
   assert.match(targetMarkup, /horizontal bar chart of count by year/);
-  assert.match(targetMarkup, /data-chart-type="bar"/);
   assert.match(targetMarkup, /data-bar-orientation="horizontal"/);
+  assert.match(targetMarkup, /1962/);
+  assert.match(targetMarkup, /href="\/data\/ds-layout-um-v2-buckets.csv"/);
+  assert.match(targetMarkup, /Restricted/);
   assert.match(
     targetMarkup,
     /<h2 id="overview-chart-title" class="[^"]*font-sans/,
   );
-  assert.doesNotMatch(targetMarkup, /<h3[^>]*>Record counts by year/);
-  assert.doesNotMatch(render(tagged), /horizontal bar chart of count by year/);
+
+  const render = (item: Dataset, bucketData?: BucketData) =>
+    renderToStaticMarkup(
+      createElement(DatasetPage, {
+        dataset: item,
+        parents: [],
+        resources: item.resources ?? [],
+        activity: [],
+        ...(bucketData ? { bucketData } : {}),
+      }),
+    );
+  const data = parseBuckets('category,count\n001,0\n"A,B",2\n');
+  for (const access of ["public", "restricted"] as const) {
+    const arbitrary: Dataset = {
+      ...tagged,
+      access,
+      resources: dataset.resources,
+    };
+    const markup = render(arbitrary, data);
+    assert.match(markup, /horizontal bar chart of count by category/);
+    assert.match(markup, /001/);
+    assert.doesNotMatch(markup, /Loading chart|Loading data|SQL editor/);
+  }
+  assert.match(render(tagged), /No views yet/);
+  assert.doesNotMatch(render(tagged), /horizontal bar chart/);
+  assert.doesNotMatch(
+    render({
+      ...tagged,
+      access: "restricted",
+      resources: [{ name: "private", path: "secret.csv", format: "csv" }],
+    }),
+    /secret.csv/,
+  );
 });
 
 test("a restricted source marks its dataset as restricted", () => {

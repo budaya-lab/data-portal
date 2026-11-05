@@ -201,14 +201,15 @@ test("public onboarding reads the latest release from main and pins verified res
         { tag_name: "v0.3.0", draft: false, prerelease: false },
         { tag_name: "v0.2.0", draft: false, prerelease: false },
       ]);
-    if (url.includes("/compare/v0.3.0...main"))
+    if (url.includes(`/compare/${"a".repeat(40)}...main`))
       return Response.json({ status: "ahead" });
-    if (url.includes("/contents/datapackage.json?ref=v0.3.0"))
+    if (url.includes(`/contents/datapackage.json?ref=${"a".repeat(40)}`))
       return Response.json({
         content: Buffer.from(JSON.stringify(descriptor)).toString("base64"),
         encoding: "base64",
       });
-    if (url.includes("/git/trees/v0.3.0"))
+    if (url.includes("/commits/v0.3.0")) return Response.json({ sha: "a".repeat(40), commit: { tree: { sha: "b".repeat(40) } } });
+    if (url.includes(`/git/trees/${"b".repeat(40)}`))
       return Response.json({
         truncated: false,
         tree: [{ path: "tables/data.csv", type: "blob", mode: "100644" }],
@@ -233,7 +234,7 @@ test("public onboarding reads the latest release from main and pins verified res
       ],
     );
     assert.ok(requested.every((url) => !url.includes("metadata.json")));
-    assert.ok(requested.some((url) => url.includes("/compare/v0.3.0...main")));
+    assert.ok(requested.some((url) => url.includes(`/compare/${"a".repeat(40)}...main`)));
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -247,9 +248,9 @@ test("unsupported public resources keep the whole release metadata-only with a g
       return Response.json([
         { tag_name: "v1.0.0", draft: false, prerelease: false },
       ]);
-    if (url.includes("/compare/v1.0.0...main"))
+    if (url.includes(`/compare/${"a".repeat(40)}...main`))
       return Response.json({ status: "identical" });
-    if (url.includes("/contents/datapackage.json?ref=v1.0.0"))
+    if (url.includes(`/contents/datapackage.json?ref=${"a".repeat(40)}`))
       return Response.json({
         content: Buffer.from(
           JSON.stringify({
@@ -264,7 +265,8 @@ test("unsupported public resources keep the whole release metadata-only with a g
         ).toString("base64"),
         encoding: "base64",
       });
-    if (url.includes("/git/trees/v1.0.0"))
+    if (url.includes("/commits/v1.0.0")) return Response.json({ sha: "a".repeat(40), commit: { tree: { sha: "b".repeat(40) } } });
+    if (url.includes(`/git/trees/${"b".repeat(40)}`))
       return Response.json({
         truncated: false,
         tree: [
@@ -306,7 +308,7 @@ test("a missing latest tag produces a public metadata-only draft with a generic 
       return Response.json([
         { tag_name: "v1.0.0", draft: false, prerelease: false },
       ]);
-    if (url.includes("/compare/v1.0.0...main"))
+    if (url.includes("/commits/v1.0.0"))
       return new Response("", { status: 404 });
     if (url.includes("/contents/datapackage.json?ref=main"))
       return Response.json({
@@ -356,9 +358,10 @@ test("missing descriptor at the selected release holds the public record as meta
       return Response.json([
         { tag_name: "v1.0.0", draft: false, prerelease: false },
       ]);
-    if (url.includes("/compare/v1.0.0...main"))
+    if (url.includes(`/compare/${"a".repeat(40)}...main`))
       return Response.json({ status: "identical" });
-    if (url.includes("/contents/datapackage.json?ref=v1.0.0"))
+    if (url.includes("/commits/v1.0.0")) return Response.json({ sha: "a".repeat(40), commit: { tree: { sha: "b".repeat(40) } } });
+    if (url.includes(`/contents/datapackage.json?ref=${"a".repeat(40)}`))
       return new Response("", { status: 404 });
     if (url.includes("/contents/datapackage.json?ref=main"))
       return Response.json({
@@ -393,12 +396,13 @@ test("missing descriptor at the selected release holds the public record as meta
   }
 });
 
-test("private onboarding reads main without requesting releases or exposing its resource paths", async () => {
+test("private onboarding without a release keeps main metadata and exposes no resource paths", async () => {
   const originalFetch = globalThis.fetch;
   const requested: string[] = [];
   globalThis.fetch = async (input) => {
     const url = String(input);
     requested.push(url);
+    if (url.includes("/releases?")) return Response.json([]);
     if (url.includes("/contents/datapackage.json?ref=main"))
       return Response.json({
         content: Buffer.from(
@@ -423,7 +427,7 @@ test("private onboarding reads main without requesting releases or exposing its 
     );
     assert.ok(
       requested.every(
-        (url) => !url.includes("/releases") && !url.includes("/git/trees"),
+        (url) => !url.includes("/git/trees") && !url.includes("/contents/buckets.csv"),
       ),
     );
   } finally {

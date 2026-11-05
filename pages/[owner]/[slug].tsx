@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { Chart } from "../../components/Chart";
 import { Table } from "../../components/Table";
+import { readBucketFile } from "../../lib/bucket-files";
+import type { BucketData } from "../../lib/buckets";
 import {
   type ActivityEntry,
   DATA_QUERY,
@@ -45,6 +47,7 @@ type PageProps = {
   parents?: Dataset[];
   resources: Resource[];
   activity: ActivityEntry[];
+  bucketData?: BucketData;
 };
 
 export const getStaticPaths: GetStaticPaths = async () => {
@@ -78,7 +81,17 @@ export const getStaticProps: GetStaticProps<PageProps> = async ({ params }) => {
   // Capture git history for each resource (and the derived activity feed) at build
   // time — deployed portals are static exports with no git in out/. See lib/history.ts.
   const { resources, activity } = withHistory(dataset);
-  return { props: { dataset, parents, resources, activity } };
+  const bucket = resources.find((resource) => resource.name === "buckets");
+  const bucketData = bucket ? readBucketFile(bucket) : undefined;
+  return {
+    props: {
+      dataset,
+      parents,
+      resources,
+      activity,
+      ...(bucketData ? { bucketData } : {}),
+    },
+  };
 };
 
 // Showcase surface:
@@ -95,12 +108,15 @@ export default function DatasetPage({
   parents = [],
   resources,
   activity,
+  bucketData,
 }: PageProps) {
   const namespaceLabel = NAMESPACE_TYPE === "owner" ? "Owner" : "Theme";
   const restricted = isRestricted(dataset);
   const stage = stageLabel(dataset);
   const keywords = subjectKeywords(dataset);
-  const visibleResources = restricted ? [] : resources;
+  const visibleResources = restricted
+    ? resources.filter((resource) => resource.name === "buckets")
+    : resources;
   const visibleActivity = restricted ? [] : activity;
   const primary = visibleResources[0];
   // The two serverless geo tiers render as ONE map (see MapPreview): the PMTiles
@@ -125,7 +141,8 @@ export default function DatasetPage({
     ? []
     : nonGeoResources.filter(
         (r) =>
-          r.format === "parquet" || r.format === "csv" || r.format === "tsv",
+          r.name !== "buckets" &&
+          (r.format === "parquet" || r.format === "csv" || r.format === "tsv"),
       );
   // Every file, ordered for the Download & API block: the two serverless geo tiers
   // first (GeoParquet for analysis, PMTiles for maps), then the source archive
@@ -223,23 +240,21 @@ export default function DatasetPage({
               <ActivityFeed activity={visibleActivity} />
             )}
 
-            {/* Views are scoped to their owning dataset; the public overview CSV
-                is a cleared summary of this otherwise restricted repository. */}
+            {/* Bucket summaries are public even when source data is restricted. */}
             <SectionLabel className="mt-11">Views</SectionLabel>
-            {dataset.namespace === "budaya-lab" &&
-            dataset.slug === "ds-layout-um-v2" ? (
+            {bucketData ? (
               <section aria-labelledby="overview-chart-title">
                 <h2
                   id="overview-chart-title"
                   className="mb-6 font-sans text-sm font-medium text-ink/75"
                 >
-                  Record counts by year
+                  Record counts by {bucketData.labelColumn}
                 </h2>
                 <Chart
-                  url="/data/ds-layout-um-v2-buckets.csv"
+                  data={bucketData.rows}
                   type="bar"
                   barOrientation="horizontal"
-                  x="year"
+                  x={bucketData.labelColumn}
                   y="count"
                 />
               </section>

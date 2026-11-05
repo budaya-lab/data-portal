@@ -56,6 +56,7 @@ export type ActivityEntry = {
 // several — data + a data dictionary + methodology, or quarterly files, etc.
 export type Resource = {
   // Stable id within the dataset (e.g. "data", "dictionary"). Used in anchors.
+  // The local name "buckets" identifies an explicitly public summary CSV.
   name: string
   // Bare filename served from /public/data (e.g. "orders-2024.csv").
   path: string
@@ -111,8 +112,9 @@ export type Dataset = {
   // package sources and repository landing pages. Omit when unknown.
   // Dataset stage is the controlled stage: keyword, not a separate field.
   derivedFrom?: { namespace: string; slug: string }[]
-  // Catalog access label. Restricted data stays at its source; this public
-  // manifest contains only metadata and a login-protected landing page URL.
+  // Catalog access label for the underlying data, which stays at its source.
+  // Restricted records may include only metadata, a safe landing page, and
+  // the explicitly public buckets summary resource; never other restricted files.
   // A restricted `sources[]` entry also makes the dataset restricted.
   access?: 'public' | 'restricted'
   // Catalog grouping label (e.g. "Boundaries", "Environment"). Sourced from the
