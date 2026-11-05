@@ -32,6 +32,8 @@ Open <http://localhost:3000/>. Draft records are visible locally but excluded fr
    `OWNER` is the GitHub organisation or username. The default repository-name pattern is `^ds[-_].*`; override it with `--pattern`. The publisher namespace defaults to the account's lowercase login; override it with `--namespace`.
 
    The first command validates summaries in memory and writes a report under `.tmp/` without changing the catalogue or `public/data/`. `--apply` requires typing `apply` in a terminal, copies validated public summaries, and appends drafts to `datasets.json`. Existing records are skipped, not updated. A valid root `datapackage.json` is required; README text and repository descriptions are not metadata fallbacks.
+
+   Each repository is validated independently. Invalid metadata or bucket summaries skip that repository, not the entire scan. The terminal and report's `failures` list identify the repository and a public-safe reason. Only valid candidates are eligible for confirmed `--apply`; skipped repositories remain unchanged. Authentication, network, rate-limit, and other GitHub API errors still stop the run.
 4. Review metadata, access, licences, resource links, and report warnings. Remove `draft` only when approved for publication. Run the checks below and submit a PR. A dataset release does not automatically publish a catalogue record.
 
 ### Manually
@@ -59,7 +61,7 @@ Use the existing standard `resources[]` fields, not a custom catalogue field. So
 }
 ```
 
-The path is relative to the portal's `public/data/`. New imports use publisher-scoped paths to prevent collisions. The existing `ds-layout-um-v2` example retains its original public CSV path. Existing records and files are skipped or flagged for review, never overwritten automatically. Advertised summaries that are malformed, unavailable, symlinked, or oversized fail import rather than disappear silently.
+The path is relative to the portal's `public/data/`. New imports use publisher-scoped paths to prevent collisions. The existing `ds-layout-um-v2` example retains its original public CSV path. Existing records and files are skipped or flagged for review, never overwritten automatically. Advertised summaries that are malformed, unavailable, symlinked, or oversized fail that repository's import rather than disappear silently. Validation failures appear in the review report; GitHub API and response-safety errors still stop the run.
 
 The showcase derives the category header from the local CSV and renders horizontal bars in Views. The summary is also a normal public resource download/distribution, not a second table/SQL preview. Builds validate local summary paths and contents. Dataset access stays restricted where applicable. Copied CSVs are public in Git and the static export even for draft records; production still omits draft pages and feeds.
 

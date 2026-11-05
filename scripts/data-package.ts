@@ -2,6 +2,8 @@ import type { License } from "../lib/metadata/types";
 import type { Resource } from "../lib/providers/types";
 import stageLabels from "../stage.config.json";
 
+export class RepositoryValidationError extends Error {}
+
 export type DeclaredResource = {
   name: string;
   path: string | string[];
@@ -90,28 +92,37 @@ function validPath(path: unknown): path is string {
 
 export function parseDataPackage(text: string | undefined): ExtractedMetadata {
   if (text === undefined)
-    throw new Error("datapackage.json is required for onboarding.");
+    throw new RepositoryValidationError(
+      "datapackage.json is required for onboarding.",
+    );
   let value: unknown;
   try {
     value = JSON.parse(text);
   } catch (cause) {
-    throw new Error("Invalid datapackage.json: expected JSON.", { cause });
+    throw new RepositoryValidationError(
+      "Invalid datapackage.json: expected JSON.",
+      { cause },
+    );
   }
   if (
     !isRecord(value) ||
     typeof value.name !== "string" ||
     !/^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?$/.test(value.name)
   )
-    throw new Error("Invalid datapackage.json package name.");
+    throw new RepositoryValidationError(
+      "Invalid datapackage.json package name.",
+    );
   const title = safeText(value.title, 160);
   if (!title)
-    throw new Error("Invalid datapackage.json title: review public-safe text.");
+    throw new RepositoryValidationError(
+      "Invalid datapackage.json title: review public-safe text.",
+    );
   const description =
     value.description === undefined
       ? undefined
       : safeText(value.description, 500);
   if (value.description !== undefined && !description)
-    throw new Error(
+    throw new RepositoryValidationError(
       "Invalid datapackage.json description: review public-safe text.",
     );
   if (
@@ -119,7 +130,7 @@ export function parseDataPackage(text: string | undefined): ExtractedMetadata {
     value.keywords.length > 20 ||
     value.keywords.some((keyword) => !safeText(keyword, 80))
   )
-    throw new Error("Invalid datapackage.json keywords.");
+    throw new RepositoryValidationError("Invalid datapackage.json keywords.");
   const keywords = value.keywords as string[];
   const declaredStages = keywords.filter((keyword) =>
     keyword.startsWith("stage:"),
@@ -128,9 +139,11 @@ export function parseDataPackage(text: string | undefined): ExtractedMetadata {
     declaredStages.length !== 1 ||
     !Object.hasOwn(stageLabels, declaredStages[0].slice("stage:".length))
   )
-    throw new Error("Invalid datapackage.json stage keyword.");
+    throw new RepositoryValidationError(
+      "Invalid datapackage.json stage keyword.",
+    );
   if (!Array.isArray(value.resources) || value.resources.length === 0)
-    throw new Error("Invalid datapackage.json resources.");
+    throw new RepositoryValidationError("Invalid datapackage.json resources.");
   const names = new Set<string>();
   const resources: DeclaredResource[] = value.resources.map(
     (resource: unknown) => {
@@ -140,7 +153,9 @@ export function parseDataPackage(text: string | undefined): ExtractedMetadata {
         !/^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?$/.test(resource.name) ||
         names.has(resource.name)
       )
-        throw new Error("Invalid datapackage.json resource name.");
+        throw new RepositoryValidationError(
+          "Invalid datapackage.json resource name.",
+        );
       names.add(resource.name);
       const paths = Array.isArray(resource.path)
         ? resource.path
@@ -150,13 +165,15 @@ export function parseDataPackage(text: string | undefined): ExtractedMetadata {
         paths.some((path) => !validPath(path)) ||
         resource.data !== undefined
       )
-        throw new Error("Invalid datapackage.json resource path.");
+        throw new RepositoryValidationError(
+          "Invalid datapackage.json resource path.",
+        );
       if (
         resource.name === "buckets" &&
         (resource.path !== "buckets.csv" ||
           (resource.format !== undefined && resource.format !== "csv"))
       ) {
-        throw new Error(
+        throw new RepositoryValidationError(
           "The buckets resource must reference root buckets.csv with CSV format.",
         );
       }
@@ -165,13 +182,17 @@ export function parseDataPackage(text: string | undefined): ExtractedMetadata {
         (typeof resource.format !== "string" ||
           !/^[a-z0-9]+$/.test(resource.format))
       )
-        throw new Error("Invalid datapackage.json resource format.");
+        throw new RepositoryValidationError(
+          "Invalid datapackage.json resource format.",
+        );
       const resourceTitle =
         resource.title === undefined
           ? undefined
           : safeText(resource.title, 160);
       if (resource.title !== undefined && !resourceTitle)
-        throw new Error("Invalid datapackage.json resource title.");
+        throw new RepositoryValidationError(
+          "Invalid datapackage.json resource title.",
+        );
       return {
         name: resource.name,
         path: resource.path as string | string[],
@@ -185,7 +206,7 @@ export function parseDataPackage(text: string | undefined): ExtractedMetadata {
   let created: string | undefined;
   if (value.created !== undefined) {
     if (!validDateTime(value.created))
-      throw new Error(
+      throw new RepositoryValidationError(
         "Invalid datapackage.json created date; replace the template example.",
       );
     created = value.created;
@@ -193,18 +214,22 @@ export function parseDataPackage(text: string | undefined): ExtractedMetadata {
   let licenses: License[] | undefined;
   if (value.licenses !== undefined) {
     if (!Array.isArray(value.licenses))
-      throw new Error("Invalid datapackage.json licenses.");
+      throw new RepositoryValidationError("Invalid datapackage.json licenses.");
     licenses = value.licenses.map((license: unknown) => {
       if (
         !isRecord(license) ||
         typeof license.name !== "string" ||
         !/^[A-Za-z0-9][A-Za-z0-9._+-]{0,79}$/.test(license.name)
       )
-        throw new Error("Invalid datapackage.json license.");
+        throw new RepositoryValidationError(
+          "Invalid datapackage.json license.",
+        );
       const title =
         license.title === undefined ? undefined : safeText(license.title, 160);
       if (license.title !== undefined && !title)
-        throw new Error("Invalid datapackage.json license title.");
+        throw new RepositoryValidationError(
+          "Invalid datapackage.json license title.",
+        );
       let path: string | undefined;
       if (license.path !== undefined) {
         try {
@@ -224,7 +249,9 @@ export function parseDataPackage(text: string | undefined): ExtractedMetadata {
             throw new Error("unsafe URL");
           path = url.href;
         } catch {
-          throw new Error("Invalid datapackage.json license URL.");
+          throw new RepositoryValidationError(
+            "Invalid datapackage.json license URL.",
+          );
         }
       }
       return {
