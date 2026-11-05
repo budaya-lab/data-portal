@@ -19,7 +19,7 @@ Open <http://localhost:3000/>. Draft records are visible locally but excluded fr
 
 ### From a GitHub repository
 
-1. Create the dataset repository from [`tpl-dataset`](https://github.com/nus-dh/tpl-dataset#readme). Follow its instructions to replace the example metadata and data, fill in `datapackage.json`, and validate it. The template requires one primary-stage keyword: `stage:master`, `stage:curated`, or `stage:annotated`.
+1. Create the dataset repository from [`tpl-dataset`](https://github.com/nus-dh/tpl-dataset#readme). Follow its instructions to replace the example metadata and data, fill in `datapackage.json`, and validate it. The template requires one primary-stage keyword: `stage:master`, `stage:curated`, `stage:annotated`, or `stage:ground-truth`.
 2. For public datasets, create a reviewed GitHub Release using the template's release workflow. The portal links verified resources from the highest non-prerelease SemVer release reachable from `main`; it does not copy the files. Without a suitable release or supported resources, onboarding produces a metadata-only draft. Private repositories contribute safe metadata and a landing-page link only.
 3. From this directory, discover candidates and review the report:
 

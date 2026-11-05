@@ -728,6 +728,25 @@ test("search result shows the controlled stage without exposing a raw keyword", 
   assert.doesNotMatch(html, /stage:curated/);
 });
 
+test("search and showcase display ground-truth labels without raw keywords or inferred parents", () => {
+  const dataset: Dataset = {
+    ...tagged,
+    keywords: ["fieldwork", "stage:ground-truth"],
+  };
+  assert.equal(getDatasetStage(dataset), "ground-truth");
+  assert.deepEqual(subjectKeywords(dataset), ["fieldwork"]);
+  assert.doesNotThrow(() => validateCatalogAccess([dataset]));
+
+  for (const element of [
+    createElement(DatasetRow, { ds: dataset }),
+    createElement(DatasetPage, { dataset, resources: [], activity: [] }),
+  ]) {
+    const html = renderToStaticMarkup(element);
+    assert.match(html, /Ground truth/);
+    assert.doesNotMatch(html, /stage:ground-truth|Derived from/);
+  }
+});
+
 test("dataset showcase renders the stage and confirmed catalogue parent links", () => {
   const dataset: Dataset = {
     ...tagged,
