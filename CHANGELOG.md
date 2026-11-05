@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.1](https://github.com/budaya-lab/data-portal/compare/v0.9.0...v0.9.1) (2026-11-05)
+
+
+### Bug Fixes
+
+* **catalogue:** skip invalid repository imports ([9714c64](https://github.com/budaya-lab/data-portal/commit/9714c64009aa0e3c80ceb9d01ebe55aded6feb45))
+* **catalogue:** skip invalid repository imports ([b572392](https://github.com/budaya-lab/data-portal/commit/b5723920dc805af183aaee3db27683cecd9a355b))
+
 ## [0.9.0](https://github.com/budaya-lab/data-portal/compare/v0.8.0...v0.9.0) (2026-11-05)
 
 
