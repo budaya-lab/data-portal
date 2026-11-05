@@ -1,5 +1,32 @@
 [
   {
+    "slug": "ds-layout-um",
+    "namespace": "budaya-lab",
+    "name": "Layout UM",
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/budaya-lab/ds-layout-um",
+        "access": "restricted"
+      }
+    ],
+    "description": "557 images from 1956 to 1961, used for layout classification.",
+    "keywords": [
+      "layout",
+      "UM",
+      "stage:curated"
+    ],
+    "resources": [
+      {
+        "name": "buckets",
+        "path": "ds-layout-um-buckets.csv",
+        "format": "csv",
+        "title": "Public bucket summary"
+      }
+    ]
+  },
+  {
     "slug": "ds-layout-um-v2",
     "namespace": "budaya-lab",
     "name": "Layout UM v2",
@@ -52,6 +79,33 @@
       {
         "namespace": "budaya-lab",
         "slug": "ds-layout-um-v2"
+      }
+    ]
+  },
+  {
+    "slug": "ds-articlereconstruction",
+    "namespace": "budaya-lab",
+    "name": "Article reconstruction",
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/budaya-lab/ds-articlereconstruction",
+        "access": "restricted"
+      }
+    ],
+    "description": "Labelling articles from Utusan Melayu for article reconstruction. It includes 160 pages (80 before 1959 and 80 after 1959).",
+    "keywords": [
+      "Utusan Melayu",
+      "stage:curated"
+    ],
+    "created": "2026-10-23T06:36:54Z",
+    "resources": [
+      {
+        "name": "buckets",
+        "path": "ds-articlereconstruction-buckets.csv",
+        "format": "csv",
+        "title": "Public bucket summary"
       }
     ]
   }
