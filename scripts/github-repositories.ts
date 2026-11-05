@@ -4,7 +4,11 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseBuckets } from "../lib/buckets";
 import { type Dataset, validateCatalogAccess } from "../lib/datasets";
-import { type ExtractedMetadata, parseDataPackage } from "./data-package";
+import {
+  type ExtractedMetadata,
+  parseDataPackage,
+  RepositoryValidationError,
+} from "./data-package";
 import {
   type ReleaseSummary,
   resourcesAtRelease,
@@ -496,9 +500,15 @@ async function readContent(
   ref: string,
 ): Promise<string | undefined> {
   const bytes = await readContentBytes(account, repo, filename, token, ref);
-  return bytes === undefined
-    ? undefined
-    : new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  if (bytes === undefined) return undefined;
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch (cause) {
+    throw new RepositoryValidationError(
+      `${filename} must contain valid UTF-8.`,
+      { cause },
+    );
+  }
 }
 
 function repositoryApiPath(account: string, repo: Repository): string {
@@ -720,7 +730,9 @@ export async function readRepositoryMetadata(
   let bucketFile: ExtractedMetadata["bucketFile"];
   if (bucket) {
     if (bucket.type !== "blob" || !["100644", "100755"].includes(bucket.mode))
-      throw new Error("buckets.csv must be a regular Git file.");
+      throw new RepositoryValidationError(
+        "buckets.csv must be a regular Git file.",
+      );
     const bytes = await readContentBytes(
       account,
       repo,
@@ -729,10 +741,17 @@ export async function readRepositoryMetadata(
       commit.sha,
     );
     if (bytes === undefined)
-      throw new Error(
+      throw new RepositoryValidationError(
         "Advertised buckets.csv is unavailable at the selected release.",
       );
-    parseBuckets(bytes);
+    try {
+      parseBuckets(bytes);
+    } catch (cause) {
+      throw new RepositoryValidationError(
+        "Invalid public buckets.csv: review the label/count CSV contract.",
+        { cause },
+      );
+    }
     bucketFile = { bytes, ref: `${tag} (${commit.sha})` };
   }
   const result = restricted
@@ -826,6 +845,37 @@ function showProgress(done: number, total: number): void {
   if (done === total) process.stderr.write(String.fromCharCode(10));
 }
 
+export async function discoverCandidates(
+  account: string,
+  namespace: string,
+  repositories: Repository[],
+  token: string,
+  onProgress: (done: number, total: number) => void = () => {},
+): Promise<{
+  candidates: Candidate[];
+  extracted: ExtractedMetadata[];
+  failures: { repository: string; reason: string }[];
+}> {
+  const candidates: Candidate[] = [];
+  const extracted: ExtractedMetadata[] = [];
+  const failures: { repository: string; reason: string }[] = [];
+  onProgress(0, repositories.length);
+  for (let index = 0; index < repositories.length; index++) {
+    const repo = repositories[index];
+    try {
+      const metadata = await readRepositoryMetadata(account, repo, token);
+      const candidate = buildCandidate(repo, namespace, metadata);
+      candidates.push(candidate);
+      extracted.push(metadata);
+    } catch (error) {
+      if (!(error instanceof RepositoryValidationError)) throw error;
+      failures.push({ repository: repo.full_name, reason: error.message });
+    }
+    onProgress(index + 1, repositories.length);
+  }
+  return { candidates, extracted, failures };
+}
+
 async function main(): Promise<void> {
   const options = parseArguments(process.argv.slice(2));
   const token = resolveGitHubToken(process.env.GITHUB_TOKEN, () =>
@@ -841,16 +891,13 @@ async function main(): Promise<void> {
   const manifestPath = "datasets.json";
   const initialManifest = await readFile(manifestPath, "utf8");
   const plan = planRepositories(matched, options.namespace, initialManifest);
-  const candidates: Candidate[] = [];
-  const extracted: ExtractedMetadata[] = [];
-  showProgress(0, plan.repositories.length);
-  for (let index = 0; index < plan.repositories.length; index++) {
-    const repo = plan.repositories[index];
-    const metadata = await readRepositoryMetadata(options.account, repo, token);
-    extracted.push(metadata);
-    candidates.push(buildCandidate(repo, options.namespace, metadata));
-    showProgress(index + 1, plan.repositories.length);
-  }
+  const { candidates, extracted, failures } = await discoverCandidates(
+    options.account,
+    options.namespace,
+    plan.repositories,
+    token,
+    showProgress,
+  );
   const review = {
     account: options.account,
     namespace: options.namespace,
@@ -860,10 +907,12 @@ async function main(): Promise<void> {
       repositoriesMatched: matched.length,
       alreadyCatalogued: plan.alreadyCatalogued.length,
       candidates: candidates.length,
+      failures: failures.length,
       conflicts: plan.conflicts.length,
     },
     alreadyCatalogued: plan.alreadyCatalogued,
     conflicts: plan.conflicts,
+    failures,
     candidates: candidates.map((candidate, index) => ({
       ...candidate,
       review: [
@@ -884,8 +933,11 @@ async function main(): Promise<void> {
   console.log(
     `Repositories: ${repositories.length} discovered, ${matched.length} matched, ` +
       `${plan.alreadyCatalogued.length} already catalogued, ${candidates.length} new candidate(s), ` +
-      `${plan.conflicts.length} conflict(s).`,
+      `${failures.length} failed validation, ${plan.conflicts.length} conflict(s).`,
   );
+  for (const failure of failures) {
+    console.error(`Skipped ${failure.repository}: ${failure.reason}`);
+  }
   console.log(`Review file saved to ${reviewPath}`);
   if (!options.apply || candidates.length === 0) return;
   if (plan.conflicts.length)
