@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.9.0](https://github.com/budaya-lab/data-portal/compare/v0.8.0...v0.9.0) (2026-11-05)
+
+
+### Features
+
+* **catalogue:** import and render bucket summaries ([6c2478b](https://github.com/budaya-lab/data-portal/commit/6c2478be8de8710ac74eb080cd8de33d6e5f7572))
+* **catalogue:** support ground-truth stage ([4a027d6](https://github.com/budaya-lab/data-portal/commit/4a027d699c8941d43d986612ecae092bcdc340e5))
+* **catalogue:** support stages and public bucket summaries ([061a10f](https://github.com/budaya-lab/data-portal/commit/061a10f0d5a5a296972508cfc3a1ca63074d477a))
+
 ## [0.8.0](https://github.com/budaya-lab/data-portal/compare/v0.7.1...v0.8.0) (2026-11-02)
 
 
