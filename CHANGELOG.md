@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0](https://github.com/budaya-lab/data-portal/compare/v0.10.0...v1.0.0) (2026-11-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* **onboarding:** use released lazydata metadata validation
+
+### Features
+
+* **onboarding:** use released lazydata metadata validation ([1341b78](https://github.com/budaya-lab/data-portal/commit/1341b7842e7b02c39db121898154b800d9eff498))
+
 ## [0.10.0](https://github.com/budaya-lab/data-portal/compare/v0.9.1...v0.10.0) (2026-11-05)
 
 
