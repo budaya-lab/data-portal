@@ -42,15 +42,18 @@ async function withGitHub(
   const descriptor = {
     name: "example",
     title: "Public-safe title",
-    keywords: ["stage:curated"],
+    description: "An example collection.",
+    keywords: ["task:catalogue", "project:example", "stage:curated"],
     resources: [
       {
         name: "records",
+        title: "Records",
         path: source.private ? "internal/private.csv" : "tables/data.csv",
         format: "csv",
       },
       {
         name: options.alias ? "summary" : "buckets",
+        title: "Public bucket summary",
         path: options.conflicting ? "other.csv" : "buckets.csv",
         format: "csv",
       },

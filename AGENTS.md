@@ -13,9 +13,14 @@ Read `ARCHITECTURE.md` and `README.md` before changing catalogue behavior. This 
 - Catalogue records may optionally declare one controlled `stage:` keyword from `stage.config.json` (currently `master`, `curated`, `annotated`, or `ground-truth`); omit the stage when unknown, and do not use the removed `role` field. Coordinate config changes with the separate dataset template. Confirmed parent links use internal `derivedFrom` references by `(namespace, slug)`, independent of stage and package `sources[]`. Validate references/cycles; in production omit draft-parent references from provider-visible output. Do not infer relationships from hosting/URLs or assume access inherits. PROV-O lineage export remains separate pending a canonical-URI decision.
 - The intended query setting is `flat` per `ARCHITECTURE.md`, but code still sets `DATA_QUERY = 'duckdb'`; don't claim the migration is complete or change it incidentally. GitHub Pages serves the static export at `data.budaya-lab.org`; it is not a runtime RBAC backend.
 
+## Source descriptor validation
+
+- Onboarding in `scripts/data-package.ts` uses the pinned compiled Lazydata release and its bundled policy for source `datapackage.json`. Keep shared rule tests in Lazydata, with only adapter/integration tests here. Retain portal-specific disclosure, publication-path/URL, placeholder-date and mapping checks; never expose shared validation details containing private resource names.
+- Do not apply the full dataset policy to `datasets.json`. Catalogue validation, stage helpers/config and bucket parsing remain separate and unchanged by this adoption.
+
 ## Verification
 
-- Package manager: pnpm (`pnpm-lock.yaml`); Node.js 22+. Do not install dependencies unless asked.
+- Package manager: pnpm (`pnpm-lock.yaml`); Node.js 24+. Do not install dependencies unless asked.
 - Build: `pnpm build` (generates optional DCAT feeds and static `out/`). Then run `pnpm check:pages` for export hygiene and route/asset checks. Typecheck: `pnpm exec tsc --noEmit`.
 - Preserve the `Validate portal` workflow/job names. Pages deployment is a separate, current-main-only workflow; do not couple release management to deployment or publish PR artifacts. `public/CNAME` preserves the custom domain.
 - Tests: `pnpm test` (runs `scripts/*.test.ts`, including bucket validation/import/apply tests).

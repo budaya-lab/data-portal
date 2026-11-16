@@ -25,8 +25,16 @@ const descriptor = (name: string) =>
   JSON.stringify({
     name,
     title: name,
-    keywords: ["stage:curated"],
-    resources: [{ name: "data", path: "internal/private.csv", format: "csv" }],
+    description: "An example collection.",
+    keywords: ["task:catalogue", "project:example", "stage:curated"],
+    resources: [
+      {
+        name: "data",
+        title: "Records",
+        path: "internal/private.csv",
+        format: "csv",
+      },
+    ],
   });
 
 async function withRepositories(
@@ -108,6 +116,19 @@ test("discovery reports invalid repositories and retains aligned valid candidate
         "ds-json": { descriptor: "{invalid" },
         "ds-missing": { descriptor: "missing" },
         "ds-buckets": { bucket: "kind,count\nprivate-label,-1\n" },
+        "ds-policy": {
+          descriptor: JSON.stringify({
+            ...JSON.parse(descriptor("ds-policy")),
+            resources: [
+              {
+                name: "private-records",
+                title: "Records",
+                path: "internal/private.csv",
+                count: -1,
+              },
+            ],
+          }),
+        },
         "ds-last": {},
       },
       async (repositories) => {
@@ -134,15 +155,17 @@ test("discovery reports invalid repositories and retains aligned valid candidate
             "example/ds-json",
             "example/ds-missing",
             "example/ds-buckets",
+            "example/ds-policy",
           ],
         );
         assert.match(failures[0].reason, /description/);
         assert.match(failures[3].reason, /buckets\.csv/);
+        assert.match(failures[4].reason, /Lazydata metadata policy/);
         assert.doesNotMatch(
           JSON.stringify(failures),
-          /private\.example|internal\/secret|private-label|test-token|private\.csv/,
+          /private\.example|internal\/secret|private-label|private-records|test-token|private\.csv/,
         );
-        assert.deepEqual(progress, [0, 1, 2, 3, 4, 5, 6]);
+        assert.deepEqual(progress, [0, 1, 2, 3, 4, 5, 6, 7]);
         assert.deepEqual(readdirSync(root), ["datasets.json"]);
         assert.equal(
           await applyCandidates(candidates, extracted, { root, apply: false }),
@@ -184,6 +207,46 @@ test("discovery reports invalid repositories and retains aligned valid candidate
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+test("malformed descriptor values fail only their repository, not the whole scan", async () => {
+  await withRepositories(
+    {
+      "ds-valid": {},
+      "ds-malformed": {
+        descriptor: JSON.stringify({
+          ...JSON.parse(descriptor("ds-malformed")),
+          resources: [
+            {
+              name: { toString: null },
+              title: "Records",
+              path: "internal/private.csv",
+              count: -1,
+            },
+          ],
+        }),
+      },
+    },
+    async (repositories) => {
+      const { candidates, failures } = await discoverCandidates(
+        "example",
+        "example",
+        repositories,
+        "test-token",
+      );
+      assert.deepEqual(
+        candidates.map((candidate) => candidate.slug),
+        ["ds-valid"],
+      );
+      assert.equal(failures.length, 1);
+      assert.equal(failures[0].repository, "example/ds-malformed");
+      assert.match(failures[0].reason, /Invalid datapackage\.json/);
+      assert.doesNotMatch(
+        failures[0].reason,
+        /internal|private\.csv|test-token/,
+      );
+    },
+  );
 });
 
 test("discovery returns failures and no importable candidates when every repository is invalid", async () => {

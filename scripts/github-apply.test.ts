@@ -37,8 +37,9 @@ function fixture() {
       JSON.stringify({
         name: "example",
         title: "Example",
-        keywords: ["stage:master"],
-        resources: [{ name: "data", path: "private.csv" }],
+        description: "An example collection.",
+        keywords: ["task:catalogue", "project:example", "stage:master"],
+        resources: [{ name: "data", title: "Records", path: "private.csv" }],
       }),
     ),
     bucketFile: {

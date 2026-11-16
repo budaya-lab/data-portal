@@ -137,7 +137,7 @@ test("Data Package metadata supplies the title, stage, creation date and public-
         name: "example-dataset",
         title: "Example corpus",
         description: "A catalogue-safe description.",
-        keywords: ["history", "stage:curated"],
+        keywords: ["history", "task:catalogue", "project:example", "stage:curated"],
         created: "2026-10-01T00:00:00Z",
         licenses: [
           {
@@ -146,7 +146,7 @@ test("Data Package metadata supplies the title, stage, creation date and public-
           },
         ],
         contributors: [{ title: "Person not published" }],
-        resources: [{ name: "data", path: "tables/data.csv", format: "csv" }],
+        resources: [{ name: "data", title: "Records", path: "tables/data.csv", format: "csv" }],
       }),
     },
   );
@@ -160,7 +160,7 @@ test("Data Package metadata supplies the title, stage, creation date and public-
   assert.deepEqual(candidate.licenses, [
     { name: "CC-BY-4.0", path: "https://creativecommons.org/licenses/by/4.0/" },
   ]);
-  assert.deepEqual(candidate.keywords, ["history", "stage:curated"]);
+  assert.deepEqual(candidate.keywords, ["history", "task:catalogue", "project:example", "stage:curated"]);
   assert.equal("contributors" in candidate, false);
 });
 
@@ -190,8 +190,9 @@ test("public onboarding reads the latest release from main and pins verified res
   const descriptor = {
     name: "example",
     title: "Released data",
-    keywords: ["stage:master"],
-    resources: [{ name: "records", path: "tables/data.csv", format: "csv" }],
+    description: "An example collection.",
+    keywords: ["task:catalogue", "project:example", "stage:master"],
+    resources: [{ name: "records", title: "Records", path: "tables/data.csv", format: "csv" }],
   };
   globalThis.fetch = async (input) => {
     const url = String(input);
@@ -256,10 +257,11 @@ test("unsupported public resources keep the whole release metadata-only with a g
           JSON.stringify({
             name: "example",
             title: "Public title",
-            keywords: ["stage:master"],
+            description: "An example collection.",
+            keywords: ["task:catalogue", "project:example", "stage:master"],
             resources: [
-              { name: "data", path: "data.csv", format: "csv" },
-              { name: "raw", path: "internal/secret.xml", format: "xml" },
+              { name: "data", title: "Records", path: "data.csv", format: "csv" },
+              { name: "raw", title: "Source records", path: "internal/secret.xml", format: "xml" },
             ],
           }),
         ).toString("base64"),
@@ -316,9 +318,10 @@ test("a missing latest tag produces a public metadata-only draft with a generic 
           JSON.stringify({
             name: "example",
             title: "Safe title",
-            keywords: ["stage:master"],
+            description: "An example collection.",
+            keywords: ["task:catalogue", "project:example", "stage:master"],
             resources: [
-              { name: "private-filename", path: "internal/file.csv" },
+              { name: "private-filename", title: "Records", path: "internal/file.csv" },
             ],
           }),
         ).toString("base64"),
@@ -369,8 +372,9 @@ test("missing descriptor at the selected release holds the public record as meta
           JSON.stringify({
             name: "example",
             title: "Safe title",
-            keywords: ["stage:master"],
-            resources: [{ name: "data", path: "data.csv" }],
+            description: "An example collection.",
+            keywords: ["task:catalogue", "project:example", "stage:master"],
+            resources: [{ name: "data", title: "Records", path: "data.csv" }],
           }),
         ).toString("base64"),
         encoding: "base64",
@@ -409,8 +413,9 @@ test("private onboarding without a release keeps main metadata and exposes no re
           JSON.stringify({
             name: "secret",
             title: "Safe title",
-            keywords: ["stage:annotated"],
-            resources: [{ name: "private-data", path: "internal/secret.csv" }],
+            description: "An example collection.",
+            keywords: ["task:catalogue", "project:example", "stage:annotated"],
+            resources: [{ name: "private-data", title: "Records", path: "internal/secret.csv" }],
           }),
         ).toString("base64"),
         encoding: "base64",
