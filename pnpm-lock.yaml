@@ -200,6 +200,9 @@ importers:
       '@biomejs/biome':
         specifier: 2.5.14
         version: 2.5.14
+      '@lazydata/validator':
+        specifier: https://github.com/budaya-lab/lazydata/releases/download/v1.0.1/lazydata-validator-1.0.1.tgz
+        version: https://github.com/budaya-lab/lazydata/releases/download/v1.0.1/lazydata-validator-1.0.1.tgz
       '@tailwindcss/typography':
         specifier: ^0.5.0
         version: 0.5.20(tailwindcss@3.4.19(tsx@4.23.15))
@@ -639,6 +642,12 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@lazydata/validator@https://github.com/budaya-lab/lazydata/releases/download/v1.0.1/lazydata-validator-1.0.1.tgz':
+    resolution: {integrity: sha512-Xj7E/Z1IyjHp+1EQ6VIZPLHQZu5IgGiRt0C7jV/cHQ62GltD/7YAbN/iqNixT3HKAKHX0ZbeXh4if4LtcMdKxA==, tarball: https://github.com/budaya-lab/lazydata/releases/download/v1.0.1/lazydata-validator-1.0.1.tgz}
+    version: 1.0.1
+    engines: {node: '>=24'}
+    hasBin: true
 
   '@mapbox/jsonlint-lines-primitives@2.0.3':
     resolution: {integrity: sha512-0SElaV0uMxEnxzBhhX9WTuPyUeMsAN/SS0i16tjuba4/mio63MG9khjC1a0JAiPGXAwvwm4UfHJURCN7nyudQg==}
@@ -1717,6 +1726,8 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
+
+  '@lazydata/validator@https://github.com/budaya-lab/lazydata/releases/download/v1.0.1/lazydata-validator-1.0.1.tgz': {}
 
   '@mapbox/jsonlint-lines-primitives@2.0.3': {}
 
