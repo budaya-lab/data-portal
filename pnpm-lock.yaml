@@ -200,9 +200,9 @@ importers:
       '@biomejs/biome':
         specifier: 2.5.14
         version: 2.5.14
-      '@lazydata/validator':
-        specifier: https://github.com/budaya-lab/lazydata/releases/download/v1.0.1/lazydata-validator-1.0.1.tgz
-        version: https://github.com/budaya-lab/lazydata/releases/download/v1.0.1/lazydata-validator-1.0.1.tgz
+      '@penjaga/validator':
+        specifier: https://github.com/budaya-lab/penjaga/releases/download/v2.0.0/penjaga-validator-2.0.0.tgz
+        version: https://github.com/budaya-lab/penjaga/releases/download/v2.0.0/penjaga-validator-2.0.0.tgz
       '@tailwindcss/typography':
         specifier: ^0.5.0
         version: 0.5.20(tailwindcss@3.4.19(tsx@4.23.15))
@@ -643,12 +643,6 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@lazydata/validator@https://github.com/budaya-lab/lazydata/releases/download/v1.0.1/lazydata-validator-1.0.1.tgz':
-    resolution: {integrity: sha512-Xj7E/Z1IyjHp+1EQ6VIZPLHQZu5IgGiRt0C7jV/cHQ62GltD/7YAbN/iqNixT3HKAKHX0ZbeXh4if4LtcMdKxA==, tarball: https://github.com/budaya-lab/lazydata/releases/download/v1.0.1/lazydata-validator-1.0.1.tgz}
-    version: 1.0.1
-    engines: {node: '>=24'}
-    hasBin: true
-
   '@mapbox/jsonlint-lines-primitives@2.0.3':
     resolution: {integrity: sha512-0SElaV0uMxEnxzBhhX9WTuPyUeMsAN/SS0i16tjuba4/mio63MG9khjC1a0JAiPGXAwvwm4UfHJURCN7nyudQg==}
     engines: {node: '>= 22'}
@@ -751,6 +745,12 @@ packages:
   '@nodelib/fs.walk@1.2.8':
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
+
+  '@penjaga/validator@https://github.com/budaya-lab/penjaga/releases/download/v2.0.0/penjaga-validator-2.0.0.tgz':
+    resolution: {integrity: sha512-xPqxCgC3/52k6YdcwW7WVFvbCYtYcQkOf1Sdh5/InHyGopO+z9V6Kn4D7K6LCy0yo7IzKkpqgdj+t2LOmLGrXQ==, tarball: https://github.com/budaya-lab/penjaga/releases/download/v2.0.0/penjaga-validator-2.0.0.tgz}
+    version: 2.0.0
+    engines: {node: '>=24'}
+    hasBin: true
 
   '@swc/helpers@0.5.23':
     resolution: {integrity: sha512-5lSsMOTXURePglDfvuAQUqkGek9Hg2kksOYay2m0+XR++b2NWYL/4sWyuvVBIs8oKnJaxkdi9whaL/sqN13afw==}
@@ -1727,8 +1727,6 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@lazydata/validator@https://github.com/budaya-lab/lazydata/releases/download/v1.0.1/lazydata-validator-1.0.1.tgz': {}
-
   '@mapbox/jsonlint-lines-primitives@2.0.3': {}
 
   '@mapbox/point-geometry@1.1.0': {}
@@ -1807,6 +1805,8 @@ snapshots:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.20.3
+
+  '@penjaga/validator@https://github.com/budaya-lab/penjaga/releases/download/v2.0.0/penjaga-validator-2.0.0.tgz': {}
 
   '@swc/helpers@0.5.23':
     dependencies:

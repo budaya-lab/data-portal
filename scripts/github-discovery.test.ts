@@ -160,7 +160,7 @@ test("discovery reports invalid repositories and retains aligned valid candidate
         );
         assert.match(failures[0].reason, /description/);
         assert.match(failures[3].reason, /buckets\.csv/);
-        assert.match(failures[4].reason, /Lazydata metadata policy/);
+        assert.match(failures[4].reason, /Penjaga metadata policy/);
         assert.doesNotMatch(
           JSON.stringify(failures),
           /private\.example|internal\/secret|private-label|private-records|test-token|private\.csv/,

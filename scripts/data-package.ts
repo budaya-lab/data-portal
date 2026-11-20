@@ -1,5 +1,5 @@
-import { validateMetadata } from "@lazydata/validator";
-import policy from "@lazydata/validator/policy" with { type: "json" };
+import { validateMetadata } from "@penjaga/validator";
+import policy from "@penjaga/validator/policy" with { type: "json" };
 import type { License } from "../lib/metadata/types";
 import type { Resource } from "../lib/providers/types";
 
@@ -76,7 +76,7 @@ export function parseDataPackage(text: string | undefined): ExtractedMetadata {
   }
   if (validateMetadata(parsed, policy).length > 0)
     throw new RepositoryValidationError(
-      "Invalid datapackage.json: does not meet Lazydata metadata policy. Validate it in the source repository for details.",
+      "Invalid datapackage.json: does not meet Penjaga metadata policy. Validate it in the source repository for details.",
     );
   // The validator checks unknown input but does not return a narrowed type.
   const value = parsed as ValidatedPackage;
