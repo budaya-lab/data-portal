@@ -15,7 +15,8 @@ Read `ARCHITECTURE.md` and `README.md` before changing catalogue behavior. This 
 
 ## Source descriptor validation
 
-- Onboarding in `scripts/data-package.ts` uses the pinned compiled Lazydata release and its bundled policy for source `datapackage.json`. Keep shared rule tests in Lazydata, with only adapter/integration tests here. Retain portal-specific disclosure, publication-path/URL, placeholder-date and mapping checks; never expose shared validation details containing private resource names.
+- Onboarding in `scripts/data-package.ts` uses the pinned compiled Penjaga v2.0.0 release (`@penjaga/validator`) and its bundled policy for source `datapackage.json`. Keep shared rule tests in Penjaga, with only adapter/integration tests here. Retain portal-specific disclosure, publication-path/URL, placeholder-date and mapping checks; never expose shared validation details containing private resource names.
+- Keep the `@penjaga/validator` dependency, imports and lockfile aligned when upgrading its pinned published archive. Do not substitute a sibling checkout, moving branch, source archive or nonexistent release asset.
 - Do not apply the full dataset policy to `datasets.json`. Catalogue validation, stage helpers/config and bucket parsing remain separate and unchanged by this adoption.
 
 ## Verification

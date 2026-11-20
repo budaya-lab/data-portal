@@ -96,7 +96,7 @@ test("uses the released metadata policy rather than the former minimal onboardin
           ],
         }),
       ),
-    /Invalid datapackage\.json: does not meet Lazydata metadata policy/,
+    /Invalid datapackage\.json: does not meet Penjaga metadata policy/,
   );
 });
 
@@ -119,7 +119,7 @@ test("shared validation failures never expose source resource names or paths", (
       assert.ok(error instanceof Error);
       assert.match(
         error.message,
-        /Invalid datapackage\.json: does not meet Lazydata metadata policy/,
+        /Invalid datapackage\.json: does not meet Penjaga metadata policy/,
       );
       assert.doesNotMatch(
         error.message,
