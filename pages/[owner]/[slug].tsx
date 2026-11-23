@@ -169,7 +169,7 @@ export default function DatasetPage({
       <Head>
         <title>{dataset.name}</title>
       </Head>
-      <main className="mx-auto max-w-[940px] px-6 pb-24 sm:px-16">
+      <main className="mx-auto max-w-6xl px-6 pb-24 sm:px-16">
         <nav className="pt-7 font-sans text-[13px] font-medium text-ink/50">
           <Link
             href="/"
