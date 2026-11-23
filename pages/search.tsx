@@ -137,7 +137,7 @@ export default function Search({ datasets }: { datasets: Dataset[] }) {
         <title>Search — Budaya Lab Data Portal</title>
       </Head>
       <main
-        className={`mx-auto px-6 pb-24 sm:px-16 ${hasFacets ? "max-w-[1100px]" : "max-w-[720px]"}`}
+        className="mx-auto max-w-6xl px-6 pb-24 sm:px-16"
       >
         <nav className="pt-7 font-sans text-[13px] font-medium text-ink/50">
           <Link

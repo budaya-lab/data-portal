@@ -32,7 +32,7 @@ export default function Home({ suggested }: { suggested: string[] }) {
       <Head>
         <title>Budaya Lab Data Portal</title>
       </Head>
-      <main className="mx-auto max-w-[660px] px-6 pb-24 pt-16 sm:px-16 sm:pt-[104px]">
+      <main className="mx-auto max-w-6xl px-6 pb-24 pt-16 sm:px-16 sm:pt-[104px]">
         <div className="mb-6 font-sans text-xs font-semibold uppercase tracking-[0.14em] text-accent">
           Budaya Lab
         </div>
