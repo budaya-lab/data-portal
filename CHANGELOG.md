@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.0](https://github.com/budaya-lab/data-portal/compare/v1.0.0...v1.1.0) (2026-11-23)
+
+
+### Features
+
+* **home:** show keyword cards with record counts ([2b28872](https://github.com/budaya-lab/data-portal/commit/2b288727b6c769300ed10ac60efdd39fe6198563))
+* improve portal discovery and page layout ([1c632b0](https://github.com/budaya-lab/data-portal/commit/1c632b05e70525da97df8f8cd64a4a49c9681816))
+* **search:** add keyword metadata facets ([b0ca183](https://github.com/budaya-lab/data-portal/commit/b0ca183e0e1e3d3ad4d0bf4b8a7dae64b6a029bb))
+
+
+### Bug Fixes
+
+* **layout:** keep page widths consistent ([d47d80f](https://github.com/budaya-lab/data-portal/commit/d47d80fb5c7277d8a7b942d7904c712a4edefeca))
+
 ## [1.0.0](https://github.com/budaya-lab/data-portal/compare/v0.10.0...v1.0.0) (2026-11-16)
 
 
