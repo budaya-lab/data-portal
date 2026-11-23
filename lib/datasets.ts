@@ -283,74 +283,23 @@ export function resourceLabel(r: Resource): string {
   return r.name || `Download ${r.format}`;
 }
 
-// Words too generic to make useful suggested searches. Only applied when mining
-// dataset titles (keywords are already curated, so they're never filtered).
-const SUGGESTION_STOPWORDS = new Set([
-  "the",
-  "and",
-  "for",
-  "per",
-  "from",
-  "with",
-  "data",
-  "dataset",
-  "datasets",
-  "sample",
-  "capita",
-  "bundle",
-  "total",
-  "annual",
-  "monthly",
-  "daily",
-  "estimated",
-  "world",
-  "national",
-]);
+// Derive keyword cards and record counts from subject keywords, excluding stages.
+export type KeywordCount = { keyword: string; count: number };
 
-// Keep an all-caps/numeric acronym as-is (GDP); lowercase everything else so
-// suggestions read as search terms, not headline-cased words.
-function normalizeSuggestion(token: string): string {
-  return /^[A-Z0-9]{2,}$/.test(token) ? token : token.toLowerCase();
-}
-
-// Derive the home page's "popular searches" from the portal's own datasets rather
-// than hardcoding topics. Keywords/tags are the strongest signal (an explicit,
-// shared theme, so frequency-ranked); when they don't fill the list, supplement
-// with one head term per title — the last salient word, usually the topic noun in
-// "Publisher Topic" / "Adjective Noun" — so a repeated publisher prefix doesn't
-// dominate. Deduped case-insensitively and capped.
-export function suggestedQueries(datasets: Dataset[], limit = 4): string[] {
-  const cands = new Map<
-    string,
-    { display: string; score: number; order: number }
-  >();
-  let order = 0;
-  const add = (raw: string, weight: number) => {
-    const display = raw.trim();
-    if (!display) return;
-    const key = display.toLowerCase();
-    const existing = cands.get(key);
-    if (existing) existing.score += weight;
-    else cands.set(key, { display, score: weight, order: order++ });
-  };
-
-  for (const d of datasets) for (const kw of subjectKeywords(d)) add(kw, 10);
-
-  if (cands.size < limit) {
-    for (const d of datasets) {
-      const words = (d.name ?? "")
-        .split(/[^A-Za-z0-9]+/)
-        .map(normalizeSuggestion)
-        .filter(
-          (w) => w.length >= 3 && !SUGGESTION_STOPWORDS.has(w.toLowerCase()),
-        );
-      const head = words[words.length - 1];
-      if (head) add(head, 1);
+export function keywordCounts(datasets: Dataset[]): KeywordCount[] {
+  const counts = new Map<string, KeywordCount>();
+  for (const dataset of datasets) {
+    const seen = new Set<string>();
+    for (const keyword of subjectKeywords(dataset)) {
+      const key = keyword.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const existing = counts.get(key);
+      if (existing) existing.count += 1;
+      else counts.set(key, { keyword, count: 1 });
     }
   }
-
-  return Array.from(cands.values())
-    .sort((a, b) => b.score - a.score || a.order - b.order)
-    .slice(0, limit)
-    .map((c) => c.display);
+  return Array.from(counts.values()).sort(
+    (a, b) => b.count - a.count || a.keyword.localeCompare(b.keyword),
+  );
 }

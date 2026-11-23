@@ -12,11 +12,11 @@ import {
   getDatasetStage,
   isDraft,
   isRestricted,
+  keywordCounts,
   matchesCatalogQuery,
   publishedDatasets,
   stageLabel,
   subjectKeywords,
-  suggestedQueries,
   validateCatalogAccess,
 } from "../lib/datasets";
 import { toDCAT } from "../lib/metadata/dcat";
@@ -46,6 +46,19 @@ test("catalog search finds Frictionless keywords without searching source data",
   );
 });
 
+test("keyword counts include each dataset once and exclude stage keywords", () => {
+  assert.deepEqual(
+    keywordCounts([
+      { ...tagged, keywords: ["History", "history", "stage:curated"] },
+      { ...tagged, slug: "another", keywords: ["history", "fieldwork"] },
+    ]),
+    [
+      { keyword: "History", count: 2 },
+      { keyword: "fieldwork", count: 1 },
+    ],
+  );
+});
+
 test("controlled stage keywords describe data without inventing parentage", () => {
   for (const [stage, label] of Object.entries(stageLabels)) {
     const dataset: Dataset = {
@@ -60,13 +73,6 @@ test("controlled stage keywords describe data without inventing parentage", () =
   assert.equal(getDatasetStage(tagged), undefined);
   assert.equal(stageLabel(tagged), undefined);
   assert.equal(getDatasetStage({ ...tagged, derivedFrom: [] }), undefined);
-  assert.deepEqual(
-    suggestedQueries(
-      [{ ...tagged, keywords: ["stage:curated", "history"] }],
-      2,
-    ),
-    ["history", "interviews"],
-  );
 });
 
 test("catalogue rejects unknown, duplicate, or malformed stages and obsolete roles", () => {

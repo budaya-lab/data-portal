@@ -2,21 +2,19 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import { suggestedQueries } from "../lib/datasets";
+import { type KeywordCount, keywordCounts } from "../lib/datasets";
 import { provider } from "../lib/providers";
 
-// Popular searches are derived from the portal's own datasets at build time (see
-// suggestedQueries) rather than hardcoded, so every portal surfaces its real
-// topics without editing this file.
+// Keyword cards are derived from the portal's dataset metadata at build time.
 export async function getStaticProps() {
   return {
-    props: { suggested: suggestedQueries(await provider.listDatasets()) },
+    props: { keywords: keywordCounts(await provider.listDatasets()) },
   };
 }
 
 // Home surface: a portal name, one-line description, and search as the primary
-// call to action, followed by popular-search links into the catalog.
-export default function Home({ suggested }: { suggested: string[] }) {
+// call to action, followed by searchable keyword cards.
+export default function Home({ keywords }: { keywords: KeywordCount[] }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
 
@@ -69,23 +67,31 @@ export default function Home({ suggested }: { suggested: string[] }) {
           />
         </form>
 
-        {suggested.length > 0 && (
-          <>
-            <div className="mb-3.5 font-sans text-[11px] font-semibold uppercase tracking-[0.1em] text-ink/45">
-              Popular searches
-            </div>
-            <div className="flex flex-wrap gap-x-[22px] gap-y-2">
-              {suggested.map((q) => (
+        {keywords.length > 0 && (
+          <section aria-labelledby="keywords-heading" className="mb-12">
+            <h2
+              id="keywords-heading"
+              className="mb-3.5 font-sans text-[11px] font-semibold uppercase tracking-[0.1em] text-ink/45"
+            >
+              Explore by keyword
+            </h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {keywords.map(({ keyword, count }) => (
                 <Link
-                  key={q}
-                  href={`/search?q=${encodeURIComponent(q)}`}
-                  className="font-serif text-base font-medium italic text-accent underline decoration-1 underline-offset-[3px] hover:text-ink"
+                  key={keyword}
+                  href={`/search?q=${encodeURIComponent(keyword)}`}
+                  className="flex min-h-20 items-center justify-between gap-4 border border-ink/15 px-4 py-3 text-ink no-underline transition-colors hover:border-accent hover:bg-cream-panel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 >
-                  {q}
+                  <span className="font-serif text-base font-medium">
+                    {keyword}
+                  </span>
+                  <span className="shrink-0 font-sans text-xs text-ink/55">
+                    {count} {count === 1 ? "record" : "records"}
+                  </span>
                 </Link>
               ))}
             </div>
-          </>
+          </section>
         )}
 
         <div className="mt-12">
