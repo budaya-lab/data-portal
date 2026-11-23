@@ -94,6 +94,21 @@ export function subjectKeywords(d: Dataset): string[] {
   return (d.keywords ?? []).filter((keyword) => !keyword.startsWith("stage:"));
 }
 
+export type KeywordFacet = "task" | "stage" | "project" | "keywords";
+
+export function keywordFacetValues(d: Dataset, facet: KeywordFacet): string[] {
+  const keywords = d.keywords ?? [];
+  if (facet === "keywords") {
+    return keywords.filter(
+      (keyword) =>
+        !keyword.startsWith("task:") &&
+        !keyword.startsWith("stage:") &&
+        !keyword.startsWith("project:"),
+    );
+  }
+  return keywords.filter((keyword) => keyword.startsWith(`${facet}:`));
+}
+
 export function isRestricted(d: Dataset): boolean {
   return (
     d.access === "restricted" ||

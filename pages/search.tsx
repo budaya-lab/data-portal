@@ -9,6 +9,8 @@ import {
   getResources,
   isDraft,
   isRestricted,
+  type KeywordFacet,
+  keywordFacetValues,
   matchesCatalogQuery,
   stageLabel,
 } from "../lib/datasets";
@@ -55,18 +57,20 @@ function fieldNames(d: Dataset): string[] {
 }
 
 // Catalog surface: a borderless search line over a faceted result list.
-// Categories (and publishers, when the portal has more than one) live in a
-// left sidebar as clickable filters with per-facet counts — filter without
-// scrolling — and every card leads with a data preview: a map snapshot for
-// geo datasets, a format + record-count shape tile for tabular ones.
+// Category, publisher, and keyword facets live in a left sidebar with counts;
+// every result leads with a preview of its data shape.
 export default function Search({ datasets }: { datasets: Dataset[] }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [activeCats, setActiveCats] = useState<Set<string>>(new Set());
   const [activeNs, setActiveNs] = useState<Set<string>>(new Set());
+  const [activeTasks, setActiveTasks] = useState<Set<string>>(new Set());
+  const [activeStages, setActiveStages] = useState<Set<string>>(new Set());
+  const [activeProjects, setActiveProjects] = useState<Set<string>>(new Set());
+  const [activeKeywords, setActiveKeywords] = useState<Set<string>>(new Set());
 
-  // Initialize the query from ?q=… once the router is ready (the home page CTA
-  // and suggested-query chips both navigate here with a ?q param).
+  // Initialize the query from ?q=… once the router is ready (the home page
+  // search and keyword links navigate here with a ?q param).
   useEffect(() => {
     if (!router.isReady) return;
     const q = router.query.q;
@@ -75,48 +79,69 @@ export default function Search({ datasets }: { datasets: Dataset[] }) {
 
   // Client-side full-text filter over the datasets the provider returned. A
   // provider whose capabilities.search is true would instead call
-  // provider.search({ q, … }) server-side (full-text / faceted by namespace,
-  // format, tags) — the static provider filters here in the browser.
+  // provider.search({ q, … }) server-side — the static provider filters here
+  // in the browser.
   const searched = useMemo(() => {
     return datasets.filter((d) => matchesCatalogQuery(d, query));
   }, [datasets, query]);
 
   const catOf = (d: Dataset) => d.category ?? "Other";
-  const matchesCats = (d: Dataset) =>
-    activeCats.size === 0 || activeCats.has(catOf(d));
-  const matchesNs = (d: Dataset) =>
-    activeNs.size === 0 || activeNs.has(d.namespace);
-
-  const filtered = useMemo(
-    () => searched.filter((d) => matchesCats(d) && matchesNs(d)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [searched, activeCats, activeNs],
-  );
-
-  // Facet options with counts. Each group's counts are taken over the list
-  // filtered by the query AND the OTHER group (standard faceted counting), so
-  // a selection never zeroes out its own alternatives. Categories only appear
-  // when the catalog uses them; the publisher group only when there are
-  // several namespaces to choose between.
-  const catFacets = useMemo(() => {
-    if (!datasets.some((d) => d.category)) return null;
-    const counts = new Map<string, number>();
-    for (const d of searched.filter(matchesNs))
-      counts.set(catOf(d), (counts.get(catOf(d)) ?? 0) + 1);
-    return Array.from(counts.entries()).sort(([a], [b]) =>
-      a === "Other" ? 1 : b === "Other" ? -1 : a.localeCompare(b),
+  const activeByFacet: Record<KeywordFacet, Set<string>> = {
+    task: activeTasks,
+    stage: activeStages,
+    project: activeProjects,
+    keywords: activeKeywords,
+  };
+  const matchesAllExcept = (d: Dataset, except?: string) =>
+    (except === "category" ||
+      activeCats.size === 0 ||
+      activeCats.has(catOf(d))) &&
+    (except === "publisher" ||
+      activeNs.size === 0 ||
+      activeNs.has(d.namespace)) &&
+    (Object.entries(activeByFacet) as [KeywordFacet, Set<string>][]).every(
+      ([facet, active]) =>
+        except === facet ||
+        active.size === 0 ||
+        keywordFacetValues(d, facet).some((value) => active.has(value)),
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [datasets, searched, activeNs]);
 
-  const nsFacets = useMemo(() => {
-    if (new Set(datasets.map((d) => d.namespace)).size < 2) return null;
+  const filtered = searched.filter((d) => matchesAllExcept(d));
+
+  const countValues = (
+    valuesFor: (dataset: Dataset) => string[],
+    except: string,
+  ): [string, number][] => {
     const counts = new Map<string, number>();
-    for (const d of searched.filter(matchesCats))
-      counts.set(d.namespace, (counts.get(d.namespace) ?? 0) + 1);
+    for (const dataset of searched) {
+      if (!matchesAllExcept(dataset, except)) continue;
+      for (const value of Array.from(new Set(valuesFor(dataset)))) {
+        counts.set(value, (counts.get(value) ?? 0) + 1);
+      }
+    }
     return Array.from(counts.entries()).sort(([a], [b]) => a.localeCompare(b));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [datasets, searched, activeCats]);
+  };
+
+  const catFacets = datasets.some((d) => d.category)
+    ? countValues((d) => [catOf(d)], "category")
+    : null;
+  const nsFacets =
+    new Set(datasets.map((d) => d.namespace)).size > 1
+      ? countValues((d) => [d.namespace], "publisher")
+      : null;
+  const taskFacets = countValues((d) => keywordFacetValues(d, "task"), "task");
+  const stageFacets = countValues(
+    (d) => keywordFacetValues(d, "stage"),
+    "stage",
+  );
+  const projectFacets = countValues(
+    (d) => keywordFacetValues(d, "project"),
+    "project",
+  );
+  const keywordFacets = countValues(
+    (d) => keywordFacetValues(d, "keywords"),
+    "keywords",
+  );
 
   const toggle = (
     set: Set<string>,
@@ -129,16 +154,14 @@ export default function Search({ datasets }: { datasets: Dataset[] }) {
     apply(next);
   };
 
-  const hasFacets = Boolean(catFacets || nsFacets);
+  const hasFacets = Boolean(catFacets || nsFacets || datasets.length > 0);
 
   return (
     <>
       <Head>
         <title>Search — Budaya Lab Data Portal</title>
       </Head>
-      <main
-        className="mx-auto max-w-6xl px-6 pb-24 sm:px-16"
-      >
+      <main className="mx-auto max-w-6xl px-6 pb-24 sm:px-16">
         <nav className="pt-7 font-sans text-[13px] font-medium text-ink/50">
           <Link
             href="/"
@@ -194,6 +217,34 @@ export default function Search({ datasets }: { datasets: Dataset[] }) {
                     onClear={() => setActiveNs(new Set())}
                   />
                 )}
+                <FacetGroup
+                  title="Task"
+                  options={taskFacets}
+                  active={activeTasks}
+                  onToggle={(v) => toggle(activeTasks, v, setActiveTasks)}
+                  onClear={() => setActiveTasks(new Set())}
+                />
+                <FacetGroup
+                  title="Stage"
+                  options={stageFacets}
+                  active={activeStages}
+                  onToggle={(v) => toggle(activeStages, v, setActiveStages)}
+                  onClear={() => setActiveStages(new Set())}
+                />
+                <FacetGroup
+                  title="Project"
+                  options={projectFacets}
+                  active={activeProjects}
+                  onToggle={(v) => toggle(activeProjects, v, setActiveProjects)}
+                  onClear={() => setActiveProjects(new Set())}
+                />
+                <FacetGroup
+                  title="Other keywords"
+                  options={keywordFacets}
+                  active={activeKeywords}
+                  onToggle={(v) => toggle(activeKeywords, v, setActiveKeywords)}
+                  onClear={() => setActiveKeywords(new Set())}
+                />
               </aside>
             )}
 
@@ -249,6 +300,7 @@ function FacetGroup({
         </h2>
         {active.size > 0 && (
           <button
+            type="button"
             onClick={onClear}
             className="cursor-pointer border-0 bg-transparent p-0 font-sans text-[11px] font-medium text-accent hover:underline"
           >
@@ -257,11 +309,18 @@ function FacetGroup({
         )}
       </div>
       <ul className="m-0 max-h-[19rem] list-none overflow-y-auto p-0 pr-1">
+        {options.length === 0 && (
+          <li className="py-1 font-sans text-xs text-ink/40">No values</li>
+        )}
         {options.map(([value, count]) => {
           const on = active.has(value);
+          const label = ["Task", "Stage", "Project"].includes(title)
+            ? value.slice(value.indexOf(":") + 1)
+            : value;
           return (
             <li key={value}>
               <button
+                type="button"
                 onClick={() => onToggle(value)}
                 aria-pressed={on}
                 className={`flex w-full cursor-pointer items-baseline justify-between gap-2 border-0 bg-transparent px-0 py-[5px] text-left font-sans text-[13px] leading-snug ${
@@ -270,7 +329,7 @@ function FacetGroup({
                     : "font-normal text-ink/70 hover:text-ink"
                 }`}
               >
-                <span>{value}</span>
+                <span>{label}</span>
                 <span
                   className={`text-[11px] tabular-nums ${on ? "text-accent/70" : "text-ink/40"}`}
                 >

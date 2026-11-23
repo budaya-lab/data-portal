@@ -13,6 +13,7 @@ import {
   isDraft,
   isRestricted,
   keywordCounts,
+  keywordFacetValues,
   matchesCatalogQuery,
   publishedDatasets,
   stageLabel,
@@ -44,6 +45,24 @@ test("catalog search finds Frictionless keywords without searching source data",
     matchesCatalogQuery({ ...tagged, keywords: [] }, "oral history"),
     false,
   );
+});
+
+test("keyword facet values separate task, stage, project, and subject keywords", () => {
+  const dataset: Dataset = {
+    ...tagged,
+    keywords: [
+      "task:segmentation",
+      "stage:annotated",
+      "project:press-archive",
+      "layout",
+    ],
+  };
+  assert.deepEqual(keywordFacetValues(dataset, "task"), ["task:segmentation"]);
+  assert.deepEqual(keywordFacetValues(dataset, "stage"), ["stage:annotated"]);
+  assert.deepEqual(keywordFacetValues(dataset, "project"), [
+    "project:press-archive",
+  ]);
+  assert.deepEqual(keywordFacetValues(dataset, "keywords"), ["layout"]);
 });
 
 test("keyword counts include each dataset once and exclude stage keywords", () => {
