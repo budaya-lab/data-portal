@@ -74,6 +74,7 @@ test("publishes reviewed entries and preserves only explicit or previously confi
     "ds-articlereconstruction-atd": "ds-articlereconstruction",
     "ds-articlereconstruction-frial-atd": "ds-articlereconstruction-atd",
     "ds-articlereconstruction-syafiq-atd": "ds-articlereconstruction-atd",
+    "ds-bangsawan-yc-atd": "ds-bangsawan",
     "ds-layout-um-gt": "ds-layout-um",
     "ds-layout-um-v2-hirwan-atd": "ds-layout-um-v2",
   };
@@ -82,11 +83,6 @@ test("publishes reviewed entries and preserves only explicit or previously confi
       { namespace: "budaya-lab", slug: parent },
     ]);
   }
-  assert.equal(
-    record("ds-bangsawan-yc-atd").derivedFrom,
-    undefined,
-    "a similar repository name does not establish lineage",
-  );
 });
 
 test("preserves reviewed catalogue metadata when the local source disagrees", () => {

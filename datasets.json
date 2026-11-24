@@ -13,7 +13,6 @@
     ],
     "description": "557 images from 1956 to 1961, used for layout classification.",
     "keywords": [
-      "UM",
       "task:layout",
       "project:Jawi",
       "stage:curated"
@@ -66,7 +65,6 @@
       }
     ],
     "keywords": [
-      "UM",
       "task:layout",
       "project:Jawi",
       "stage:curated"
@@ -514,6 +512,12 @@
         "count": 100,
         "format": "csv",
         "access": "restricted"
+      }
+    ],
+    "derivedFrom": [
+      {
+        "namespace": "budaya-lab",
+        "slug": "ds-bangsawan"
       }
     ]
   },
