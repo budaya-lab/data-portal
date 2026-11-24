@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/budaya-lab/data-portal/compare/v1.2.0...v1.3.0) (2026-11-24)
+
+
+### Features
+
+* **catalogue:** list restricted dataset resources and lineage ([2ac0ac7](https://github.com/budaya-lab/data-portal/commit/2ac0ac7d1d4499d136d43a23ff5f75bea43887e3))
+
 ## [1.2.0](https://github.com/budaya-lab/data-portal/compare/v1.1.0...v1.2.0) (2026-11-24)
 
 
