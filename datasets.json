@@ -136,5 +136,27 @@
       "stage:ground-truth"
     ],
     "created": "2026-11-04T00:00:00Z"
+  },
+  {
+    "slug": "ds-bangsawan",
+    "namespace": "budaya-lab",
+    "name": "Bangsawan",
+    "version": "2.0.0",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/budaya-lab/ds-bangsawan",
+        "access": "restricted"
+      }
+    ],
+    "description": "A selection of articles with the term \"Bangsawan\".",
+    "keywords": [
+      "task:classification",
+      "project:jawi",
+      "stage:curated"
+    ],
+    "created": "2026-11-20T00:00:00Z"
   }
 ]
