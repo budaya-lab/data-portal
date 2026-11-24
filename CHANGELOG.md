@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.2.0](https://github.com/budaya-lab/data-portal/compare/v1.1.0...v1.2.0) (2026-11-24)
+
+
+### Features
+
+* **catalogue:** add validated Bangsawan draft ([ba4a41c](https://github.com/budaya-lab/data-portal/commit/ba4a41c599438e909ed31b86565e79485f529dbb))
+* **catalogue:** sync valid metadata and style keyword cards ([42d5039](https://github.com/budaya-lab/data-portal/commit/42d50391c9c29c71da2ebf0120a92222772d1332))
+* **home:** style structured keyword cards ([fc8b63a](https://github.com/budaya-lab/data-portal/commit/fc8b63ae639c8a18343d4e81935010bf06dd51ad))
+
+
+### Bug Fixes
+
+* **catalogue:** accept directory resource paths ([1e6c3c4](https://github.com/budaya-lab/data-portal/commit/1e6c3c464d2e5baed287f779cda40701380c9a23))
+* **catalogue:** accept untyped directory paths ([8d84962](https://github.com/budaya-lab/data-portal/commit/8d849628bb2491471cd194be371a3f220c4f92c5))
+* **catalogue:** exclude invalid source metadata ([d854905](https://github.com/budaya-lab/data-portal/commit/d8549056b283b2eb23db83cf3f5abcdc7bd9a054))
+
 ## [1.1.0](https://github.com/budaya-lab/data-portal/compare/v1.0.0...v1.1.0) (2026-11-23)
 
 
