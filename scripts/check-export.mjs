@@ -94,7 +94,7 @@ for (const path of files) {
   if (!inNext && size >= MAX_FILE_BYTES) bloat.push({ rel, size })
 }
 
-// Best-effort manifest summary: which datasets serve from R2 vs inline.
+// Best-effort manifest references, not a claim about exported file contents.
 function manifestSummary() {
   if (!existsSync('datasets.json')) return null
   let datasets
@@ -103,29 +103,34 @@ function manifestSummary() {
   } catch {
     return null
   }
-  let r2 = 0
-  let inline = 0
-  const paths = []
+  let remote = 0
+  let local = 0
+  let restricted = 0
   for (const d of datasets) {
+    const restrictedDataset = d.access === 'restricted' || d.sources?.some((source) => source.access === 'restricted')
     const resources = d.resources?.length ? d.resources : d.file ? [{ path: d.file }] : []
-    for (const r of resources) paths.push(r.path || '')
+    for (const resource of resources) {
+      if (resource.access === 'restricted') {
+        restricted++
+        continue
+      }
+      if (restrictedDataset && resource.name !== 'buckets') continue
+      if (/^(https?:)?\/\//.test(resource.path)) remote++
+      else local++
+    }
   }
-  for (const p of paths) {
-    if (/^(https?:)?\/\//.test(p)) r2++
-    else inline++
-  }
-  return { r2, inline, total: paths.length }
+  return { remote, local, restricted, total: remote + local }
 }
 
 const ms = manifestSummary()
 
 console.log(`[check-export] ${EXPORT_DIR}/  —  ${files.length} files, ${fmtBytes(totalBytes)} total`)
 if (ms) {
-  console.log(`[check-export] datasets.json: ${ms.r2}/${ms.total} resources served from R2 (absolute URL), ${ms.inline} inline`)
+  console.log(`[check-export] datasets.json: ${ms.total} downloadable resources (${ms.remote} remote, ${ms.local} local); ${ms.restricted} restricted metadata-only listings`)
 }
 
 if (pointerLeaks.length === 0 && bloat.length === 0) {
-  console.log(`✓ [check-export] clean — no LFS pointer leaks, no files ≥ ${MAX_FILE_MB} MB. Data is served from R2.`)
+  console.log(`✓ [check-export] clean — no LFS pointer leaks, no files ≥ ${MAX_FILE_MB} MB.`)
   process.exit(0)
 }
 

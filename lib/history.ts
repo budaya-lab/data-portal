@@ -15,7 +15,7 @@
 
 import { execFileSync } from 'child_process'
 import type { Dataset, Resource, ResourceVersion, ActivityEntry } from './providers'
-import { getResources } from './datasets'
+import { getDownloadableResources } from './datasets'
 import { formatDate } from './format'
 
 // Run git, returning stdout — or null if git isn't available / the command fails (not a
@@ -212,7 +212,7 @@ export function withHistory(dataset: Dataset): {
   resources: Resource[]
   activity: ActivityEntry[]
 } {
-  const resources = getResources(dataset).map((r) => ({
+  const resources = getDownloadableResources(dataset).map((r) => ({
     ...r,
     history: resourceHistory(r),
   }))

@@ -71,7 +71,7 @@ export type FrictionlessLike = PackageMetadata & {
   name?: string
   file?: string
   format?: string
-  resources?: { name: string; path: string; format: string; title?: string }[]
+  resources?: { name: string; path: string; format: string; title?: string; access?: 'public' | 'restricted' }[]
   schema?: TableSchema
   access?: 'public' | 'restricted'
 }
@@ -217,9 +217,12 @@ export function toDCAT(input: FrictionlessLike, opts: ToDcatOptions = {}): DcatD
     opts.downloadUrl ?? (input.file ? joinUrl(opts.baseUrl, `data/${input.file}`) : undefined)
   const landingPage = opts.landingPage
 
-  const resources = input.resources?.length ? input.resources : input.file
-    ? [{ name: 'data', path: input.file, format: input.format, title: input.title ?? input.name }]
-    : []
+  const restricted = input.access === 'restricted' || input.sources?.some((source) => source.access === 'restricted')
+  const resources = input.resources?.length
+    ? input.resources.filter((resource) => resource.access !== 'restricted' && (!restricted || resource.name === 'buckets'))
+    : !restricted && input.file
+      ? [{ name: 'data', path: input.file, format: input.format, title: input.title ?? input.name }]
+      : []
   const distributions = resources.map((resource) => {
     const url = !input.resources?.length ? downloadURL
       : /^(?:https?:\/\/|\/)/.test(resource.path) ? resource.path
@@ -241,9 +244,7 @@ export function toDCAT(input: FrictionlessLike, opts: ToDcatOptions = {}): DcatD
     'dct:title': input.title ?? input.name,
     'dct:description': input.description,
     'dcat:keyword': input.keywords,
-    'dct:accessLevel': input.access === 'restricted' || input.sources?.some((s) => s.access === 'restricted')
-      ? 'restricted public'
-      : undefined,
+    'dct:accessLevel': restricted ? 'restricted public' : undefined,
     'dct:license': licenseUri(input.licenses),
     'dct:source': input.sources
       ?.map((s) => s.path ?? s.title)

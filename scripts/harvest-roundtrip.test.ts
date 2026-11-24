@@ -80,7 +80,7 @@ async function main() {
       // Per-dataset fidelity: title, description, keywords, ≥1 resource with a URL.
       for (const src of datasets) {
         const got = result.datasets.find(
-          (d) => d.name === (src.title ?? src.name),
+          (d) => d.identifier === `${src.namespace}/${src.slug}`,
         );
         if (!got) {
           ok(false, `${label}: missing dataset "${src.name}"`);

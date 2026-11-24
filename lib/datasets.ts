@@ -116,8 +116,25 @@ export function isRestricted(d: Dataset): boolean {
   );
 }
 
-// A public static export cannot enforce access to source data. Only validated
-// public bucket summaries may be resources on a restricted catalogue record.
+function validateRestrictedResource(resource: Resource): void {
+  const allowedKeys = new Set(["name", "title", "description", "path", "format", "count", "access"]);
+  const path = resource.path;
+  if (
+    resource.name === "buckets" ||
+    typeof resource.name !== "string" || !resource.name.trim() ||
+    typeof resource.title !== "string" || !resource.title.trim() ||
+    (resource.description !== undefined && (typeof resource.description !== "string" || !resource.description.trim())) ||
+    typeof resource.format !== "string" || !/^[a-z][a-z0-9-]*$/.test(resource.format) ||
+    typeof path !== "string" || /[\\:?#%]/.test(path) || path.startsWith("~") ||
+    Array.from(path).some((character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127) ||
+    path.replace(/\/$/, "").split("/").some((part) => !part || part.startsWith(".")) ||
+    (resource.format === "directory") !== path.endsWith("/") ||
+    Object.keys(resource).some((key) => !allowedKeys.has(key))
+  ) throw new Error("Restricted resource listings need reviewed relative metadata paths, titles and formats, without download or preview fields");
+}
+
+// A public static export cannot enforce source access. Explicit restricted
+// resource metadata is listable, but only public resources may expose bytes.
 export function validateCatalogAccess(datasets: Dataset[]): void {
   const byId = new Map<string, Dataset>();
   for (const d of datasets) {
@@ -197,11 +214,21 @@ export function validateCatalogAccess(datasets: Dataset[]): void {
     if (d.resources !== undefined && !Array.isArray(d.resources)) {
       throw new Error(`Invalid resources for dataset ${d.namespace}/${d.slug}`);
     }
+    for (const resource of d.resources ?? []) {
+      if (!resource || typeof resource !== "object") throw new Error("Invalid resource metadata");
+      if (resource.access !== undefined && resource.access !== "public" && resource.access !== "restricted") {
+        throw new Error("Invalid resource access");
+      }
+      if (resource.count !== undefined && (!Number.isSafeInteger(resource.count) || resource.count < 0)) {
+        throw new Error("Invalid resource count");
+      }
+      if (resource.access === "restricted") validateRestrictedResource(resource);
+    }
     const buckets = (d.resources ?? []).filter((resource) => resource?.name === "buckets");
     if (buckets.length > 1) throw new Error("Only one bucket resource is allowed per dataset");
     for (const resource of buckets) validateBucketResource(resource);
     const restricted = isRestricted(d);
-    if (restricted && (d.file || d.resources?.some((resource) => resource?.name !== "buckets"))) {
+    if (restricted && (d.file || d.resources?.some((resource) => resource?.name !== "buckets" && resource.access !== "restricted"))) {
       throw new Error(
         `Restricted dataset ${d.namespace}/${d.slug} cannot have resources in a public catalog`,
       );
@@ -276,11 +303,18 @@ export function getResources(d: Dataset): Resource[] {
   return [];
 }
 
+export function getDownloadableResources(d: Dataset): Resource[] {
+  return getResources(d).filter((resource) =>
+    resource.access !== "restricted" && (!isRestricted(d) || resource.name === "buckets"),
+  );
+}
+
 // Public URL of a resource's raw file. A relative `path` is served statically from
 // /public/data; an absolute path is returned as-is, so a resource can point at a remote
 // file (e.g. a CKAN/DCAT download URL harvested by /portaljs-migrate) or a site-root path without
 // copying bytes into the repo.
 export function resourceUrl(r: Resource): string {
+  if (r.access === "restricted") throw new Error("Restricted resources have no download URL");
   if (/^(https?:)?\/\//.test(r.path) || r.path.startsWith("/")) return r.path;
   return `/data/${r.path}`;
 }

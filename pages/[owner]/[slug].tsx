@@ -114,9 +114,14 @@ export default function DatasetPage({
   const restricted = isRestricted(dataset);
   const stage = stageLabel(dataset);
   const keywords = subjectKeywords(dataset);
-  const visibleResources = restricted
-    ? resources.filter((resource) => resource.name === "buckets")
-    : resources;
+  const visibleResources = resources.filter(
+    (resource) =>
+      resource.access !== "restricted" &&
+      (!restricted || resource.name === "buckets"),
+  );
+  const metadataResources = (dataset.resources ?? []).filter(
+    (resource) => resource.access === "restricted",
+  );
   const visibleActivity = restricted ? [] : activity;
   const primary = visibleResources[0];
   // The two serverless geo tiers render as ONE map (see MapPreview): the PMTiles
@@ -230,6 +235,7 @@ export default function DatasetPage({
                 separate resource: a single block, each row with its size, a
                 copy-URL, and (for the columnar tiers) a ready-to-run DuckDB
                 snippet. Dual-tier geo datasets get a one-line architecture note. */}
+            <MetadataResourceList resources={metadataResources} />
             <DownloadApiBlock
               resources={orderedResources}
               dualTier={Boolean(pmtilesResource && geoparquetResource)}
@@ -486,11 +492,64 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   );
 }
 
-// The single "Download & API" block: every file in the dataset presented as a
-// FORMAT of one thing, not a separate resource. Each row carries its size, a
-// direct download, a copy-URL (for files served from a public URL), and — for the
-// columnar/query tiers — a ready-to-run DuckDB snippet. A dual-tier geo dataset
-// gets a one-line architecture note (the vendor story, not the user's model).
+// Reviewed source metadata is listable without exposing paths or byte actions.
+function MetadataResourceList({ resources }: { resources: Resource[] }) {
+  if (!resources.length) return null;
+  return (
+    <section aria-label="Restricted resource metadata" className="mt-11">
+      <SectionLabel>Resources</SectionLabel>
+      <p className="mb-4 font-sans text-sm text-ink/60">
+        Metadata only. Access to these resources is controlled by the source
+        repository.
+      </p>
+      <table className="w-full table-fixed border-collapse text-left font-sans text-sm">
+        <caption className="sr-only">
+          Restricted resources and supplied item counts
+        </caption>
+        <thead>
+          <tr className="border-b border-ink/15">
+            <th scope="col" className="w-1/2 py-2 pr-4">
+              Resource
+            </th>
+            <th scope="col" className="py-2 pr-4">
+              Format
+            </th>
+            <th scope="col" className="py-2 text-right">
+              Count
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {resources.map((resource) => (
+            <tr
+              key={resource.name}
+              className="border-b border-ink/10 align-top"
+            >
+              <td className="break-words py-3 pr-4">
+                <div>{resource.title ?? resource.name}</div>
+                <div className="mt-1 text-xs text-ink/50">
+                  {resource.name} · Restricted
+                </div>
+              </td>
+              <td className="py-3 pr-4">
+                {resource.format === "directory"
+                  ? "Directory"
+                  : resource.format.toUpperCase()}
+              </td>
+              <td className="py-3 text-right tabular-nums">
+                {resource.count === undefined
+                  ? "—"
+                  : resource.count.toLocaleString("en")}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+
+// Public downloads and API snippets only; metadata-only resources never enter.
 function DownloadApiBlock({
   resources,
   dualTier,
