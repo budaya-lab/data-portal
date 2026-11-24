@@ -66,20 +66,15 @@ test("catalogues all ten reviewed datasets with every declared private resource 
   }
 });
 
-test("keeps new entries as drafts and preserves only explicit or previously confirmed parents", () => {
-  for (const slug of [
-    "ds-articlereconstruction-atd",
-    "ds-articlereconstruction-frial-atd",
-    "ds-articlereconstruction-syafiq-atd",
-    "ds-bangsawan-yc-atd",
-    "ds-layout-um-gt",
-  ]) {
-    assert.equal(record(slug).draft, true, slug);
+test("publishes reviewed entries and preserves only explicit or previously confirmed parents", () => {
+  for (const slug of Object.keys(expected)) {
+    assert.equal(record(slug).draft, undefined, slug);
   }
   const parents: Record<string, string> = {
     "ds-articlereconstruction-atd": "ds-articlereconstruction",
     "ds-articlereconstruction-frial-atd": "ds-articlereconstruction-atd",
     "ds-articlereconstruction-syafiq-atd": "ds-articlereconstruction-atd",
+    "ds-bangsawan-yc-atd": "ds-bangsawan",
     "ds-layout-um-gt": "ds-layout-um",
     "ds-layout-um-v2-hirwan-atd": "ds-layout-um-v2",
   };
@@ -88,11 +83,6 @@ test("keeps new entries as drafts and preserves only explicit or previously conf
       { namespace: "budaya-lab", slug: parent },
     ]);
   }
-  assert.equal(
-    record("ds-bangsawan-yc-atd").derivedFrom,
-    undefined,
-    "a similar repository name does not establish lineage",
-  );
 });
 
 test("preserves reviewed catalogue metadata when the local source disagrees", () => {
@@ -103,6 +93,15 @@ test("preserves reviewed catalogue metadata when the local source disagrees", ()
   );
   assert.ok(dataset.keywords?.includes("stage:curated"));
   assert.equal(dataset.keywords?.includes("stage:annotated"), false);
+});
+
+test("preserves reviewed project keyword casing and removes redundant UM subjects", () => {
+  for (const slug of ["ds-bangsawan", "ds-bangsawan-yc-atd"]) {
+    assert.ok(record(slug).keywords?.includes("project:Jawi"), slug);
+    assert.equal(record(slug).keywords?.includes("project:jawi"), false, slug);
+  }
+  const hirwan = record("ds-layout-um-v2-hirwan-atd");
+  assert.equal(hirwan.keywords?.includes("UM"), false);
 });
 
 test("retains supplied counts and existing public bucket resources without inventing totals", () => {
