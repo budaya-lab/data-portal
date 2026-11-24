@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0](https://github.com/budaya-lab/data-portal/compare/v1.4.0...v1.5.0) (2026-11-24)
+
+
+### Features
+
+* **catalogue:** group and alphabetize keywords ([56ca62c](https://github.com/budaya-lab/data-portal/commit/56ca62c84614195db0b3f51e9c6de62d8f384855))
+* **catalogue:** group keywords by kind and alphabetize ([0c7888d](https://github.com/budaya-lab/data-portal/commit/0c7888ddf061faa5beb78bb47af2a7e5f4ad3b9d))
+
 ## [1.4.0](https://github.com/budaya-lab/data-portal/compare/v1.3.0...v1.4.0) (2026-11-24)
 
 
