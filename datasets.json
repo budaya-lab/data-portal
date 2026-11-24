@@ -11,11 +11,13 @@
         "access": "restricted"
       }
     ],
-    "description": "557 images from 1956 to 1961, used for layout classification.",
+    "description": "A selection of Utusan Melayu page scans for manual annotation.",
+    "created": "2026-11-02T00:00:00Z",
     "keywords": [
-      "layout",
       "UM",
-      "stage:curated"
+      "task:layout",
+      "project:Jawi",
+      "stage:annotated"
     ],
     "resources": [
       {
@@ -30,7 +32,8 @@
     "slug": "ds-layout-um-v2",
     "namespace": "budaya-lab",
     "name": "Layout UM v2",
-    "description": "152 images from the 60s, used for layout classification.",
+    "description": "Images from Utusan Melayu between 1962 and 1969, used for layout classification.",
+    "created": "2026-10-26T00:00:00Z",
     "resources": [
       {
         "name": "buckets",
@@ -40,8 +43,9 @@
       }
     ],
     "keywords": [
-      "layout",
       "UM",
+      "task:layout",
+      "project:Jawi",
       "stage:curated"
     ],
     "access": "restricted",
@@ -56,7 +60,7 @@
   {
     "slug": "ds-layout-um-v2-hirwan-atd",
     "namespace": "budaya-lab",
-    "name": "Layout UM v2 - Annotated",
+    "name": "Layout UM v2 Annotated by Hirwan",
     "access": "restricted",
     "sources": [
       {
@@ -65,10 +69,11 @@
         "access": "restricted"
       }
     ],
-    "description": "152 images from the 60s, used for layout classification. Annotated copy, of ds-layout-um-v2, by Hirwan.",
+    "description": "152 images from Utusan Melayu between 1962 and 1969, used for layout classification. Annotated by Hirwan.",
     "keywords": [
-      "layout",
       "UM",
+      "task:layout",
+      "project:Jawi",
       "stage:annotated"
     ],
     "created": "2026-10-26T00:00:00Z",
@@ -97,6 +102,8 @@
     "description": "Labelling articles from Utusan Melayu for article reconstruction. It includes 160 pages (80 before 1959 and 80 after 1959).",
     "keywords": [
       "Utusan Melayu",
+      "task:article",
+      "project:Jawi",
       "stage:curated"
     ],
     "created": "2026-10-23T06:36:54Z",
@@ -108,5 +115,26 @@
         "title": "Public bucket summary"
       }
     ]
+  },
+  {
+    "slug": "ds-layout-um-gt",
+    "namespace": "budaya-lab",
+    "name": "Layout UM annotated Groundtruth",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/budaya-lab/ds-layout-um-gt",
+        "access": "restricted"
+      }
+    ],
+    "description": "Layout annotations for Utusan Melayu page scans from 1956 to 1961. Annotated by Jakkarin and verified by Tarin.",
+    "keywords": [
+      "task:layout",
+      "project:Jawi",
+      "stage:ground-truth"
+    ],
+    "created": "2026-11-04T00:00:00Z"
   }
 ]
