@@ -393,14 +393,17 @@ test("budaya-lab repository stays restricted with its public summary and curated
   assert.equal(datasetHref(dataset), "/@budaya-lab/ds-layout-um-v2");
   assert.equal(isRestricted(dataset), true);
   assert.equal(dataset.file, undefined);
-  assert.deepEqual(dataset.resources, [
-    {
-      name: "buckets",
-      path: "ds-layout-um-v2-buckets.csv",
-      format: "csv",
-      title: "Public bucket summary",
-    },
-  ]);
+  assert.deepEqual(
+    dataset.resources?.filter((resource) => resource.name === "buckets"),
+    [
+      {
+        name: "buckets",
+        path: "ds-layout-um-v2-buckets.csv",
+        format: "csv",
+        title: "Public bucket summary",
+      },
+    ],
+  );
   assert.equal(getDatasetStage(dataset), "curated");
   assert.deepEqual(dataset.sources, [
     {

@@ -14,6 +14,8 @@
     "description": "557 images from 1956 to 1961, used for layout classification.",
     "keywords": [
       "UM",
+      "task:layout",
+      "project:Jawi",
       "stage:curated"
     ],
     "resources": [
@@ -22,8 +24,24 @@
         "path": "ds-layout-um-buckets.csv",
         "format": "csv",
         "title": "Public bucket summary"
+      },
+      {
+        "name": "input",
+        "title": "Manifest",
+        "path": "input.csv",
+        "count": 557,
+        "format": "csv",
+        "access": "restricted"
+      },
+      {
+        "name": "metadata",
+        "title": "The metadata classes for the annotation task.",
+        "path": "metadata.yaml",
+        "format": "yaml",
+        "access": "restricted"
       }
-    ]
+    ],
+    "created": "2026-11-02T00:00:00Z"
   },
   {
     "slug": "ds-layout-um-v2",
@@ -37,6 +55,14 @@
         "path": "ds-layout-um-v2-buckets.csv",
         "format": "csv",
         "title": "Public bucket summary"
+      },
+      {
+        "name": "input",
+        "title": "Manifest",
+        "path": "input.csv",
+        "count": 152,
+        "format": "csv",
+        "access": "restricted"
       }
     ],
     "keywords": [
@@ -82,6 +108,24 @@
         "namespace": "budaya-lab",
         "slug": "ds-layout-um-v2"
       }
+    ],
+    "resources": [
+      {
+        "name": "input",
+        "title": "Manifest",
+        "path": "input.csv",
+        "count": 152,
+        "format": "csv",
+        "access": "restricted"
+      },
+      {
+        "name": "xml",
+        "title": "Human-annotated segments",
+        "path": "xml/",
+        "count": 67,
+        "format": "directory",
+        "access": "restricted"
+      }
     ]
   },
   {
@@ -99,6 +143,8 @@
     "description": "Labelling articles from Utusan Melayu for article reconstruction. It includes 160 pages (80 before 1959 and 80 after 1959).",
     "keywords": [
       "Utusan Melayu",
+      "task:article",
+      "project:Jawi",
       "stage:curated"
     ],
     "created": "2026-10-23T06:36:54Z",
@@ -108,6 +154,30 @@
         "path": "ds-articlereconstruction-buckets.csv",
         "format": "csv",
         "title": "Public bucket summary"
+      },
+      {
+        "name": "input",
+        "title": "Manifest",
+        "path": "input.csv",
+        "count": 178,
+        "format": "csv",
+        "access": "restricted"
+      },
+      {
+        "name": "alto",
+        "title": "Manually created segments for annotators to link together in the article reconstruction task, with OCR..",
+        "path": "alto/",
+        "count": 178,
+        "format": "directory",
+        "access": "restricted"
+      },
+      {
+        "name": "xml",
+        "title": "Manually created segments for annotators to link together in the article reconstruction task, without OCR.",
+        "path": "xml/",
+        "count": 178,
+        "format": "directory",
+        "access": "restricted"
       }
     ]
   },
@@ -131,6 +201,382 @@
       "project:jawi",
       "stage:curated"
     ],
-    "created": "2026-11-20T00:00:00Z"
+    "created": "2026-11-20T00:00:00Z",
+    "resources": [
+      {
+        "name": "input",
+        "title": "Manifest",
+        "path": "input.csv",
+        "count": 100,
+        "format": "csv",
+        "access": "restricted"
+      },
+      {
+        "name": "alto",
+        "title": "Alto files",
+        "path": "alto/",
+        "count": 100,
+        "format": "directory",
+        "access": "restricted"
+      },
+      {
+        "name": "config",
+        "title": "Configuration file for the annotation task",
+        "path": "config.json",
+        "count": 4,
+        "format": "json",
+        "access": "restricted"
+      },
+      {
+        "name": "results",
+        "title": "Results from the jawi data manager",
+        "path": "results.csv",
+        "count": 100,
+        "format": "csv",
+        "access": "restricted"
+      }
+    ]
+  },
+  {
+    "slug": "ds-articlereconstruction-atd",
+    "namespace": "budaya-lab",
+    "draft": true,
+    "name": "Article reconstruction (Annotated)",
+    "description": "Derived from annotations amde on the ds-articlereconstruction dataset. Aggregation was done by the assemble_annotations notebook. (1) Three pages were dropped: UM-1956-06-12-3, UM-1962-04-13-8 and UM-1967-02-19-7. (2) ALTO is the reference for region IDs and geometry, so the PAGE XML layouts in xml/ were rebuilt to match it: regions missing from ALTO were removed, regions only in ALTO were added, and regions whose box overlap with ALTO was below 0.9 IoU were redrawn to ALTO's geometry. (3) For the second batch, article_xml/ merges the two annotators: each of syafiq's articles was paired with frial's best-overlapping article, and only the regions both put in that article were kept. Regions that either annotator put in two articles, or that have no ALTO block, were removed. Article metadata comes from syafiq. (4) Pages were flagged in input.csv, with details in flag_comment, for OCR problems, segment IDs missing from ALTO, and disagreements between the annotators. OCR problems are text or text-image segments in an article with no OCR text, and text segments with fewer than 5 characters.",
+    "access": "restricted",
+    "created": "2026-11-05T00:00:00Z",
+    "keywords": [
+      "task:article",
+      "project:Jawi",
+      "stage:annotated"
+    ],
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/budaya-lab/ds-articlereconstruction-atd",
+        "access": "restricted"
+      },
+      {
+        "title": "ds-articlereconstruction",
+        "path": "https://github.com/budaya-lab/ds-articlereconstruction",
+        "access": "restricted"
+      }
+    ],
+    "resources": [
+      {
+        "name": "input",
+        "title": "Manifest",
+        "path": "input.csv",
+        "count": 175,
+        "format": "csv",
+        "access": "restricted"
+      },
+      {
+        "name": "alto",
+        "title": "Manually created segments for annotators to link together in the article reconstruction task, with OCR.",
+        "path": "alto/",
+        "count": 175,
+        "format": "directory",
+        "access": "restricted"
+      },
+      {
+        "name": "annotations",
+        "title": "Annotations from the 3 annotators.",
+        "path": "annotations/",
+        "count": 253,
+        "format": "directory",
+        "access": "restricted"
+      },
+      {
+        "name": "article_xml",
+        "title": "Manually created segments for annotators to link together in the article reconstruction task.",
+        "path": "article_xml/",
+        "count": 175,
+        "format": "directory",
+        "access": "restricted"
+      },
+      {
+        "name": "assemble_annotations",
+        "title": "A notebook for examining the discrepancies between annotators, as well as segments with noisy ocr.",
+        "path": "assemble_annotations.ipynb",
+        "format": "ipynb",
+        "access": "restricted"
+      },
+      {
+        "name": "backups",
+        "title": "The jupyter notebook automatically saves backups every time it removes lines, and produces an error reort.",
+        "path": "backups/",
+        "count": 725,
+        "format": "directory",
+        "access": "restricted"
+      },
+      {
+        "name": "xml",
+        "title": "Manually created segments for annotators to link together in the article reconstruction task.",
+        "path": "xml/",
+        "count": 175,
+        "format": "directory",
+        "access": "restricted"
+      },
+      {
+        "name": "reports",
+        "title": "Automatically generated csvs and pdfs of the changes made and the discrepancies between annotators.",
+        "path": "reports/",
+        "count": 9,
+        "format": "directory",
+        "access": "restricted"
+      }
+    ],
+    "derivedFrom": [
+      {
+        "namespace": "budaya-lab",
+        "slug": "ds-articlereconstruction"
+      }
+    ]
+  },
+  {
+    "slug": "ds-articlereconstruction-frial-atd",
+    "namespace": "budaya-lab",
+    "draft": true,
+    "name": "Article reconstruction (Re-Annotated by Frial)",
+    "description": "After the first pass at annotation, this dataset is used for adjudication.",
+    "access": "restricted",
+    "created": "2026-11-10T00:00:00Z",
+    "keywords": [
+      "task:article",
+      "project:Jawi",
+      "stage:annotated"
+    ],
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/budaya-lab/ds-articlereconstruction-Frial-atd",
+        "access": "restricted"
+      },
+      {
+        "title": "ds-articlereconstruction-atd",
+        "path": "https://github.com/budaya-lab/ds-articlereconstruction-atd",
+        "access": "restricted"
+      }
+    ],
+    "resources": [
+      {
+        "name": "input",
+        "title": "Manifest",
+        "path": "input.csv",
+        "count": 175,
+        "format": "csv",
+        "access": "restricted"
+      },
+      {
+        "name": "alto",
+        "title": "Manually created segments for annotators to link together in the article reconstruction task, with OCR.",
+        "path": "alto/",
+        "count": 175,
+        "format": "directory",
+        "access": "restricted"
+      },
+      {
+        "name": "article_xml",
+        "title": "Manually created segments for annotators to link together in the article reconstruction task.",
+        "path": "article_xml/",
+        "count": 175,
+        "format": "directory",
+        "access": "restricted"
+      },
+      {
+        "name": "xml",
+        "title": "Manually created segments for annotators to link together in the article reconstruction task.",
+        "path": "xml/",
+        "count": 175,
+        "format": "directory",
+        "access": "restricted"
+      }
+    ],
+    "derivedFrom": [
+      {
+        "namespace": "budaya-lab",
+        "slug": "ds-articlereconstruction-atd"
+      }
+    ]
+  },
+  {
+    "slug": "ds-articlereconstruction-syafiq-atd",
+    "namespace": "budaya-lab",
+    "draft": true,
+    "name": "Article reconstruction (Re-Annotated by Syafiq)",
+    "description": "After the first pass at annotation, this dataset is used for adjudication.",
+    "access": "restricted",
+    "created": "2026-11-05T00:00:00Z",
+    "keywords": [
+      "task:article",
+      "project:Jawi",
+      "stage:annotated"
+    ],
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/budaya-lab/ds-articlereconstruction-Syafiq-atd",
+        "access": "restricted"
+      },
+      {
+        "title": "ds-articlereconstruction-atd",
+        "path": "https://github.com/budaya-lab/ds-articlereconstruction-atd",
+        "access": "restricted"
+      }
+    ],
+    "resources": [
+      {
+        "name": "input",
+        "title": "Manifest",
+        "path": "input.csv",
+        "count": 175,
+        "format": "csv",
+        "access": "restricted"
+      },
+      {
+        "name": "alto",
+        "title": "Manually created segments for annotators to link together in the article reconstruction task, with OCR.",
+        "path": "alto/",
+        "count": 175,
+        "format": "directory",
+        "access": "restricted"
+      },
+      {
+        "name": "article_xml",
+        "title": "Manually created segments for annotators to link together in the article reconstruction task.",
+        "path": "article_xml/",
+        "count": 175,
+        "format": "directory",
+        "access": "restricted"
+      },
+      {
+        "name": "xml",
+        "title": "Manually created segments for annotators to link together in the article reconstruction task.",
+        "path": "xml/",
+        "count": 175,
+        "format": "directory",
+        "access": "restricted"
+      }
+    ],
+    "derivedFrom": [
+      {
+        "namespace": "budaya-lab",
+        "slug": "ds-articlereconstruction-atd"
+      }
+    ]
+  },
+  {
+    "slug": "ds-bangsawan-yc-atd",
+    "namespace": "budaya-lab",
+    "draft": true,
+    "name": "Bangsawan",
+    "description": "A selection of articles with the term \"Bangsawan\" manually annotated.",
+    "access": "restricted",
+    "created": "2026-11-20T00:00:00Z",
+    "version": "2.0.0",
+    "keywords": [
+      "task:classification",
+      "project:jawi",
+      "stage:annotated"
+    ],
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/budaya-lab/ds-bangsawan-YC-atd",
+        "access": "restricted"
+      }
+    ],
+    "resources": [
+      {
+        "name": "input",
+        "title": "Manifest",
+        "path": "input.csv",
+        "count": 100,
+        "format": "csv",
+        "access": "restricted"
+      },
+      {
+        "name": "alto",
+        "title": "Alto files",
+        "path": "alto/",
+        "count": 100,
+        "format": "directory",
+        "access": "restricted"
+      },
+      {
+        "name": "config",
+        "title": "Configuration file for the annotation task",
+        "path": "config.json",
+        "count": 4,
+        "format": "json",
+        "access": "restricted"
+      },
+      {
+        "name": "results",
+        "title": "Results from the jawi data manager",
+        "path": "results.csv",
+        "count": 100,
+        "format": "csv",
+        "access": "restricted"
+      }
+    ]
+  },
+  {
+    "slug": "ds-layout-um-gt",
+    "namespace": "budaya-lab",
+    "draft": true,
+    "name": "Layout UM annotated Groundtruth",
+    "description": " Layout annotations for Utusan Melayu page scans from 1956 to 1961. Annotated by Jakkarin and verified by Tarin.",
+    "access": "restricted",
+    "created": "2026-11-04T00:00:00Z",
+    "keywords": [
+      "task:layout",
+      "project:Jawi",
+      "stage:ground-truth"
+    ],
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/budaya-lab/ds-layout-um-gt",
+        "access": "restricted"
+      },
+      {
+        "title": "ds-layout-um",
+        "path": "https://github.com/budaya-lab/ds-layout-um",
+        "access": "restricted"
+      }
+    ],
+    "resources": [
+      {
+        "name": "input",
+        "title": "Manifest",
+        "path": "input.csv",
+        "count": 557,
+        "format": "csv",
+        "access": "restricted"
+      },
+      {
+        "name": "metadata",
+        "title": "The metadata classes for the annotation task.",
+        "path": "metadata.yaml",
+        "format": "yaml",
+        "access": "restricted"
+      },
+      {
+        "name": "xml",
+        "title": "Manifest",
+        "path": "xml/",
+        "count": 557,
+        "format": "directory",
+        "access": "restricted"
+      }
+    ],
+    "derivedFrom": [
+      {
+        "namespace": "budaya-lab",
+        "slug": "ds-layout-um"
+      }
+    ]
   }
 ]
