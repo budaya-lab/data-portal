@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.4.0](https://github.com/budaya-lab/data-portal/compare/v1.3.0...v1.4.0) (2026-11-24)
+
+
+### Features
+
+* **catalogue:** confirm Bangsawan lineage and keywords ([24cef2b](https://github.com/budaya-lab/data-portal/commit/24cef2b597e532afd716316fedbe2ecf4ecb5b6c))
+
+
+### Bug Fixes
+
+* **catalogue:** publish reviewed dataset records ([a2277c9](https://github.com/budaya-lab/data-portal/commit/a2277c9e8ca54f996e1c82fa531aaabce97cd57f))
+* **catalogue:** publish reviewed dataset records ([4c724de](https://github.com/budaya-lab/data-portal/commit/4c724decb303a6cb87691f7e9c28aae18e9aa817))
+
 ## [1.3.0](https://github.com/budaya-lab/data-portal/compare/v1.2.0...v1.3.0) (2026-11-24)
 
 
