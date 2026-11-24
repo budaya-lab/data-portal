@@ -95,6 +95,15 @@ test("preserves reviewed catalogue metadata when the local source disagrees", ()
   assert.equal(dataset.keywords?.includes("stage:annotated"), false);
 });
 
+test("preserves reviewed project keyword casing and removes redundant UM subjects", () => {
+  for (const slug of ["ds-bangsawan", "ds-bangsawan-yc-atd"]) {
+    assert.ok(record(slug).keywords?.includes("project:Jawi"), slug);
+    assert.equal(record(slug).keywords?.includes("project:jawi"), false, slug);
+  }
+  const hirwan = record("ds-layout-um-v2-hirwan-atd");
+  assert.equal(hirwan.keywords?.includes("UM"), false);
+});
+
 test("retains supplied counts and existing public bucket resources without inventing totals", () => {
   const input = record("ds-articlereconstruction").resources?.find(
     (resource) => resource.name === "input",

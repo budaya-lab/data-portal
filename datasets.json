@@ -92,7 +92,6 @@
     ],
     "description": "152 images from Utusan Melayu between 1962 and 1969, used for layout classification. Annotated by Hirwan.",
     "keywords": [
-      "UM",
       "task:layout",
       "project:Jawi",
       "stage:annotated"
@@ -195,7 +194,7 @@
     "description": "A selection of articles with the term \"Bangsawan\".",
     "keywords": [
       "task:classification",
-      "project:jawi",
+      "project:Jawi",
       "stage:curated"
     ],
     "created": "2026-11-20T00:00:00Z",
@@ -470,7 +469,7 @@
     "version": "2.0.0",
     "keywords": [
       "task:classification",
-      "project:jawi",
+      "project:Jawi",
       "stage:annotated"
     ],
     "sources": [
