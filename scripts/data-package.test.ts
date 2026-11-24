@@ -86,6 +86,16 @@ test("accepts directory resources with trailing-slash paths", () => {
     JSON.stringify({ ...descriptor, resources: [directory] }),
   );
   assert.deepEqual(metadata.resources, [directory]);
+
+  const directoryWithoutFormat = {
+    name: "xml",
+    title: "XML files",
+    path: "xml/",
+  };
+  const currentMetadata = parseDataPackage(
+    JSON.stringify({ ...descriptor, resources: [directoryWithoutFormat] }),
+  );
+  assert.deepEqual(currentMetadata.resources, [directoryWithoutFormat]);
 });
 
 test("accepts ground-truth packages and preserves subject keywords and resources", () => {

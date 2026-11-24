@@ -105,9 +105,9 @@ export function parseDataPackage(text: string | undefined): ExtractedMetadata {
     const paths = Array.isArray(resource.path)
       ? resource.path
       : [resource.path];
-    if (
-      paths.some((path) => !isPublicationPath(path, resource.format === "dir"))
-    )
+    const isDirectory =
+      resource.format === undefined || resource.format === "dir";
+    if (paths.some((path) => !isPublicationPath(path, isDirectory)))
       throw new RepositoryValidationError(
         "Invalid datapackage.json resource path.",
       );
