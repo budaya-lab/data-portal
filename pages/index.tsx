@@ -72,23 +72,24 @@ export default function Home({ keywords }: { keywords: KeywordCount[] }) {
         </p>
 
         {/* Search is the primary call to action — submitting navigates to /search. */}
-        <form
-          role="search"
-          onSubmit={(e) => {
-            e.preventDefault();
-            search(query);
-          }}
-          className="mb-12"
-        >
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search datasets…"
-            aria-label="Search datasets"
-            className="w-full border-0 border-b border-ink/30 bg-transparent pb-3.5 font-serif text-lg italic text-ink placeholder:text-ink/40 focus:border-accent focus:outline-none"
-          />
-        </form>
+        <search>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              search(query);
+            }}
+            className="mb-12"
+          >
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search datasets…"
+              aria-label="Search datasets"
+              className="w-full border-0 border-b border-ink/30 bg-transparent pb-3.5 font-serif text-lg italic text-ink placeholder:text-ink/40 focus:border-accent focus:outline-none"
+            />
+          </form>
+        </search>
 
         {keywords.length > 0 && (
           <section aria-labelledby="keywords-heading" className="mb-12">
