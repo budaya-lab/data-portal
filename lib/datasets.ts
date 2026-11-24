@@ -61,26 +61,41 @@ export function isDraft(d: Dataset): boolean {
 export type DatasetStage = keyof typeof stageLabels;
 
 const configuredStages = Object.entries(stageLabels);
-if (configuredStages.length === 0 || configuredStages.some(([name, label]) =>
-  !/^[a-z][a-z0-9-]*$/.test(name) || typeof label !== "string" || !label.trim()
-)) {
-  throw new Error("Invalid stage.config.json: expected nonempty stage names and labels");
+if (
+  configuredStages.length === 0 ||
+  configuredStages.some(
+    ([name, label]) =>
+      !/^[a-z][a-z0-9-]*$/.test(name) ||
+      typeof label !== "string" ||
+      !label.trim(),
+  )
+) {
+  throw new Error(
+    "Invalid stage.config.json: expected nonempty stage names and labels",
+  );
 }
 
 export function getDatasetStage(d: Dataset): DatasetStage | undefined {
   if (d.keywords === undefined) return undefined;
-  if (!Array.isArray(d.keywords) || d.keywords.some((keyword) => typeof keyword !== "string")) {
+  if (
+    !Array.isArray(d.keywords) ||
+    d.keywords.some((keyword) => typeof keyword !== "string")
+  ) {
     throw new Error(`Invalid keywords for dataset ${d.namespace}/${d.slug}`);
   }
   const stages = d.keywords.filter((keyword) => keyword.startsWith("stage:"));
   if (stages.length > 1) {
-    throw new Error(`Invalid stage keywords for dataset ${d.namespace}/${d.slug}`);
+    throw new Error(
+      `Invalid stage keywords for dataset ${d.namespace}/${d.slug}`,
+    );
   }
   const keyword = stages[0];
   if (keyword === undefined) return undefined;
   const stage = keyword.slice("stage:".length);
   if (!Object.hasOwn(stageLabels, stage)) {
-    throw new Error(`Invalid stage keyword for dataset ${d.namespace}/${d.slug}`);
+    throw new Error(
+      `Invalid stage keyword for dataset ${d.namespace}/${d.slug}`,
+    );
   }
   return stage as DatasetStage;
 }
@@ -117,20 +132,44 @@ export function isRestricted(d: Dataset): boolean {
 }
 
 function validateRestrictedResource(resource: Resource): void {
-  const allowedKeys = new Set(["name", "title", "description", "path", "format", "count", "access"]);
+  const allowedKeys = new Set([
+    "name",
+    "title",
+    "description",
+    "path",
+    "format",
+    "count",
+    "access",
+  ]);
   const path = resource.path;
   if (
     resource.name === "buckets" ||
-    typeof resource.name !== "string" || !resource.name.trim() ||
-    typeof resource.title !== "string" || !resource.title.trim() ||
-    (resource.description !== undefined && (typeof resource.description !== "string" || !resource.description.trim())) ||
-    typeof resource.format !== "string" || !/^[a-z][a-z0-9-]*$/.test(resource.format) ||
-    typeof path !== "string" || /[\\:?#%]/.test(path) || path.startsWith("~") ||
-    Array.from(path).some((character) => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127) ||
-    path.replace(/\/$/, "").split("/").some((part) => !part || part.startsWith(".")) ||
+    typeof resource.name !== "string" ||
+    !resource.name.trim() ||
+    typeof resource.title !== "string" ||
+    !resource.title.trim() ||
+    (resource.description !== undefined &&
+      (typeof resource.description !== "string" ||
+        !resource.description.trim())) ||
+    typeof resource.format !== "string" ||
+    !/^[a-z][a-z0-9-]*$/.test(resource.format) ||
+    typeof path !== "string" ||
+    /[\\:?#%]/.test(path) ||
+    path.startsWith("~") ||
+    Array.from(path).some(
+      (character) =>
+        character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127,
+    ) ||
+    path
+      .replace(/\/$/, "")
+      .split("/")
+      .some((part) => !part || part.startsWith(".")) ||
     (resource.format === "directory") !== path.endsWith("/") ||
     Object.keys(resource).some((key) => !allowedKeys.has(key))
-  ) throw new Error("Restricted resource listings need reviewed relative metadata paths, titles and formats, without download or preview fields");
+  )
+    throw new Error(
+      "Restricted resource listings need reviewed relative metadata paths, titles and formats, without download or preview fields",
+    );
 }
 
 // A public static export cannot enforce source access. Explicit restricted
@@ -152,7 +191,9 @@ export function validateCatalogAccess(datasets: Dataset[]): void {
     }
     getDatasetStage(d);
     if (Object.hasOwn(d, "role")) {
-      throw new Error(`Catalogue role is unsupported for dataset ${d.namespace}/${d.slug}; use a stage: keyword`);
+      throw new Error(
+        `Catalogue role is unsupported for dataset ${d.namespace}/${d.slug}; use a stage: keyword`,
+      );
     }
     const id = JSON.stringify([d.namespace, d.slug]);
     if (d.derivedFrom !== undefined && !Array.isArray(d.derivedFrom)) {
@@ -215,20 +256,39 @@ export function validateCatalogAccess(datasets: Dataset[]): void {
       throw new Error(`Invalid resources for dataset ${d.namespace}/${d.slug}`);
     }
     for (const resource of d.resources ?? []) {
-      if (!resource || typeof resource !== "object") throw new Error("Invalid resource metadata");
-      if (resource.access !== undefined && resource.access !== "public" && resource.access !== "restricted") {
+      if (!resource || typeof resource !== "object")
+        throw new Error("Invalid resource metadata");
+      if (
+        resource.access !== undefined &&
+        resource.access !== "public" &&
+        resource.access !== "restricted"
+      ) {
         throw new Error("Invalid resource access");
       }
-      if (resource.count !== undefined && (!Number.isSafeInteger(resource.count) || resource.count < 0)) {
+      if (
+        resource.count !== undefined &&
+        (!Number.isSafeInteger(resource.count) || resource.count < 0)
+      ) {
         throw new Error("Invalid resource count");
       }
-      if (resource.access === "restricted") validateRestrictedResource(resource);
+      if (resource.access === "restricted")
+        validateRestrictedResource(resource);
     }
-    const buckets = (d.resources ?? []).filter((resource) => resource?.name === "buckets");
-    if (buckets.length > 1) throw new Error("Only one bucket resource is allowed per dataset");
+    const buckets = (d.resources ?? []).filter(
+      (resource) => resource?.name === "buckets",
+    );
+    if (buckets.length > 1)
+      throw new Error("Only one bucket resource is allowed per dataset");
     for (const resource of buckets) validateBucketResource(resource);
     const restricted = isRestricted(d);
-    if (restricted && (d.file || d.resources?.some((resource) => resource?.name !== "buckets" && resource.access !== "restricted"))) {
+    if (
+      restricted &&
+      (d.file ||
+        d.resources?.some(
+          (resource) =>
+            resource?.name !== "buckets" && resource.access !== "restricted",
+        ))
+    ) {
       throw new Error(
         `Restricted dataset ${d.namespace}/${d.slug} cannot have resources in a public catalog`,
       );
@@ -304,8 +364,10 @@ export function getResources(d: Dataset): Resource[] {
 }
 
 export function getDownloadableResources(d: Dataset): Resource[] {
-  return getResources(d).filter((resource) =>
-    resource.access !== "restricted" && (!isRestricted(d) || resource.name === "buckets"),
+  return getResources(d).filter(
+    (resource) =>
+      resource.access !== "restricted" &&
+      (!isRestricted(d) || resource.name === "buckets"),
   );
 }
 
@@ -314,7 +376,8 @@ export function getDownloadableResources(d: Dataset): Resource[] {
 // file (e.g. a CKAN/DCAT download URL harvested by /portaljs-migrate) or a site-root path without
 // copying bytes into the repo.
 export function resourceUrl(r: Resource): string {
-  if (r.access === "restricted") throw new Error("Restricted resources have no download URL");
+  if (r.access === "restricted")
+    throw new Error("Restricted resources have no download URL");
   if (/^(https?:)?\/\//.test(r.path) || r.path.startsWith("/")) return r.path;
   return `/data/${r.path}`;
 }
@@ -355,6 +418,12 @@ export type KeywordCount = {
   kind?: StructuredKeywordKind;
 };
 
+const keywordKindOrder: Record<StructuredKeywordKind, number> = {
+  project: 0,
+  task: 1,
+  stage: 2,
+};
+
 export function keywordCounts(datasets: Dataset[]): KeywordCount[] {
   const counts = new Map<string, KeywordCount>();
   for (const dataset of datasets) {
@@ -373,6 +442,10 @@ export function keywordCounts(datasets: Dataset[]): KeywordCount[] {
     }
   }
   return Array.from(counts.values()).sort(
-    (a, b) => b.count - a.count || a.keyword.localeCompare(b.keyword),
+    (a, b) =>
+      (a.kind ? keywordKindOrder[a.kind] : 3) -
+        (b.kind ? keywordKindOrder[b.kind] : 3) ||
+      a.keyword.localeCompare(b.keyword) ||
+      b.count - a.count,
   );
 }

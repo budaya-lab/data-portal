@@ -86,11 +86,11 @@ test("keyword counts include each dataset once and retain structured keyword kin
       },
     ]),
     [
-      { keyword: "History", count: 2 },
-      { keyword: "task:layout", count: 2, kind: "task" },
-      { keyword: "fieldwork", count: 1 },
       { keyword: "project:Jawi", count: 1, kind: "project" },
+      { keyword: "task:layout", count: 2, kind: "task" },
       { keyword: "stage:curated", count: 1, kind: "stage" },
+      { keyword: "fieldwork", count: 1 },
+      { keyword: "History", count: 2 },
     ],
   );
 });

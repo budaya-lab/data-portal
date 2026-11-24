@@ -38,7 +38,7 @@ function truncate(s: string, max = 150): string {
   if (s.length <= max) return s;
   const cut = s.slice(0, max);
   const space = cut.lastIndexOf(" ");
-  return cut.slice(0, space > 100 ? space : max).replace(/[,;:.]$/, "") + "…";
+  return `${cut.slice(0, space > 100 ? space : max).replace(/[,;:.]$/, "")}…`;
 }
 
 // Compact record count for the data-shape tile (3149 → "3.1k").
@@ -218,6 +218,13 @@ export default function Search({ datasets }: { datasets: Dataset[] }) {
                   />
                 )}
                 <FacetGroup
+                  title="Project"
+                  options={projectFacets}
+                  active={activeProjects}
+                  onToggle={(v) => toggle(activeProjects, v, setActiveProjects)}
+                  onClear={() => setActiveProjects(new Set())}
+                />
+                <FacetGroup
                   title="Task"
                   options={taskFacets}
                   active={activeTasks}
@@ -230,13 +237,6 @@ export default function Search({ datasets }: { datasets: Dataset[] }) {
                   active={activeStages}
                   onToggle={(v) => toggle(activeStages, v, setActiveStages)}
                   onClear={() => setActiveStages(new Set())}
-                />
-                <FacetGroup
-                  title="Project"
-                  options={projectFacets}
-                  active={activeProjects}
-                  onToggle={(v) => toggle(activeProjects, v, setActiveProjects)}
-                  onClear={() => setActiveProjects(new Set())}
                 />
                 <FacetGroup
                   title="Other keywords"
