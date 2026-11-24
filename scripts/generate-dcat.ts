@@ -28,13 +28,12 @@ import manifest from '../datasets.json'
 import { provider } from '../lib/providers'
 import type { Dataset } from '../lib/providers'
 import { validateBucketFiles } from '../lib/bucket-files'
-import { publishedDatasets } from '../lib/datasets'
+import { getDownloadableResources, publishedDatasets } from '../lib/datasets'
 import {
   toDCATCatalog,
   getDcatProfile,
   serialize,
   validateDcat,
-  type CatalogEntry,
   type DcatConfig,
   type RdfFormat,
   type JsonLdNode,
@@ -73,7 +72,7 @@ async function main() {
   // Draft CSVs also ship as public assets, even though their pages/feeds do not.
   validateBucketFiles(manifest as Dataset[])
   const visibleDatasets = await provider.listDatasets()
-  const datasets = publishedDatasets(visibleDatasets as CatalogEntry[])
+  const datasets = publishedDatasets(visibleDatasets)
 
   // Base DCAT-3 catalog (profile-agnostic). Profiles augment this.
   const base = toDCATCatalog(datasets, {
@@ -102,12 +101,7 @@ async function main() {
   // the resource path exactly as it appears in the manifest.
   await Promise.all(
     datasets.map(async (d) => {
-      const paths = [
-        ...(d.file ? [d.file] : []),
-        ...(((d as { resources?: { path?: string }[] }).resources ?? [])
-          .map((r) => r.path)
-          .filter((p): p is string => Boolean(p))),
-      ]
+      const paths = getDownloadableResources(d).map((resource) => resource.path)
       const hashes: Record<string, string> = {}
       for (const p of paths) {
         try {

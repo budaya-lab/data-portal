@@ -20,7 +20,7 @@ Open <http://localhost:3000/>. Draft records are visible locally but excluded fr
 ### From a GitHub repository
 
 1. Create the dataset repository from [`tpl-dataset`](https://github.com/nus-dh/tpl-dataset#readme). Follow its instructions to replace the example metadata and data, fill in `datapackage.json`, and validate it. The template requires one primary-stage keyword: `stage:master`, `stage:curated`, `stage:annotated`, or `stage:ground-truth`.
-2. For public datasets, create a reviewed GitHub Release using the template's release workflow. The portal links verified ordinary resources from the highest non-prerelease SemVer release reachable from `main`; it does not copy those files. The exception is optional public `buckets.csv` summaries, which are copied on confirmed apply for public and restricted repositories alike. Without a suitable release, no summary is imported. Private repositories otherwise contribute safe metadata and a landing-page link only.
+2. For public datasets, create a reviewed GitHub Release using the template's release workflow. The portal links verified ordinary resources from the highest non-prerelease SemVer release reachable from `main`; it does not copy those files. The exception is optional public `buckets.csv` summaries, which are copied on confirmed apply for public and restricted repositories alike. Without a suitable release, no summary is imported. Automated imports from private repositories otherwise contribute safe metadata and a landing-page link; reviewed resource listings can be added manually as described below.
 3. From this directory, discover candidates and review the report:
 
    ```bash
@@ -40,9 +40,9 @@ Open <http://localhost:3000/>. Draft records are visible locally but excluded fr
 
 Edit `datasets.json`; no new page file is needed. Use a unique `(namespace, slug)`, where `namespace` identifies the publisher. Add a title (`name`), description, subject keywords, and source landing-page link. Pages appear at `/@<namespace>/<slug>/`.
 
-- For restricted sources, set `access: "restricted"`, use a credential-free HTTPS landing URL without a query or fragment, and omit `file` and all ordinary resources. The only resource exception is a validated public bucket summary, described below. Never add private paths, credentials, or restricted data to the portal. Drafts are not a confidentiality boundary: their metadata and copied public summaries remain in Git.
+- For restricted sources, set `access: "restricted"`, use a credential-free HTTPS landing URL without a query or fragment, and omit `file`. Reviewed ordinary resources may be listed with their own `access: "restricted"`, repository-relative `path`, title, format and optional supplied `count`. These are metadata only: no previews, downloads, content/history reads or downloadable feed distributions. Use catalogue format `directory` for directory listings. Only validated public bucket summaries may expose bytes. Never add host/filesystem paths, private URLs, credentials or restricted data. Draft metadata remains public in Git.
 - Set a stage only when known, using one keyword from [`stage.config.json`](stage.config.json). Keep its values aligned with the dataset template.
-- Use `derivedFrom` only for confirmed catalogue parents. It is separate from Data Package `sources[]`; onboarding does not infer lineage.
+- Use `derivedFrom` only for confirmed catalogue parents. When manually adding these datasets, an explicit package source that matches another catalogue repository establishes that parent; preserve existing confirmed links. Do not infer lineage from similar names or stages. Automated GitHub onboarding does not add these links.
 
 ### Public bucket summaries
 

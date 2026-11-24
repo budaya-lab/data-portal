@@ -52,15 +52,19 @@ export type ActivityEntry = {
   sha: string
 }
 
-// A single file within a dataset (a Frictionless "resource"). A dataset can hold
-// several — data + a data dictionary + methodology, or quarterly files, etc.
+// A public file or an explicitly restricted, metadata-only source resource.
+// A dataset may list files and directories without exposing their contents.
 export type Resource = {
   // Stable id within the dataset (e.g. "data", "dictionary"). Used in anchors.
   // The local name "buckets" identifies an explicitly public summary CSV.
   name: string
-  // Bare filename served from /public/data (e.g. "orders-2024.csv").
+  // Public resources use download paths/URLs. With access: restricted, this is
+  // a reviewed repository-relative metadata reference, never a portal URL.
   path: string
-  format: DataFormat
+  format: DataFormat | 'xml' | 'yaml' | 'ipynb' | 'directory'
+  access?: 'public' | 'restricted'
+  // Supplied item total, not bytes; never computed by the portal.
+  count?: number
   title?: string
   description?: string
   // Per-resource Frictionless Table Schema.
@@ -113,8 +117,9 @@ export type Dataset = {
   // Dataset stage is the controlled stage: keyword, not a separate field.
   derivedFrom?: { namespace: string; slug: string }[]
   // Catalog access label for the underlying data, which stays at its source.
-  // Restricted records may include only metadata, a safe landing page, and
-  // the explicitly public buckets summary resource; never other restricted files.
+  // Restricted records may list reviewed resource metadata with explicit
+  // access: restricted, plus a safe landing page and public bucket summaries.
+  // Metadata-only resources never become previews or downloads.
   // A restricted `sources[]` entry also makes the dataset restricted.
   access?: 'public' | 'restricted'
   // Catalog grouping label (e.g. "Boundaries", "Environment"). Sourced from the

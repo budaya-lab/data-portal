@@ -437,11 +437,12 @@ const CROISSANT_DATATYPE: Record<string, string> = {
 }
 
 // A dataset's resource, uniformly whether it's a single-file dataset or a bundle.
-type CroissantResource = { path: string; format?: string; title?: string; description?: string; schema?: { fields?: Field[] } }
+type CroissantResource = { name?: string; path: string; format?: string; title?: string; description?: string; access?: 'public' | 'restricted'; schema?: { fields?: Field[] } }
 
 function resourcesOf(entry: CroissantEntry): CroissantResource[] {
-  if (Array.isArray(entry.resources)) return entry.resources as CroissantResource[]
-  if (entry.file) return [{ path: entry.file, format: entry.format, title: entry.title, schema: entry.schema }]
+  const restricted = entry.access === 'restricted' || entry.sources?.some((source) => source.access === 'restricted')
+  if (Array.isArray(entry.resources)) return entry.resources.filter((resource) => resource.access !== 'restricted' && (!restricted || resource.name === 'buckets'))
+  if (!restricted && entry.file) return [{ path: entry.file, format: entry.format, title: entry.title, schema: entry.schema }]
   return []
 }
 
