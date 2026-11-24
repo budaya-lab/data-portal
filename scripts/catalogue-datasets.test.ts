@@ -66,15 +66,9 @@ test("catalogues all ten reviewed datasets with every declared private resource 
   }
 });
 
-test("keeps new entries as drafts and preserves only explicit or previously confirmed parents", () => {
-  for (const slug of [
-    "ds-articlereconstruction-atd",
-    "ds-articlereconstruction-frial-atd",
-    "ds-articlereconstruction-syafiq-atd",
-    "ds-bangsawan-yc-atd",
-    "ds-layout-um-gt",
-  ]) {
-    assert.equal(record(slug).draft, true, slug);
+test("publishes reviewed entries and preserves only explicit or previously confirmed parents", () => {
+  for (const slug of Object.keys(expected)) {
+    assert.equal(record(slug).draft, undefined, slug);
   }
   const parents: Record<string, string> = {
     "ds-articlereconstruction-atd": "ds-articlereconstruction",

@@ -186,7 +186,6 @@
     "namespace": "budaya-lab",
     "name": "Bangsawan",
     "version": "2.0.0",
-    "draft": true,
     "access": "restricted",
     "sources": [
       {
@@ -240,7 +239,6 @@
   {
     "slug": "ds-articlereconstruction-atd",
     "namespace": "budaya-lab",
-    "draft": true,
     "name": "Article reconstruction (Annotated)",
     "description": "Derived from annotations amde on the ds-articlereconstruction dataset. Aggregation was done by the assemble_annotations notebook. (1) Three pages were dropped: UM-1956-06-12-3, UM-1962-04-13-8 and UM-1967-02-19-7. (2) ALTO is the reference for region IDs and geometry, so the PAGE XML layouts in xml/ were rebuilt to match it: regions missing from ALTO were removed, regions only in ALTO were added, and regions whose box overlap with ALTO was below 0.9 IoU were redrawn to ALTO's geometry. (3) For the second batch, article_xml/ merges the two annotators: each of syafiq's articles was paired with frial's best-overlapping article, and only the regions both put in that article were kept. Regions that either annotator put in two articles, or that have no ALTO block, were removed. Article metadata comes from syafiq. (4) Pages were flagged in input.csv, with details in flag_comment, for OCR problems, segment IDs missing from ALTO, and disagreements between the annotators. OCR problems are text or text-image segments in an article with no OCR text, and text segments with fewer than 5 characters.",
     "access": "restricted",
@@ -337,7 +335,6 @@
   {
     "slug": "ds-articlereconstruction-frial-atd",
     "namespace": "budaya-lab",
-    "draft": true,
     "name": "Article reconstruction (Re-Annotated by Frial)",
     "description": "After the first pass at annotation, this dataset is used for adjudication.",
     "access": "restricted",
@@ -403,7 +400,6 @@
   {
     "slug": "ds-articlereconstruction-syafiq-atd",
     "namespace": "budaya-lab",
-    "draft": true,
     "name": "Article reconstruction (Re-Annotated by Syafiq)",
     "description": "After the first pass at annotation, this dataset is used for adjudication.",
     "access": "restricted",
@@ -469,7 +465,6 @@
   {
     "slug": "ds-bangsawan-yc-atd",
     "namespace": "budaya-lab",
-    "draft": true,
     "name": "Bangsawan",
     "description": "A selection of articles with the term \"Bangsawan\" manually annotated.",
     "access": "restricted",
@@ -525,7 +520,6 @@
   {
     "slug": "ds-layout-um-gt",
     "namespace": "budaya-lab",
-    "draft": true,
     "name": "Layout UM annotated Groundtruth",
     "description": " Layout annotations for Utusan Melayu page scans from 1956 to 1961. Annotated by Jakkarin and verified by Tarin.",
     "access": "restricted",
