@@ -14,6 +14,7 @@ import {
   isRestricted,
   keywordCounts,
   keywordFacetValues,
+  keywordPresentation,
   matchesCatalogQuery,
   publishedDatasets,
   stageLabel,
@@ -65,17 +66,51 @@ test("keyword facet values separate task, stage, project, and subject keywords",
   assert.deepEqual(keywordFacetValues(dataset, "keywords"), ["layout"]);
 });
 
-test("keyword counts include each dataset once and exclude stage keywords", () => {
+test("keyword counts include each dataset once and retain structured keyword kinds", () => {
   assert.deepEqual(
     keywordCounts([
-      { ...tagged, keywords: ["History", "history", "stage:curated"] },
-      { ...tagged, slug: "another", keywords: ["history", "fieldwork"] },
+      {
+        ...tagged,
+        keywords: [
+          "History",
+          "history",
+          "task:layout",
+          "stage:curated",
+          "project:Jawi",
+        ],
+      },
+      {
+        ...tagged,
+        slug: "another",
+        keywords: ["history", "fieldwork", "task:layout"],
+      },
     ]),
     [
       { keyword: "History", count: 2 },
+      { keyword: "task:layout", count: 2, kind: "task" },
       { keyword: "fieldwork", count: 1 },
+      { keyword: "project:Jawi", count: 1, kind: "project" },
+      { keyword: "stage:curated", count: 1, kind: "stage" },
     ],
   );
+});
+
+test("structured keyword presentation hides the stored namespace prefix", () => {
+  assert.deepEqual(keywordPresentation("task:layout"), {
+    label: "layout",
+    kind: "task",
+  });
+  assert.deepEqual(keywordPresentation("stage:ground-truth"), {
+    label: "ground-truth",
+    kind: "stage",
+  });
+  assert.deepEqual(keywordPresentation("project:Jawi"), {
+    label: "Jawi",
+    kind: "project",
+  });
+  assert.deepEqual(keywordPresentation("Utusan Melayu"), {
+    label: "Utusan Melayu",
+  });
 });
 
 test("controlled stage keywords describe data without inventing parentage", () => {

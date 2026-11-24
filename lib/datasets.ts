@@ -298,20 +298,44 @@ export function resourceLabel(r: Resource): string {
   return r.name || `Download ${r.format}`;
 }
 
-// Derive keyword cards and record counts from subject keywords, excluding stages.
-export type KeywordCount = { keyword: string; count: number };
+export type StructuredKeywordKind = "task" | "stage" | "project";
+export type KeywordPresentation = {
+  label: string;
+  kind?: StructuredKeywordKind;
+};
+
+export function keywordPresentation(keyword: string): KeywordPresentation {
+  for (const kind of ["task", "stage", "project"] as const) {
+    const prefix = `${kind}:`;
+    if (keyword.startsWith(prefix)) {
+      return { label: keyword.slice(prefix.length), kind };
+    }
+  }
+  return { label: keyword };
+}
+
+// Derive keyword cards and record counts from all catalogue keywords.
+export type KeywordCount = {
+  keyword: string;
+  count: number;
+  kind?: StructuredKeywordKind;
+};
 
 export function keywordCounts(datasets: Dataset[]): KeywordCount[] {
   const counts = new Map<string, KeywordCount>();
   for (const dataset of datasets) {
     const seen = new Set<string>();
-    for (const keyword of subjectKeywords(dataset)) {
+    for (const keyword of dataset.keywords ?? []) {
       const key = keyword.toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);
       const existing = counts.get(key);
-      if (existing) existing.count += 1;
-      else counts.set(key, { keyword, count: 1 });
+      if (existing) {
+        existing.count += 1;
+      } else {
+        const { kind } = keywordPresentation(keyword);
+        counts.set(key, { keyword, count: 1, ...(kind && { kind }) });
+      }
     }
   }
   return Array.from(counts.values()).sort(

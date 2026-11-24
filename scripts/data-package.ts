@@ -52,11 +52,16 @@ type ValidatedPackage = {
   licenses?: License[];
 };
 
-function isPublicationPath(path: string): boolean {
+function isPublicationPath(path: string, isDirectory: boolean): boolean {
+  const validDirectoryPath =
+    isDirectory &&
+    path.length > 1 &&
+    path.endsWith("/") &&
+    !path.endsWith("//");
   return (
     !/[?#%]/.test(path) &&
     !Array.from(path).some((character) => character.charCodeAt(0) < 32) &&
-    !path.endsWith("/")
+    (!path.endsWith("/") || validDirectoryPath)
   );
 }
 
@@ -100,7 +105,9 @@ export function parseDataPackage(text: string | undefined): ExtractedMetadata {
     const paths = Array.isArray(resource.path)
       ? resource.path
       : [resource.path];
-    if (paths.some((path) => !isPublicationPath(path)))
+    const isDirectory =
+      resource.format === undefined || resource.format === "dir";
+    if (paths.some((path) => !isPublicationPath(path, isDirectory)))
       throw new RepositoryValidationError(
         "Invalid datapackage.json resource path.",
       );

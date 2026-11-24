@@ -13,7 +13,6 @@
     ],
     "description": "557 images from 1956 to 1961, used for layout classification.",
     "keywords": [
-      "layout",
       "UM",
       "stage:curated"
     ],
@@ -30,7 +29,8 @@
     "slug": "ds-layout-um-v2",
     "namespace": "budaya-lab",
     "name": "Layout UM v2",
-    "description": "152 images from the 60s, used for layout classification.",
+    "description": "Images from Utusan Melayu between 1962 and 1969, used for layout classification.",
+    "created": "2026-10-26T00:00:00Z",
     "resources": [
       {
         "name": "buckets",
@@ -40,8 +40,9 @@
       }
     ],
     "keywords": [
-      "layout",
       "UM",
+      "task:layout",
+      "project:Jawi",
       "stage:curated"
     ],
     "access": "restricted",
@@ -56,7 +57,7 @@
   {
     "slug": "ds-layout-um-v2-hirwan-atd",
     "namespace": "budaya-lab",
-    "name": "Layout UM v2 - Annotated",
+    "name": "Layout UM v2 Annotated by Hirwan",
     "access": "restricted",
     "sources": [
       {
@@ -65,10 +66,11 @@
         "access": "restricted"
       }
     ],
-    "description": "152 images from the 60s, used for layout classification. Annotated copy, of ds-layout-um-v2, by Hirwan.",
+    "description": "152 images from Utusan Melayu between 1962 and 1969, used for layout classification. Annotated by Hirwan.",
     "keywords": [
-      "layout",
       "UM",
+      "task:layout",
+      "project:Jawi",
       "stage:annotated"
     ],
     "created": "2026-10-26T00:00:00Z",
@@ -108,5 +110,27 @@
         "title": "Public bucket summary"
       }
     ]
+  },
+  {
+    "slug": "ds-bangsawan",
+    "namespace": "budaya-lab",
+    "name": "Bangsawan",
+    "version": "2.0.0",
+    "draft": true,
+    "access": "restricted",
+    "sources": [
+      {
+        "title": "GitHub repository (sign in for access)",
+        "path": "https://github.com/budaya-lab/ds-bangsawan",
+        "access": "restricted"
+      }
+    ],
+    "description": "A selection of articles with the term \"Bangsawan\".",
+    "keywords": [
+      "task:classification",
+      "project:jawi",
+      "stage:curated"
+    ],
+    "created": "2026-11-20T00:00:00Z"
   }
 ]

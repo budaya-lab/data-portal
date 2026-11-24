@@ -55,6 +55,7 @@ test("holds all public resources as metadata-only on unsupported format, path ar
   const tree = [{ path: "tables/data.csv", type: "blob", mode: "100644" }];
   for (const resources of [
     [{ name: "pdf", path: "tables/data.pdf", format: "pdf" }],
+    [{ name: "directory", path: "xml/", format: "dir" }],
     [{ name: "parts", path: ["tables/data.csv"], format: "csv" }],
     [{ name: "missing", path: "missing.csv", format: "csv" }],
     [{ name: "link", path: "link.csv", format: "csv" }],

@@ -29,6 +29,12 @@ test("rejects unsafe and malformed Data Packages without exposing private resour
         { ...descriptor.resources[0], path: "internal/%2e%2e/secret.csv" },
       ],
     },
+    {
+      resources: [{ ...descriptor.resources[0], path: "xml/", format: "csv" }],
+    },
+    {
+      resources: [{ ...descriptor.resources[0], path: "xml//", format: "dir" }],
+    },
     { resources: [{ ...descriptor.resources[0], format: "CSV" }] },
     { keywords: [...descriptor.keywords, ...Array(20).fill("subject")] },
     { title: "github.com/budaya-lab/ds-example/blob/main/private.csv" },
@@ -67,6 +73,29 @@ test("rejects unsafe and malformed Data Packages without exposing private resour
       /internal\/secret|secret\.csv|private\.example/,
     );
   }
+});
+
+test("accepts directory resources with trailing-slash paths", () => {
+  const directory = {
+    name: "xml",
+    title: "XML files",
+    path: "xml/",
+    format: "dir",
+  };
+  const metadata = parseDataPackage(
+    JSON.stringify({ ...descriptor, resources: [directory] }),
+  );
+  assert.deepEqual(metadata.resources, [directory]);
+
+  const directoryWithoutFormat = {
+    name: "xml",
+    title: "XML files",
+    path: "xml/",
+  };
+  const currentMetadata = parseDataPackage(
+    JSON.stringify({ ...descriptor, resources: [directoryWithoutFormat] }),
+  );
+  assert.deepEqual(currentMetadata.resources, [directoryWithoutFormat]);
 });
 
 test("accepts ground-truth packages and preserves subject keywords and resources", () => {
