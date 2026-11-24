@@ -139,7 +139,6 @@
     ],
     "description": "Labelling articles from Utusan Melayu for article reconstruction. It includes 160 pages (80 before 1959 and 80 after 1959).",
     "keywords": [
-      "Utusan Melayu",
       "task:article",
       "project:Jawi",
       "stage:curated"
