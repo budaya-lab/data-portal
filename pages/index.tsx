@@ -2,8 +2,31 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import { type KeywordCount, keywordCounts } from "../lib/datasets";
+import {
+  type KeywordCount,
+  keywordCounts,
+  keywordPresentation,
+  type StructuredKeywordKind,
+} from "../lib/datasets";
 import { provider } from "../lib/providers";
+
+const keywordCardStyles: Record<StructuredKeywordKind, string> = {
+  task: "border-accent/25 bg-accent-soft/60 hover:border-accent/50",
+  stage: "border-indigo/25 bg-indigo-soft/70 hover:border-indigo/50",
+  project: "border-teal-700/20 bg-teal-50 hover:border-teal-700/50",
+};
+
+const keywordKindStyles: Record<StructuredKeywordKind, string> = {
+  task: "text-accent",
+  stage: "text-indigo",
+  project: "text-teal-800",
+};
+
+const keywordKindLabels: Record<StructuredKeywordKind, string> = {
+  task: "Task",
+  stage: "Stage",
+  project: "Project",
+};
 
 // Keyword cards are derived from the portal's dataset metadata at build time.
 export async function getStaticProps() {
@@ -76,20 +99,36 @@ export default function Home({ keywords }: { keywords: KeywordCount[] }) {
               Explore by keyword
             </h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {keywords.map(({ keyword, count }) => (
-                <Link
-                  key={keyword}
-                  href={`/search?q=${encodeURIComponent(keyword)}`}
-                  className="flex min-h-20 items-center justify-between gap-4 border border-ink/15 px-4 py-3 text-ink no-underline transition-colors hover:border-accent hover:bg-cream-panel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                >
-                  <span className="font-serif text-base font-medium">
-                    {keyword}
-                  </span>
-                  <span className="shrink-0 font-sans text-xs text-ink/55">
-                    {count} {count === 1 ? "record" : "records"}
-                  </span>
-                </Link>
-              ))}
+              {keywords.map(({ keyword, count, kind }) => {
+                const { label } = keywordPresentation(keyword);
+                return (
+                  <Link
+                    key={keyword}
+                    href={`/search?q=${encodeURIComponent(keyword)}`}
+                    className={`flex min-h-20 items-center justify-between gap-4 border px-4 py-3 text-ink no-underline transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+                      kind
+                        ? keywordCardStyles[kind]
+                        : "border-ink/15 hover:border-accent hover:bg-cream-panel"
+                    }`}
+                  >
+                    <span className="min-w-0">
+                      {kind && (
+                        <span
+                          className={`mb-1 block font-sans text-[10px] font-semibold uppercase tracking-[0.08em] ${keywordKindStyles[kind]}`}
+                        >
+                          {keywordKindLabels[kind]}
+                        </span>
+                      )}
+                      <span className="font-serif text-base font-medium">
+                        {label}
+                      </span>
+                    </span>
+                    <span className="shrink-0 font-sans text-xs text-ink/55">
+                      {count} {count === 1 ? "record" : "records"}
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         )}
