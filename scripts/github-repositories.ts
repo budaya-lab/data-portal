@@ -614,9 +614,10 @@ async function readReleaseTree(
   repo: Repository,
   token: string,
   tag: string,
+  recursive = true,
 ): Promise<TreeEntry[] | undefined> {
   const url = new URL(
-    `${repositoryApiPath(account, repo)}/git/trees/${encodeURIComponent(tag)}?recursive=1`,
+    `${repositoryApiPath(account, repo)}/git/trees/${encodeURIComponent(tag)}${recursive ? "?recursive=1" : ""}`,
     API,
   );
   const { response, text } = await githubGet(url, token);
@@ -713,11 +714,24 @@ export async function readRepositoryMetadata(
     };
   }
   const metadata = current ?? parseDataPackage(descriptor);
+  return metadataAtRelease(account, repo, token, metadata, tag, commit);
+}
+
+async function metadataAtRelease(
+  account: string,
+  repo: Repository,
+  token: string,
+  metadata: ExtractedMetadata,
+  tag: string | undefined,
+  commit: { sha: string; tree: string } | undefined,
+  sourceLabel = "main",
+): Promise<ExtractedMetadata> {
+  const restricted = repo.private !== false;
   if (!tag || !commit)
     return {
       ...metadata,
       review: [
-        "no suitable release from main; resources and bucket summaries need review before publication",
+        `no suitable release from ${sourceLabel}; resources and bucket summaries need review before publication`,
       ],
     };
   const tree = await readReleaseTree(account, repo, token, commit.tree);
@@ -777,6 +791,208 @@ export async function readRepositoryMetadata(
           ]
         : []),
     ],
+  };
+}
+
+function checkSourceBranch(branch: string): void {
+  if (!branch || branch.length > 255 || /[\r\n]/.test(branch))
+    throw new Error("Invalid source branch.");
+  try {
+    execFileSync("git", ["check-ref-format", `refs/heads/${branch}`], {
+      stdio: "ignore",
+    });
+  } catch (cause) {
+    throw new Error("Invalid source branch.", { cause });
+  }
+}
+
+export function validateSubmissionSource(
+  account: string,
+  name: string,
+  sha: string,
+  branch?: string,
+): void {
+  parseArguments([account]);
+  if (
+    !/^ds[-_][A-Za-z0-9._-]+$/.test(name) ||
+    name.length > 100 ||
+    !/^[a-f0-9]{40}$/.test(sha)
+  )
+    throw new Error(
+      "Submission needs a ds-* repository and a full lowercase commit SHA.",
+    );
+  if (branch !== undefined) checkSourceBranch(branch);
+}
+
+export async function readSubmissionSource(
+  account: string,
+  name: string,
+  sha: string,
+  token: string,
+  requestedBranch?: string,
+): Promise<{
+  repo: Repository & { id: number };
+  commit: string;
+  metadata: ExtractedMetadata;
+}> {
+  validateSubmissionSource(account, name, sha, requestedBranch);
+  const get = async (path: string) => {
+    const { response, text } = await githubGet(new URL(path, API), token);
+    if (!response.ok)
+      throw new Error(
+        `Could not verify submitted GitHub source (${response.status}).`,
+      );
+    try {
+      return JSON.parse(text);
+    } catch (cause) {
+      throw new Error("Invalid GitHub source response.", { cause });
+    }
+  };
+  const path = `repos/${encodeURIComponent(account)}/${encodeURIComponent(name)}`;
+  const repo = (await get(path)) as Repository & { id: number };
+  if (
+    !Number.isSafeInteger(repo?.id) ||
+    repo.id < 1 ||
+    typeof repo.name !== "string" ||
+    repo.name.toLowerCase() !== name.toLowerCase() ||
+    typeof repo.owner?.login !== "string" ||
+    repo.owner.login.toLowerCase() !== account.toLowerCase() ||
+    typeof repo.full_name !== "string" ||
+    repo.full_name.toLowerCase() !== `${account}/${name}`.toLowerCase() ||
+    typeof repo.private !== "boolean" ||
+    typeof repo.default_branch !== "string"
+  )
+    throw new Error(
+      "GitHub returned a different or invalid source repository.",
+    );
+  const branch = requestedBranch ?? repo.default_branch;
+  checkSourceBranch(branch);
+  const ref = await get(`${path}/git/ref/heads/${encodeURIComponent(branch)}`);
+  if (
+    ref?.ref !== `refs/heads/${branch}` ||
+    ref?.object?.type !== "commit" ||
+    !/^[a-f0-9]{40}$/.test(ref.object.sha)
+  )
+    throw new Error("GitHub did not return the exact pushed branch.");
+  type Commit = {
+    sha: string;
+    tree: { sha: string };
+    parents: { sha: string }[];
+  };
+  const commits = new Map<string, Commit>();
+  const getCommit = async (id: string): Promise<Commit> => {
+    const known = commits.get(id);
+    if (known) return known;
+    if (commits.size >= 256)
+      throw new Error("Git ancestry exceeds the 256-commit safety limit.");
+    const value = await get(`${path}/git/commits/${id}`);
+    if (
+      value?.sha !== id ||
+      !/^[a-f0-9]{40}$/.test(value?.tree?.sha) ||
+      !Array.isArray(value.parents) ||
+      value.parents.length > 256 ||
+      value.parents.some(
+        (parent: { sha?: unknown }) =>
+          typeof parent?.sha !== "string" || !/^[a-f0-9]{40}$/.test(parent.sha),
+      )
+    )
+      throw new Error("Invalid Git commit metadata.");
+    commits.set(id, value as Commit);
+    return value as Commit;
+  };
+  // Git database endpoints return ancestry metadata, never resource file patches.
+  const reachable = async (
+    ancestor: string,
+    head: string,
+  ): Promise<boolean> => {
+    const pending = [head];
+    const seen = new Set<string>();
+    while (pending.length) {
+      const id = pending.shift() as string;
+      if (id === ancestor) return true;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const commit = await getCommit(id);
+      pending.push(...commit.parents.map((parent) => parent.sha));
+    }
+    return false;
+  };
+  if (!(await reachable(sha, ref.object.sha)))
+    throw new Error(
+      "Submitted commit is not reachable from the pushed branch.",
+    );
+  const sourceCommit = await getCommit(sha);
+  const sourceTree = await readReleaseTree(
+    account,
+    repo,
+    token,
+    sourceCommit.tree.sha,
+    false,
+  );
+  const descriptor = sourceTree?.find(
+    (entry) => entry.path === "datapackage.json",
+  );
+  if (
+    descriptor?.type !== "blob" ||
+    !["100644", "100755"].includes(descriptor.mode)
+  )
+    throw new RepositoryValidationError(
+      "Submitted datapackage.json must be a verified regular Git file.",
+    );
+  const metadata = parseDataPackage(
+    await readContent(account, repo, "datapackage.json", token, sha),
+  );
+  const releases = await listReleases(account, repo, token);
+  let selected: { sha: string; tree: string } | undefined;
+  let mainHead: string | undefined =
+    branch === "main" ? ref.object.sha : undefined;
+  const tag = await selectLatestMainRelease(releases, async (releaseTag) => {
+    const reference = await get(
+      `${path}/git/ref/tags/${encodeURIComponent(releaseTag)}`,
+    );
+    if (reference?.ref !== `refs/tags/${releaseTag}`)
+      throw new Error("Invalid Git release reference.");
+    let object = reference.object;
+    for (let depth = 0; depth < 8; depth++) {
+      if (!/^[a-f0-9]{40}$/.test(object?.sha))
+        throw new Error("Invalid Git release object.");
+      if (object.type === "commit") {
+        if (!(await reachable(object.sha, sha))) return false;
+        if (!mainHead) {
+          const main = await get(`${path}/git/ref/heads/main`);
+          if (
+            main?.ref !== "refs/heads/main" ||
+            main?.object?.type !== "commit" ||
+            !/^[a-f0-9]{40}$/.test(main.object.sha)
+          )
+            throw new Error(
+              "GitHub did not return the exact main branch for release verification.",
+            );
+          mainHead = main.object.sha;
+        }
+        if (!(await reachable(object.sha, mainHead as string))) return false;
+        const commit = await getCommit(object.sha);
+        selected = { sha: commit.sha, tree: commit.tree.sha };
+        return true;
+      }
+      if (object.type !== "tag")
+        throw new Error("Release does not refer to a Git commit.");
+      object = (await get(`${path}/git/tags/${object.sha}`)).object;
+    }
+    throw new Error("Git release tag nesting exceeds the safety limit.");
+  });
+  return {
+    repo,
+    commit: sha,
+    metadata: await metadataAtRelease(
+      account,
+      repo,
+      token,
+      metadata,
+      tag,
+      selected,
+      "submitted commit",
+    ),
   };
 }
 
