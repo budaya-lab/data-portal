@@ -1,0 +1,62 @@
+name: Sync dataset catalogue
+
+on:
+  schedule:
+    - cron: "23 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: catalogue-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Check required credentials
+        env:
+          DATASET_READ_TOKEN: ${{ secrets.DATASET_READ_TOKEN }}
+          CATALOGUE_PR_TOKEN: ${{ secrets.CATALOGUE_PR_TOKEN }}
+        run: |
+          test -n "$DATASET_READ_TOKEN" || { echo 'Set the DATASET_READ_TOKEN repository secret.'; exit 1; }
+          test -n "$CATALOGUE_PR_TOKEN" || { echo 'Set the CATALOGUE_PR_TOKEN repository secret.'; exit 1; }
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Prepare catalogue changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.DATASET_READ_TOKEN }}
+          DATASET_OWNER: ${{ github.repository_owner }}
+        run: pnpm catalogue:sync "$DATASET_OWNER" --apply
+      - name: Add public-safe review report to run summary
+        if: always()
+        run: |
+          if test -f .tmp/catalogue-sync-report.md; then
+            cat .tmp/catalogue-sync-report.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Validate proposed catalogue
+        run: pnpm validate
+      - name: Open or update review PR
+        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
+        with:
+          token: ${{ secrets.CATALOGUE_PR_TOKEN }}
+          base: main
+          branch: chore/catalogue-sync
+          title: "chore(catalogue): sync dataset metadata"
+          commit-message: "chore(catalogue): sync dataset metadata"
+          body-path: .tmp/catalogue-sync-report.md
+          add-paths: |
+            datasets.json
+            :(glob)public/data/**/*.csv

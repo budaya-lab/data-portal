@@ -36,6 +36,39 @@ Open <http://localhost:3000/>. Draft records are visible locally but excluded fr
    Each repository is validated independently. Invalid metadata or bucket summaries skip that repository, not the entire scan. The terminal and report's `failures` list identify the repository and a public-safe reason. Only valid candidates are eligible for confirmed `--apply`; skipped repositories remain unchanged. Authentication, network, rate-limit, and other GitHub API errors still stop the run.
 4. Review metadata, access, licences, resource links, and report warnings. Remove `draft` only when approved for publication. Run the checks below and submit a PR. A dataset release does not automatically publish a catalogue record.
 
+### Automated organisation sync
+
+**Sync dataset catalogue** runs daily at 03:23 UTC or manually from Actions on `main`. It scans the portal owner's `ds-*` repositories and opens or updates one PR from `chore/catalogue-sync`. There is no automatic merge. Unchanged inputs create no new PR.
+
+Before enabling it, add these repository secrets (do not put their values in Git):
+
+| Secret | Fine-grained token permissions and repository selection |
+| --- | --- |
+| `DATASET_READ_TOKEN` | Organisation-owned dataset repositories: **Contents: read** and **Metadata: read**. Include private repositories and add new repositories to its selection as needed. |
+| `CATALOGUE_PR_TOKEN` | Only `data-portal`: **Contents: read/write**, **Pull requests: read/write**, **Metadata: read**. The token owner must have write access to the portal. |
+
+Use dedicated automation credentials with expiry and organisation approval where required. The read token must cover every dataset you intend to scan; GitHub lists only repositories visible to that token. The PR token is separate so dataset repositories do not need write permission. Do not substitute the workflow's `GITHUB_TOKEN`: it cannot read other private repositories, and [PRs it creates do not trigger normal PR validation](https://docs.github.com/en/actions/how-tos/writing-workflows/choosing-when-your-workflow-runs/triggering-a-workflow#triggering-a-workflow-from-a-workflow). No workflow-write or administration permission is needed. Configuration alone does not run a sync; after merging, run it manually once and inspect the report and PR before relying on the schedule.
+
+The workflow never checks out or executes dataset code. It reuses descriptor validation and suitable-release selection from `catalogue:github`, reads only `datapackage.json` and verified public `buckets.csv` contents, validates proposed changes, and commits only `datasets.json` and public CSV summaries. PRs and run summaries are public: the owner has approved private-repository metadata and public bucket labels/counts for this workflow. Ordinary restricted data, previews and history are never read or copied.
+
+Sync rules:
+
+- New records are drafts. Existing catalogue identifiers, publication status, confirmed lineage, dates and other portal-only fields are preserved. Missing repositories never delete records.
+- Source names, descriptions, keywords, licences, resource listings and supplied counts replace portal values in the proposed PR. This can undo previous portal-only wording or keyword edits; make lasting corrections upstream. Omitted source counts remain omitted, not calculated. No source relationships are inferred.
+- Repository visibility determines proposed access. Access and restricted-resource changes are flagged for explicit PR review. Restricted file/directory listings remain metadata-only with explicit resource access labels. Unsupported or unsafe mappings skip the repository rather than invent formats or expose paths as downloads.
+- Ordinary public resources retain the existing release-verified link policy. Validated public summaries may be added or updated; existing summary URLs are preserved. If no verified summary replacement is available, keep the old summary and report that when proposing other changes. The summary contract remains two-column label/count CSV; incompatible newer bucket formats require separate work.
+- Invalid repositories stay unchanged and appear in the report. Authentication, network, API, identity conflicts and destination-safety failures abort without creating/updating the PR. A failed apply can leave changes in its disposable CI checkout but cannot publish them.
+- Each run regenerates the automation branch from `main`. Do not manually edit that branch; merge or correct source metadata instead. Failed validation leaves any existing sync PR unchanged; check the latest workflow result before merging it.
+
+Preview locally without changing catalogue/public data, or explicitly apply in a disposable checkout:
+
+```bash
+pnpm catalogue:sync budaya-lab
+pnpm catalogue:sync budaya-lab --apply
+```
+
+The preview writes `.tmp/catalogue-sync-report.md` only. The sync command uses the same `--namespace` / `--pattern` options and local `gh` authentication as discovery. The older `catalogue:github --apply` remains interactive and append-only.
+
 ### Manually
 
 Edit `datasets.json`; no new page file is needed. Use a unique `(namespace, slug)`, where `namespace` identifies the publisher. Add a title (`name`), description, subject keywords, and source landing-page link. Pages appear at `/@<namespace>/<slug>/`.

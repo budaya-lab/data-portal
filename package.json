@@ -18,7 +18,8 @@
     "check-export": "node scripts/check-export.mjs",
     "check:pages": "pnpm check-export && node --test scripts/pages-export.test.mjs",
     "validate": "pnpm test && pnpm exec tsc --noEmit && pnpm build && pnpm check:pages",
-    "catalogue:github": "tsx scripts/github-repositories.ts"
+    "catalogue:github": "tsx scripts/github-repositories.ts",
+    "catalogue:sync": "tsx scripts/sync-github-catalogue.ts"
   },
   "dependencies": {
     "@duckdb/duckdb-wasm": "^1.32.0",
