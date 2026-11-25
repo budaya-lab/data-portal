@@ -36,38 +36,45 @@ Open <http://localhost:3000/>. Draft records are visible locally but excluded fr
    Each repository is validated independently. Invalid metadata or bucket summaries skip that repository, not the entire scan. The terminal and report's `failures` list identify the repository and a public-safe reason. Only valid candidates are eligible for confirmed `--apply`; skipped repositories remain unchanged. Authentication, network, rate-limit, and other GitHub API errors still stop the run.
 4. Review metadata, access, licences, resource links, and report warnings. Remove `draft` only when approved for publication. Run the checks below and submit a PR. A dataset release does not automatically publish a catalogue record.
 
-### Automated organisation sync
+### Submit one pushed dataset
 
-**Sync dataset catalogue** runs daily at 03:23 UTC or manually from Actions on `main`. It scans the portal owner's `ds-*` repositories and opens or updates one PR from `chore/catalogue-sync`. There is no automatic merge. Unchanged inputs create no new PR.
+**Submit dataset to portal** is manual-only. It accepts one `ds-*` repository name in the portal's GitHub account and a full lowercase 40-character metadata commit SHA. There is no schedule or organisation scan. Choose the workflow on portal `main`, enter the source repository and SHA, and optionally specify a pushed source branch. A future Steward action can call this workflow; no Steward UI or local-versus-pushed comparison is implemented here.
 
-Before enabling it, add these repository secrets (do not put their values in Git):
+The submitted SHA must be reachable from the named source branch, or the source's default branch when omitted. The descriptor is read only at that SHA. Missing or invalid metadata never falls back to a branch, release descriptor or local draft. Source repository visibility is verified by GitHub. No source Git commit, push or release is created.
+
+Submission uses bounded Git reference/commit metadata to prove ancestry, not REST commit/compare responses containing file patches. At most 256 Git commit lookups are allowed; tag resolution is also bounded. Exceeding a limit stops the submission. Ordinary public download links and bucket summaries retain the suitable-release rule: select the highest non-prerelease SemVer release reachable from both source `main` and the submitted metadata commit. The public report records the metadata SHA and any separate summary release/SHA.
+
+Configure these repository secrets before running it (never put their values in Git):
 
 | Secret | Fine-grained token permissions and repository selection |
 | --- | --- |
-| `DATASET_READ_TOKEN` | Organisation-owned dataset repositories: **Contents: read** and **Metadata: read**. Include private repositories and add new repositories to its selection as needed. |
-| `CATALOGUE_PR_TOKEN` | Only `data-portal`: **Contents: read/write**, **Pull requests: read/write**, **Metadata: read**. The token owner must have write access to the portal. |
+| `DATASET_READ_TOKEN` | Selected source dataset repositories: **Contents: read** and **Metadata: read**. Include private repositories that may be submitted. |
+| `CATALOGUE_PR_TOKEN` | Only `data-portal`: **Contents: read/write**, **Pull requests: read/write**, **Metadata: read**. The account must have portal write access. |
 
-Use dedicated automation credentials with expiry and organisation approval where required. The read token must cover every dataset you intend to scan; GitHub lists only repositories visible to that token. The PR token is separate so dataset repositories do not need write permission. Do not substitute the workflow's `GITHUB_TOKEN`: it cannot read other private repositories, and [PRs it creates do not trigger normal PR validation](https://docs.github.com/en/actions/how-tos/writing-workflows/choosing-when-your-workflow-runs/triggering-a-workflow#triggering-a-workflow-from-a-workflow). No workflow-write or administration permission is needed. Configuration alone does not run a sync; after merging, run it manually once and inspect the report and PR before relying on the schedule.
+Use dedicated credentials with expiry and organisation approval where required. Keep read and PR credentials separate; source repositories need no write permission. The built-in `GITHUB_TOKEN` cannot read other private repositories, and [PRs it creates do not trigger normal PR validation](https://docs.github.com/en/actions/how-tos/writing-workflows/choosing-when-your-workflow-runs/triggering-a-workflow#triggering-a-workflow-from-a-workflow). No workflow-file-write or administration permission is needed for these runner secrets. The person or tool dispatching the workflow separately needs portal workflow-run permission ([fine-grained token: Actions write](https://docs.github.com/en/rest/actions/workflows#create-a-workflow-dispatch-event)); neither runner secret signs in the caller.
 
-The workflow never checks out or executes dataset code. It reuses descriptor validation and suitable-release selection from `catalogue:github`, reads only `datapackage.json` and verified public `buckets.csv` contents, validates proposed changes, and commits only `datasets.json` and public CSV summaries. PRs and run summaries are public: the owner has approved private-repository metadata and public bucket labels/counts for this workflow. Ordinary restricted data, previews and history are never read or copied.
+The workflow never checks out or executes dataset code. It reads only root `datapackage.json` and validated public `buckets.csv` contents, validates the resulting catalogue, and commits only `datasets.json` and public CSV summaries. **PRs, their branches and run summaries are public**, including metadata for private datasets and bucket labels/counts. Review disclosure before dispatching. Ordinary restricted resource bytes, previews and file history/diffs are never copied or fetched by submission.
 
-Sync rules:
+Submission rules:
 
-- New records are drafts. Existing catalogue identifiers, publication status, confirmed lineage, dates and other portal-only fields are preserved. Missing repositories never delete records.
-- Source names, descriptions, keywords, licences, resource listings and supplied counts replace portal values in the proposed PR. This can undo previous portal-only wording or keyword edits; make lasting corrections upstream. Omitted source counts remain omitted, not calculated. No source relationships are inferred.
-- Repository visibility determines proposed access. Access and restricted-resource changes are flagged for explicit PR review. Restricted file/directory listings remain metadata-only with explicit resource access labels. Unsupported or unsafe mappings skip the repository rather than invent formats or expose paths as downloads.
-- Ordinary public resources retain the existing release-verified link policy. Validated public summaries may be added or updated; existing summary URLs are preserved. If no verified summary replacement is available, keep the old summary and report that when proposing other changes. The summary contract remains two-column label/count CSV; incompatible newer bucket formats require separate work.
-- Invalid repositories stay unchanged and appear in the report. Authentication, network, API, identity conflicts and destination-safety failures abort without creating/updating the PR. A failed apply can leave changes in its disposable CI checkout but cannot publish them.
-- Each run regenerates the automation branch from `main`. Do not manually edit that branch; merge or correct source metadata instead. Failed validation leaves any existing sync PR unchanged; check the latest workflow result before merging it.
+- Each repository has a stable PR branch, `chore/catalogue-<GitHub repository ID>`. Repeated submissions update its proposal; other datasets' PRs remain separate. There is no automatic merge. No diff means no new PR; a redundant existing proposal may close.
+- New records remain drafts. Preserve existing catalogue identifiers, publication status, dates, confirmed lineage and portal-only fields. Source names, descriptions, keywords, licences, resource listings and supplied counts replace the corresponding portal values in the proposed PR. This can undo portal-only wording; make lasting corrections upstream. Do not infer totals or relationships.
+- Flag access and restricted-resource changes for explicit review. Restricted listings carry their own access labels and never become download URLs. Unsafe or unsupported mappings fail the single submission rather than silently skip it.
+- Valid public summaries may be added or updated without changing existing summary URLs. If no verified replacement exists, preserve an existing summary. The two-column label/count CSV contract remains unchanged; newer incompatible formats need separate work.
+- Authentication, network, validation, identity or destination-safety failures stop before PR creation/update. A late write failure can leave changes only in the disposable checkout. Failed validation leaves the previous PR unchanged, so check the latest run before merging.
+- Each proposal is regenerated from portal `main` for its dataset only. Do not edit submission branches manually. Concurrent proposals can conflict in `datasets.json`; after merging one, resubmit another from its same SHA to regenerate against current portal main.
 
-Preview locally without changing catalogue/public data, or explicitly apply in a disposable checkout:
+To preview locally with your `gh` login or `GITHUB_TOKEN`, set `SOURCE_SHA` to the full pushed metadata SHA:
 
 ```bash
-pnpm catalogue:sync budaya-lab
-pnpm catalogue:sync budaya-lab --apply
+pnpm catalogue:submit budaya-lab/ds-example --commit "$SOURCE_SHA"
+# Explicitly apply only in a disposable portal checkout:
+pnpm catalogue:submit budaya-lab/ds-example --commit "$SOURCE_SHA" --apply
+# Use a non-default pushed source branch when needed:
+pnpm catalogue:submit budaya-lab/ds-example --commit "$SOURCE_SHA" --branch metadata/review
 ```
 
-The preview writes `.tmp/catalogue-sync-report.md` only. The sync command uses the same `--namespace` / `--pattern` options and local `gh` authentication as discovery. The older `catalogue:github --apply` remains interactive and append-only.
+Preview writes `.tmp/catalogue-submission-report.md` only. Local apply prepares files but does not push a branch or open a PR. The older `catalogue:github --apply` remains interactive and append-only.
 
 ### Manually
 

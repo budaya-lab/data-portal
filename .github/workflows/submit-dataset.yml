@@ -1,19 +1,30 @@
-name: Sync dataset catalogue
+name: Submit dataset to portal
 
 on:
-  schedule:
-    - cron: "23 3 * * *"
   workflow_dispatch:
+    inputs:
+      repository:
+        description: "Dataset repository name in this GitHub account (ds-*)"
+        required: true
+        type: string
+      commit:
+        description: "Full lowercase SHA of the pushed metadata commit"
+        required: true
+        type: string
+      branch:
+        description: "Pushed source branch (blank uses the source default branch)"
+        required: false
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: catalogue-sync
+  group: catalogue-submission-${{ inputs.repository }}
   cancel-in-progress: false
 
 jobs:
-  sync:
+  submit:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -35,16 +46,25 @@ jobs:
           node-version: "24"
           cache: pnpm
       - run: pnpm install --frozen-lockfile --ignore-scripts
-      - name: Prepare catalogue changes
+      - name: Prepare single-dataset proposal
+        id: prepare
         env:
           GITHUB_TOKEN: ${{ secrets.DATASET_READ_TOKEN }}
-          DATASET_OWNER: ${{ github.repository_owner }}
-        run: pnpm catalogue:sync "$DATASET_OWNER" --apply
+          DATASET_ACCOUNT: ${{ github.repository_owner }}
+          SOURCE_REPOSITORY: ${{ inputs.repository }}
+          SOURCE_COMMIT: ${{ inputs.commit }}
+          SOURCE_BRANCH: ${{ inputs.branch }}
+        run: |
+          args=("$DATASET_ACCOUNT/$SOURCE_REPOSITORY" --commit "$SOURCE_COMMIT" --apply)
+          if test -n "$SOURCE_BRANCH"; then
+            args+=(--branch "$SOURCE_BRANCH")
+          fi
+          pnpm catalogue:submit "${args[@]}"
       - name: Add public-safe review report to run summary
         if: always()
         run: |
-          if test -f .tmp/catalogue-sync-report.md; then
-            cat .tmp/catalogue-sync-report.md >> "$GITHUB_STEP_SUMMARY"
+          if test -f .tmp/catalogue-submission-report.md; then
+            cat .tmp/catalogue-submission-report.md >> "$GITHUB_STEP_SUMMARY"
           fi
       - name: Validate proposed catalogue
         run: pnpm validate
@@ -53,10 +73,10 @@ jobs:
         with:
           token: ${{ secrets.CATALOGUE_PR_TOKEN }}
           base: main
-          branch: chore/catalogue-sync
-          title: "chore(catalogue): sync dataset metadata"
-          commit-message: "chore(catalogue): sync dataset metadata"
-          body-path: .tmp/catalogue-sync-report.md
+          branch: ${{ steps.prepare.outputs.pr_branch }}
+          title: "chore(catalogue): submit ${{ inputs.repository }}"
+          commit-message: "chore(catalogue): submit dataset metadata"
+          body-path: .tmp/catalogue-submission-report.md
           add-paths: |
             datasets.json
             :(glob)public/data/**/*.csv
