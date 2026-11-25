@@ -206,7 +206,7 @@ type RepositoryPlan = {
   conflicts: { repository: string; reason: string }[];
 };
 
-function canonicalLandingUrl(value: unknown): string | undefined {
+export function canonicalLandingUrl(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
   try {
     const url = new URL(value);

@@ -75,6 +75,28 @@ test("rejects unsafe and malformed Data Packages without exposing private resour
   }
 });
 
+test("resource metadata rejects credential-like identifiers and paths before public sync", () => {
+  for (const resource of [
+    { ...descriptor.resources[0], name: `ghp_${"x".repeat(30)}` },
+    {
+      ...descriptor.resources[0],
+      path: `exports/github_pat_${"x".repeat(30)}.csv`,
+    },
+  ]) {
+    assert.throws(
+      () =>
+        parseDataPackage(
+          JSON.stringify({ ...descriptor, resources: [resource] }),
+        ),
+      (error: unknown) => {
+        assert.ok(error instanceof Error);
+        assert.doesNotMatch(error.message, /ghp_|github_pat_/);
+        return true;
+      },
+    );
+  }
+});
+
 test("accepts directory resources with trailing-slash paths", () => {
   const directory = {
     name: "xml",

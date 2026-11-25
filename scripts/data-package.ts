@@ -10,6 +10,7 @@ export type DeclaredResource = {
   path: string | string[];
   format?: string;
   title?: string;
+  count?: number;
 };
 
 export type ExtractedMetadata = {
@@ -24,13 +25,17 @@ export type ExtractedMetadata = {
   review?: string[];
 };
 
+const credentialPattern =
+  /gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}/;
+
 function safeText(value: unknown, maxLength: number): string | undefined {
   if (typeof value !== "string") return undefined;
   const text = value.replace(/\s+/g, " ").trim();
   if (
     !text ||
     text.length > maxLength ||
-    /https?:\/\/|git@github\.com:|github\.com\/.+\/(?:blob|raw|tree)\/|\b(?:token|password|secret|api[_ -]?key)\b|\bgh[pousr]_[A-Za-z0-9]{20,}\b|\bgithub_pat_[A-Za-z0-9_]{20,}\b|\bAKIA[0-9A-Z]{16}\b/i.test(
+    credentialPattern.test(text) ||
+    /https?:\/\/|git@github\.com:|github\.com\/.+\/(?:blob|raw|tree)\/|\b(?:token|password|secret|api[_ -]?key)\b/i.test(
       text,
     )
   )
@@ -47,6 +52,7 @@ type ValidatedPackage = {
     title: string;
     path: string | string[];
     format?: unknown;
+    count?: number;
   }[];
   created?: string;
   licenses?: License[];
@@ -107,7 +113,16 @@ export function parseDataPackage(text: string | undefined): ExtractedMetadata {
       : [resource.path];
     const isDirectory =
       resource.format === undefined || resource.format === "dir";
-    if (paths.some((path) => !isPublicationPath(path, isDirectory)))
+    if (!safeText(resource.name, 160))
+      throw new RepositoryValidationError(
+        "Invalid datapackage.json resource name: review public-safe text.",
+      );
+    if (
+      paths.some(
+        (path) =>
+          !isPublicationPath(path, isDirectory) || credentialPattern.test(path),
+      )
+    )
       throw new RepositoryValidationError(
         "Invalid datapackage.json resource path.",
       );
@@ -129,6 +144,7 @@ export function parseDataPackage(text: string | undefined): ExtractedMetadata {
       path: resource.path,
       ...(resource.format === undefined ? {} : { format: resource.format }),
       title: resourceTitle,
+      ...(resource.count === undefined ? {} : { count: resource.count }),
     };
   });
   let created: string | undefined;
