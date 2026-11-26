@@ -85,14 +85,10 @@ test("publishes reviewed entries and preserves only explicit or previously confi
   }
 });
 
-test("preserves reviewed catalogue metadata when the local source disagrees", () => {
-  const dataset = record("ds-layout-um");
-  assert.equal(
-    dataset.description,
-    "557 images from 1956 to 1961, used for layout classification.",
-  );
-  assert.ok(dataset.keywords?.includes("stage:curated"));
-  assert.equal(dataset.keywords?.includes("stage:annotated"), false);
+test("requires descriptions without freezing source-managed wording or stage", () => {
+  for (const slug of Object.keys(expected)) {
+    assert.ok(record(slug).description?.trim(), slug);
+  }
 });
 
 test("preserves reviewed project keyword casing and removes redundant subject labels", () => {
