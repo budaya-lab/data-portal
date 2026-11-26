@@ -11,26 +11,20 @@
         "access": "restricted"
       }
     ],
-    "description": "557 images from 1956 to 1961, used for layout classification.",
+    "description": "A selection of Utusan Melayu page scans for manual annotation.",
     "keywords": [
       "task:layout",
       "project:Jawi",
-      "stage:curated"
+      "stage:annotated"
     ],
     "resources": [
-      {
-        "name": "buckets",
-        "path": "ds-layout-um-buckets.csv",
-        "format": "csv",
-        "title": "Public bucket summary"
-      },
       {
         "name": "input",
         "title": "Manifest",
         "path": "input.csv",
-        "count": 557,
         "format": "csv",
-        "access": "restricted"
+        "access": "restricted",
+        "count": 557
       },
       {
         "name": "metadata",
@@ -38,6 +32,12 @@
         "path": "metadata.yaml",
         "format": "yaml",
         "access": "restricted"
+      },
+      {
+        "name": "buckets",
+        "path": "ds-layout-um-buckets.csv",
+        "format": "csv",
+        "title": "Public bucket summary"
       }
     ],
     "created": "2026-11-02T00:00:00Z"
